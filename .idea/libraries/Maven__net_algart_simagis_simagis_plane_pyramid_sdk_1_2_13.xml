@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: net.algart.simagis:simagis-plane-pyramid-sdk:1.2.13">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/algart/simagis/simagis-plane-pyramid-sdk/1.2.13/simagis-plane-pyramid-sdk-1.2.13.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/net/algart/simagis/simagis-plane-pyramid-sdk/1.2.13/simagis-plane-pyramid-sdk-1.2.13-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/algart/simagis/simagis-plane-pyramid-sdk/1.2.13/simagis-plane-pyramid-sdk-1.2.13-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
