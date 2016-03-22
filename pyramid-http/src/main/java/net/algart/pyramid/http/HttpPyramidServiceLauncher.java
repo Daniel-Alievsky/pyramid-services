@@ -31,15 +31,17 @@ import net.algart.pyramid.http.handlers.ReadImageHttpPyramidCommand;
 
 import java.io.IOException;
 
-public class StandardHttpPyramidServiceLauncher {
-    public static StandardHttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
-        final StandardHttpPyramidService service = new StandardHttpPyramidService(factory, port);
-        service.addHandler("/pp-information", new InformationHttpPyramidCommand(service));
-        service.addHandler("/pp-read-image", new ReadImageHttpPyramidCommand(service));
-        return service;
+public class HttpPyramidServiceLauncher {
+    protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
+        return new HttpPyramidService(factory, port);
     }
 
-    public static void main(String[] args)
+    protected void addHandlers(HttpPyramidService service) {
+        service.addHandler("/pp-information", new InformationHttpPyramidCommand(service));
+        service.addHandler("/pp-read-image", new ReadImageHttpPyramidCommand(service));
+    }
+
+    public final void doMain(String[] args)
         throws InterruptedException,
         ClassNotFoundException,
         IllegalAccessException,
@@ -61,14 +63,18 @@ public class StandardHttpPyramidServiceLauncher {
             throw new IllegalArgumentException("Different number of ports (" + ports.length
                 + ") and factories (" + planePyramidFactoryClasses.length + ")");
         }
-        StandardHttpPyramidService[] services = new StandardHttpPyramidService[planePyramidFactoryClasses.length];
+        HttpPyramidService[] services = new HttpPyramidService[planePyramidFactoryClasses.length];
         for (int k = 0; k < services.length; k++) {
             final PlanePyramidFactory factory = (PlanePyramidFactory)
                 planePyramidFactoryClasses[k].newInstance();
-            factory.initializeConfiguration(planePyramidSubFactoryClasses[k].newInstance());
+            if (planePyramidSubFactoryClasses[k] != null) {
+                factory.initializeConfiguration(planePyramidSubFactoryClasses[k].newInstance());
+            }
             services[k] = newService(factory, ports[k]);
+            addHandlers(services[k]);
+            services[k].start();
         }
-        for (final StandardHttpPyramidService service : services) {
+        for (final HttpPyramidService service : services) {
             new Thread() {
                 @Override
                 public void run() {
@@ -87,6 +93,7 @@ public class StandardHttpPyramidServiceLauncher {
     {
         Class<?>[] result = splitClassNames(propertyName, true);
         return result == null ? new Class<?>[resultLengthIfAbsent] : result;
+        // - in 1st case the result is filled by null
     }
 
     private static int[] splitIntegers(String propertyName) {
@@ -102,7 +109,9 @@ public class StandardHttpPyramidServiceLauncher {
         return result;
     }
 
-    private static Class<?>[] splitClassNames(String propertyName, boolean nullAllowed) throws ClassNotFoundException {
+    private static Class<?>[] splitClassNames(String propertyName, boolean nullAllowed)
+        throws ClassNotFoundException
+    {
         final String classNameList = System.getProperty(propertyName);
         if (classNameList == null) {
             if (nullAllowed) {
@@ -118,5 +127,9 @@ public class StandardHttpPyramidServiceLauncher {
             result[k] = nullAllowed && name.isEmpty() ? null : Class.forName(name);
         }
         return result;
+    }
+
+    public static void main(String[] args) throws Exception {
+        new HttpPyramidServiceLauncher().doMain(args);
     }
 }

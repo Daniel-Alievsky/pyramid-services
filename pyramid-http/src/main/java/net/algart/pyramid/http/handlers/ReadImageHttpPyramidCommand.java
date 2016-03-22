@@ -28,16 +28,20 @@ package net.algart.pyramid.http.handlers;
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidImageRequest;
 import net.algart.pyramid.http.HttpPyramidCommand;
-import net.algart.pyramid.http.StandardHttpPyramidService;
+import net.algart.pyramid.http.HttpPyramidService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
+
+import java.io.IOException;
+import java.util.Objects;
+
 import static net.algart.pyramid.http.HttpPyramidCommand.*;
 
 public class ReadImageHttpPyramidCommand implements HttpPyramidCommand {
-    private StandardHttpPyramidService standardHttpPyramidService;
+    private HttpPyramidService httpPyramidService;
 
-    public ReadImageHttpPyramidCommand(StandardHttpPyramidService standardHttpPyramidService) {
-        this.standardHttpPyramidService = standardHttpPyramidService;
+    public ReadImageHttpPyramidCommand(HttpPyramidService httpPyramidService) {
+        this.httpPyramidService = Objects.requireNonNull(httpPyramidService);
     }
 
     @Override
@@ -46,15 +50,19 @@ public class ReadImageHttpPyramidCommand implements HttpPyramidCommand {
         Response response)
         throws Exception
     {
-        final String configJson = StandardHttpPyramidService.pyramidIdToConfig(getParameter(request, "pyramidId"));
+        final String configJson = pyramidIdToConfig(getParameter(request, "pyramidId"));
         final double compression = getDoubleParameter(request, "compression");
         final long fromX = getLongParameter(request, "fromX");
         final long fromY = getLongParameter(request, "fromY");
         final long toX = getLongParameter(request, "toX");
         final long toY = getLongParameter(request, "toY");
-        final PlanePyramid pyramid = standardHttpPyramidService.getPyramidPool().getHttpPlanePyramid(configJson);
+        final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configJson);
         final PlanePyramidImageRequest imageRequest = new PlanePyramidImageRequest(
             pyramid.uniqueId(), compression, fromX, fromY, toX, toY);
-        standardHttpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
+        httpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
+    }
+
+    protected String pyramidIdToConfig(String pyramidId) throws IOException {
+        return httpPyramidService.pyramidIdToConfig(pyramidId);
     }
 }

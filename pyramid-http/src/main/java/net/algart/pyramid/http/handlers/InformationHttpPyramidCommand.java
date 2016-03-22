@@ -27,15 +27,18 @@ package net.algart.pyramid.http.handlers;
 
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.http.HttpPyramidCommand;
-import net.algart.pyramid.http.StandardHttpPyramidService;
+import net.algart.pyramid.http.HttpPyramidService;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
-public class InformationHttpPyramidCommand implements HttpPyramidCommand {
-    private StandardHttpPyramidService standardHttpPyramidService;
+import java.io.IOException;
+import java.util.Objects;
 
-    public InformationHttpPyramidCommand(StandardHttpPyramidService standardHttpPyramidService) {
-        this.standardHttpPyramidService = standardHttpPyramidService;
+public class InformationHttpPyramidCommand implements HttpPyramidCommand {
+    private HttpPyramidService httpPyramidService;
+
+    public InformationHttpPyramidCommand(HttpPyramidService httpPyramidService) {
+        this.httpPyramidService = Objects.requireNonNull(httpPyramidService);
     }
 
     @Override
@@ -44,9 +47,8 @@ public class InformationHttpPyramidCommand implements HttpPyramidCommand {
         Response response)
         throws Exception
     {
-        final String configJson = StandardHttpPyramidService.pyramidIdToConfig(
-            HttpPyramidCommand.getParameter(request, "pyramidId"));
-        final PlanePyramid pyramid = standardHttpPyramidService.getPyramidPool().getHttpPlanePyramid(configJson);
+        final String configJson = pyramidIdToConfig(HttpPyramidCommand.getParameter(request, "pyramidId"));
+        final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configJson);
         response.setContentType("application/json; charset=utf-8");
         response.addHeader("Access-Control-Allow-Origin", "*");
         // - Allows browser JavaScript to access this via XMLHttpRequest.
@@ -56,5 +58,9 @@ public class InformationHttpPyramidCommand implements HttpPyramidCommand {
         response.setStatus(200, "OK");
         response.getWriter().write(message);
         response.finish();
+    }
+
+    protected String pyramidIdToConfig(String pyramidId) throws IOException {
+        return httpPyramidService.pyramidIdToConfig(pyramidId);
     }
 }

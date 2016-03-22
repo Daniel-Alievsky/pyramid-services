@@ -41,7 +41,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public final class StandardHttpPyramidService {
+public class HttpPyramidService {
     private static final String CONFIG_ROOT_DIR = System.getProperty(
         "net.algart.pyramid.http.configRoot", "/pp-directory");
     private static final String CONFIG_FILE_NAME = System.getProperty(
@@ -52,56 +52,38 @@ public final class StandardHttpPyramidService {
 
     static final long IMAGE_CACHING_MEMORY = Math.max(16, Long.getLong(
         "net.algart.pyramid.http.imageCachingMemory", 256L * 1024L * 1024L));
-    static final Logger LOG = Logger.getLogger(StandardHttpPyramidService.class.getName());
+    static final Logger LOG = Logger.getLogger(HttpPyramidService.class.getName());
 
     private final HttpServer server;
+    private final int port;
     private final ReadImageThreadPool threadPool;
     private final ServerConfiguration serverConfiguration;
     private final PlanePyramidPool pyramidPool;
     private volatile boolean shutdown = false;
 
-    public StandardHttpPyramidService(PlanePyramidFactory factory, int port) throws IOException {
+    public HttpPyramidService(PlanePyramidFactory factory, int port) {
         this.pyramidPool = new PlanePyramidPool(factory, MAX_NUMBER_OF_PYRAMIDS_IN_POOL);
         this.threadPool = new ReadImageThreadPool(Runtime.getRuntime().availableProcessors());
         this.server = new HttpServer();
-        server.addListener(
-            new NetworkListener(StandardHttpPyramidService.class.getName(), "localhost", port));
+        this.port = port;
+        server.addListener(new NetworkListener(HttpPyramidService.class.getName(), "localhost", port));
         this.serverConfiguration = server.getServerConfiguration();
-        server.start();
-        LOG.info(getClass().getName() + " started on port " + port + " with factory " + factory);
         addStandardHandlers();
     }
 
-    public void addHandler(String urlPrefix, HttpPyramidCommand command) {
+    public final void addHandler(String urlPrefix, HttpPyramidCommand command) {
         Objects.requireNonNull(urlPrefix, "Null URL prefix");
         Objects.requireNonNull(command, "Null HTTP-pyramid command");
         serverConfiguration.addHttpHandler(new HttpPyramidHandler(urlPrefix, command), urlPrefix);
         LOG.info("Adding HTTP handler " + urlPrefix);
     }
 
-    public PlanePyramidPool getPyramidPool() {
-        return pyramidPool;
+    public final void start() throws IOException {
+        LOG.info("Starting " + this);
+        server.start();
     }
 
-    public boolean createReadImageTask(
-        Request request,
-        Response response,
-        PlanePyramid pyramid,
-        PlanePyramidImageRequest imageRequest)
-    {
-        return threadPool.createReadImageTask(request, response, pyramid, imageRequest);
-    }
-
-    public static String pyramidIdToConfig(String pyramidId) throws IOException {
-        final Path path = Paths.get(
-            StandardHttpPyramidService.CONFIG_ROOT_DIR, pyramidId, StandardHttpPyramidService.CONFIG_FILE_NAME);
-        if (!Files.isRegularFile(path)) {
-            throw new FileNotFoundException("File " + path.toAbsolutePath() + " does not exists");
-        }
-        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-    }
-
-    public void waitForFinish() {
+    public final void waitForFinish() {
         try {
             while (!shutdown) {
                 Thread.sleep(500);
@@ -111,7 +93,33 @@ public final class StandardHttpPyramidService {
             LOG.log(Level.SEVERE, "Unexpected interrupted exception", e);
         }
         // - to be on the safe side: allow all tasks to be correctly finished
-        LOG.info(getClass().getName() + " with factory " + pyramidPool.getFactory() + " finished");
+        LOG.info("Finishing " + this);
+    }
+
+    public final PlanePyramidPool getPyramidPool() {
+        return pyramidPool;
+    }
+
+    public final boolean createReadImageTask(
+        Request request,
+        Response response,
+        PlanePyramid pyramid,
+        PlanePyramidImageRequest imageRequest)
+    {
+        return threadPool.createReadImageTask(request, response, pyramid, imageRequest);
+    }
+
+    public String pyramidIdToConfig(String pyramidId) throws IOException {
+        final Path path = Paths.get(CONFIG_ROOT_DIR, pyramidId, CONFIG_FILE_NAME);
+        if (!Files.isRegularFile(path)) {
+            throw new FileNotFoundException("File " + path.toAbsolutePath() + " does not exists");
+        }
+        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getName() + " on port " + port + " with factory " + pyramidPool.getFactory();
     }
 
     private void addStandardHandlers() {

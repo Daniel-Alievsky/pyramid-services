@@ -37,7 +37,7 @@ import java.util.logging.Logger;
 final class ReadImageThreadPool {
     private static final Logger LOG = Logger.getLogger(ReadImageThreadPool.class.getName());
     static final PlanePyramidImageCache PLANE_PYRAMID_IMAGE_CACHE =
-        new PlanePyramidImageCache(StandardHttpPyramidService.IMAGE_CACHING_MEMORY);
+        new PlanePyramidImageCache(HttpPyramidService.IMAGE_CACHING_MEMORY);
 
     private final ReadImageTaskQueue queue;
     private final ReadImageActiveTaskSet activeTaskSet;
