@@ -37,10 +37,10 @@ import java.util.Objects;
 
 import static net.algart.pyramid.http.HttpPyramidCommand.*;
 
-public class ReadImageHttpPyramidCommand implements HttpPyramidCommand {
+public class ReadRectangleHttpPyramidCommand implements HttpPyramidCommand {
     private HttpPyramidService httpPyramidService;
 
-    public ReadImageHttpPyramidCommand(HttpPyramidService httpPyramidService) {
+    public ReadRectangleHttpPyramidCommand(HttpPyramidService httpPyramidService) {
         this.httpPyramidService = Objects.requireNonNull(httpPyramidService);
     }
 

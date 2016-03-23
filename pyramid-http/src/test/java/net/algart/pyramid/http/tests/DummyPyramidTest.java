@@ -43,7 +43,7 @@ import java.util.logging.Logger;
 
 /**
  * Start this test and type in the browser URL something like this:
- * <a href="http://localhost:81/pp-read-image?pyramidId={&quot;color&quot;:&quot;FFFF00&quot;}&amp;compression=1&amp;fromX=0&amp;fromY=0&amp;toX=1000&amp;toY=1000">
+ * <a href="http://localhost:81/pp-read-rectangle?pyramidId={&quot;color&quot;:&quot;FFFF00&quot;}&amp;compression=1&amp;fromX=0&amp;fromY=0&amp;toX=1000&amp;toY=1000">
  *     an example</a>
  */
 public class DummyPyramidTest {

@@ -27,7 +27,7 @@ package net.algart.pyramid.http;
 
 import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.http.handlers.InformationHttpPyramidCommand;
-import net.algart.pyramid.http.handlers.ReadImageHttpPyramidCommand;
+import net.algart.pyramid.http.handlers.ReadRectangleHttpPyramidCommand;
 
 import java.io.IOException;
 
@@ -38,7 +38,7 @@ public class HttpPyramidServiceLauncher {
 
     protected void addHandlers(HttpPyramidService service) {
         service.addHandler("/pp-information", new InformationHttpPyramidCommand(service));
-        service.addHandler("/pp-read-image", new ReadImageHttpPyramidCommand(service));
+        service.addHandler("/pp-read-rectangle", new ReadRectangleHttpPyramidCommand(service));
     }
 
     public final void doMain(String[] args)

@@ -164,7 +164,7 @@ class StandardPlanePyramid implements PlanePyramid {
 
     @Override
     public String toString() {
-        return "Streaming plane pyramid based on " + source + " (" + formatName + " format)";
+        return "Plane pyramid based on " + source + " (" + formatName + " format)";
     }
 
     private static boolean transparencySupported(String formatName) {
