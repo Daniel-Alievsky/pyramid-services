@@ -26,7 +26,10 @@ package net.algart.pyramid.standard.tests;
 
 import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.http.HttpPyramidService;
-import net.algart.pyramid.http.HttpPyramidServiceLauncher;
+import net.algart.pyramid.http.HttpPyramidServiceSimpleLauncher;
+import net.algart.pyramid.http.handlers.InformationHttpPyramidCommand;
+import net.algart.pyramid.http.handlers.ReadRectangleHttpPyramidCommand;
+import net.algart.pyramid.http.handlers.TMSTileHttpPyramidCommand;
 import net.algart.pyramid.standard.StandardPlanePyramidFactory;
 import net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory;
 
@@ -42,18 +45,30 @@ public class ImageIOFileAccessTest {
         System.setProperty(
             "net.algart.pyramid.http.planePyramidSubFactory",
             ImageIOPlanePyramidSourceFactory.class.getName());
-        new HttpPyramidServiceLauncher() {
+        new HttpPyramidServiceSimpleLauncher() {
             @Override
-            protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
-                return new HttpPyramidService(factory, port) {
+            protected void addHandlers(HttpPyramidService service) {
+                super.addHandlers(service);
+                service.addHandler("/unsafe-information", new InformationHttpPyramidCommand(service) {
                     @Override
-                    public String pyramidIdToConfig(String pyramidId) throws IOException {
+                    protected String pyramidIdToConfig(String pyramidId) throws IOException {
                         return pyramidId;
-                        // So, pyramidId shoild contain JSON with path to the pyramid;
-                        // VERY UNSAFE for end-user server, but convenient for testing
                     }
-                };
+                });
+                service.addHandler("/unsafe-read-rectangle", new ReadRectangleHttpPyramidCommand(service) {
+                    @Override
+                    protected String pyramidIdToConfig(String pyramidId) throws IOException {
+                        return pyramidId;
+                    }
+                });
+                service.addHandler("/unsafe-tms", new TMSTileHttpPyramidCommand(service) {
+                    @Override
+                    protected String pyramidIdToConfig(String pyramidId) throws IOException {
+                        return pyramidId;
+                    }
+                });
             }
+
         }.doMain(args);
     }
 }

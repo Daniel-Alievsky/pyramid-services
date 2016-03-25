@@ -30,6 +30,7 @@ import net.algart.simagis.pyramid.PlanePyramidSource;
 import net.algart.simagis.pyramid.PlanePyramidSourceFactory;
 
 import javax.json.Json;
+import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.IOException;
@@ -56,7 +57,12 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
     @Override
     public PlanePyramid newPyramid(final String configJson) throws Exception {
         Objects.requireNonNull(configJson);
-        final JsonObject config = Json.createReader(new StringReader(configJson)).readObject();
+        final JsonObject config;
+        try {
+            config = Json.createReader(new StringReader(configJson)).readObject();
+        } catch (JsonException e) {
+            throw new IOException("Invalid configuration json: <<<" + configJson + ">>>", e);
+        }
         final Path path = Paths.get(config.getString("pyramidPath"));
         final JsonObject pyramidJson;
         try (final JsonReader reader = Json.createReader(Files.newBufferedReader(

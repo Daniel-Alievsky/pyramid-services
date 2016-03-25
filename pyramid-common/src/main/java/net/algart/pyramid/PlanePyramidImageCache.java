@@ -28,7 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class PlanePyramidImageCache {
+public final class PlanePyramidImageCache {
     //In future: maybe it makes sense to use https://cloud.google.com/appengine/docs/java/memcache/
 
     private final long maxMemory;

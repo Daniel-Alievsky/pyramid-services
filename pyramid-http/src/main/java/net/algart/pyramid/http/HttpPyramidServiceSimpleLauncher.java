@@ -28,10 +28,11 @@ package net.algart.pyramid.http;
 import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.http.handlers.InformationHttpPyramidCommand;
 import net.algart.pyramid.http.handlers.ReadRectangleHttpPyramidCommand;
+import net.algart.pyramid.http.handlers.TMSTileHttpPyramidCommand;
 
 import java.io.IOException;
 
-public class HttpPyramidServiceLauncher {
+public class HttpPyramidServiceSimpleLauncher {
     protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
         return new HttpPyramidService(factory, port);
     }
@@ -39,6 +40,7 @@ public class HttpPyramidServiceLauncher {
     protected void addHandlers(HttpPyramidService service) {
         service.addHandler("/pp-information", new InformationHttpPyramidCommand(service));
         service.addHandler("/pp-read-rectangle", new ReadRectangleHttpPyramidCommand(service));
+        service.addHandler("/pp-tms", new TMSTileHttpPyramidCommand(service));
     }
 
     public final void doMain(String[] args)
@@ -130,6 +132,6 @@ public class HttpPyramidServiceLauncher {
     }
 
     public static void main(String[] args) throws Exception {
-        new HttpPyramidServiceLauncher().doMain(args);
+        new HttpPyramidServiceSimpleLauncher().doMain(args);
     }
 }

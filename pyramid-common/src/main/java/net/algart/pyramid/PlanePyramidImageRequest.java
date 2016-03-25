@@ -26,7 +26,7 @@ package net.algart.pyramid;
 
 import java.util.Objects;
 
-public class PlanePyramidImageRequest {
+public final class PlanePyramidImageRequest {
     private final String pyramidUniqueId;
     private final double compression;
     private final long fromX;

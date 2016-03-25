@@ -31,7 +31,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class PlanePyramidPool {
+public final class PlanePyramidPool {
     private static final boolean POOL_ENABLED = true;
     // - for debugging needs; should be true
     private static final Logger LOG = Logger.getLogger(PlanePyramidPool.class.getName());

@@ -29,7 +29,7 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.util.Objects;
 
-public class PlanePyramidInformation {
+public final class PlanePyramidInformation {
     private final int channelCount;
     private final long zeroLevelDimX;
     private final long zeroLevelDimY;

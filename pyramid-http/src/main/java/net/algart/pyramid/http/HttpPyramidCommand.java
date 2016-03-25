@@ -36,6 +36,10 @@ public interface HttpPyramidCommand {
         Response response)
         throws Exception;
 
+    default boolean isSubFoldersAllowed() {
+        return false;
+    }
+
     static String getParameter(Request request, String name) {
         return Objects.requireNonNull(request.getParameter(name), "Parameter " + name + " required");
     }

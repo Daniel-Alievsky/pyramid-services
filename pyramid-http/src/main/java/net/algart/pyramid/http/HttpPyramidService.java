@@ -148,7 +148,7 @@ public class HttpPyramidService {
     //                System.out.printf("%s: %s%n", name, request.getParameter(name));
     //            }
             final String path = request.getRequestURI();
-            if (!prefix.equals(path) && !(prefix + "/").equals(path)) {
+            if (!command.isSubFoldersAllowed() && !prefix.equals(path) && !(prefix + "/").equals(path)) {
                 response.setStatus(404, "Invalid request path");
                 response.setContentType("text/plain");
                 response.getWriter().write(String.format("Invalid path %s%n", path));
