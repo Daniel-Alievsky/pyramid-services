@@ -45,13 +45,14 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
     private volatile PlanePyramidSourceFactory planePyramidSourceFactory;
 
     @Override
-    public void initializeConfiguration(Object configuration) {
+    public void initializeConfiguration(Object configuration) throws Exception {
         Objects.requireNonNull(configuration, "Null plane pyramid source sub-factory (configuration argument");
-        if (!(configuration instanceof PlanePyramidSourceFactory)) {
-            throw new IllegalArgumentException("Invalid type of configuration argument: it must be "
-                + PlanePyramidSourceFactory.class.getName());
+        if (!(configuration instanceof String)) {
+            throw new IllegalArgumentException("Invalid type of configuration argument: it must be a String "
+                + "(the name of PlanePyramidSourceFactory class)");
         }
-        this.planePyramidSourceFactory = (PlanePyramidSourceFactory) configuration;
+        this.planePyramidSourceFactory = (PlanePyramidSourceFactory)
+            Class.forName((String) configuration).newInstance();
     }
 
     @Override

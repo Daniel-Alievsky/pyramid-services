@@ -27,7 +27,7 @@ package net.algart.pyramid;
 public interface PlanePyramidFactory {
     /**
      * <p>Customize behaviour the factory according the passed object.
-     * The argument <tt>configuration</tt> may be, for example, an instance
+     * The argument <tt>configuration</tt> may be, for example, the name of class
      * of some sub-factory class, clarifying the method of creating pyramids,
      * or some JSON object with additional settings, describing some common
      * features of all created pyramids, etc.</p>
@@ -38,7 +38,7 @@ public interface PlanePyramidFactory {
      *
      * @param configuration some object helping to create pyramids.
      */
-    void initializeConfiguration(Object configuration);
+    void initializeConfiguration(Object configuration) throws Exception;
     // Note: generics for the type of the argument is not convenient here.
     // At the point, where we are configuring this factory, we usually do not know the class of this argument;
     // it can be create via reflection, for example, from some properties or configuration files.

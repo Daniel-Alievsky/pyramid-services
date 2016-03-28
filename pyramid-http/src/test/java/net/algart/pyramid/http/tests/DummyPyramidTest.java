@@ -26,7 +26,7 @@ package net.algart.pyramid.http.tests;
 
 import net.algart.pyramid.*;
 import net.algart.pyramid.http.HttpPyramidService;
-import net.algart.pyramid.http.HttpPyramidServiceSimpleLauncher;
+import net.algart.pyramid.http.SimpleHttpPyramidServiceLauncher;
 
 import javax.imageio.ImageIO;
 import javax.json.Json;
@@ -60,7 +60,7 @@ public class DummyPyramidTest {
         System.setProperty(
             "net.algart.pyramid.http.planePyramidFactory",
             MyPyramidFactory.class.getName());
-        new HttpPyramidServiceSimpleLauncher() {
+        new SimpleHttpPyramidServiceLauncher() {
             @Override
             protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
                 return new HttpPyramidService(factory, port) {

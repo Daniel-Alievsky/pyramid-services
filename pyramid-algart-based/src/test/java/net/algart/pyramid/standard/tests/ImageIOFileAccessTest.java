@@ -24,9 +24,8 @@
 
 package net.algart.pyramid.standard.tests;
 
-import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.http.HttpPyramidService;
-import net.algart.pyramid.http.HttpPyramidServiceSimpleLauncher;
+import net.algart.pyramid.http.SimpleHttpPyramidServiceLauncher;
 import net.algart.pyramid.http.handlers.InformationHttpPyramidCommand;
 import net.algart.pyramid.http.handlers.ReadRectangleHttpPyramidCommand;
 import net.algart.pyramid.http.handlers.TMSTileHttpPyramidCommand;
@@ -45,7 +44,7 @@ public class ImageIOFileAccessTest {
         System.setProperty(
             "net.algart.pyramid.http.planePyramidSubFactory",
             ImageIOPlanePyramidSourceFactory.class.getName());
-        new HttpPyramidServiceSimpleLauncher() {
+        new SimpleHttpPyramidServiceLauncher() {
             @Override
             protected void addHandlers(HttpPyramidService service) {
                 super.addHandlers(service);

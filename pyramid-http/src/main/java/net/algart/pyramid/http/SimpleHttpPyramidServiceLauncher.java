@@ -20,7 +20,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
  */
 
 package net.algart.pyramid.http;
@@ -32,7 +31,7 @@ import net.algart.pyramid.http.handlers.TMSTileHttpPyramidCommand;
 
 import java.io.IOException;
 
-public class HttpPyramidServiceSimpleLauncher {
+public class SimpleHttpPyramidServiceLauncher {
     protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
         return new HttpPyramidService(factory, port);
     }
@@ -43,17 +42,11 @@ public class HttpPyramidServiceSimpleLauncher {
         service.addHandler("/pp-tms", new TMSTileHttpPyramidCommand(service));
     }
 
-    public final void doMain(String[] args)
-        throws InterruptedException,
-        ClassNotFoundException,
-        IllegalAccessException,
-        InstantiationException,
-        IOException
-    {
+    public final void doMain(String[] args) throws Exception {
         final Class<?>[] planePyramidFactoryClasses =
             splitClassNames("net.algart.pyramid.http.planePyramidFactory");
-        Class<?>[] planePyramidSubFactoryClasses =
-            splitClassNamesOrReturnNulls("net.algart.pyramid.http.planePyramidSubFactory",
+        String[] planePyramidSubFactoryClasses =
+            splitStringsOrReturnNulls("net.algart.pyramid.http.planePyramidSubFactory",
                 planePyramidFactoryClasses.length);
         if (planePyramidSubFactoryClasses.length != planePyramidFactoryClasses.length) {
             throw new IllegalArgumentException("Different number of sub-factories ("
@@ -70,7 +63,7 @@ public class HttpPyramidServiceSimpleLauncher {
             final PlanePyramidFactory factory = (PlanePyramidFactory)
                 planePyramidFactoryClasses[k].newInstance();
             if (planePyramidSubFactoryClasses[k] != null) {
-                factory.initializeConfiguration(planePyramidSubFactoryClasses[k].newInstance());
+                factory.initializeConfiguration(planePyramidSubFactoryClasses[k]);
             }
             services[k] = newService(factory, ports[k]);
             addHandlers(services[k]);
@@ -86,18 +79,6 @@ public class HttpPyramidServiceSimpleLauncher {
         }
     }
 
-    private static Class<?>[] splitClassNames(String propertyName) throws ClassNotFoundException {
-        return splitClassNames(propertyName, false);
-    }
-
-    private static Class<?>[] splitClassNamesOrReturnNulls(String propertyName, int resultLengthIfAbsent)
-        throws ClassNotFoundException
-    {
-        Class<?>[] result = splitClassNames(propertyName, true);
-        return result == null ? new Class<?>[resultLengthIfAbsent] : result;
-        // - in 1st case the result is filled by null
-    }
-
     private static int[] splitIntegers(String propertyName) {
         final String intList = System.getProperty(propertyName);
         if (intList == null) {
@@ -111,27 +92,30 @@ public class HttpPyramidServiceSimpleLauncher {
         return result;
     }
 
-    private static Class<?>[] splitClassNames(String propertyName, boolean nullAllowed)
-        throws ClassNotFoundException
-    {
+
+    private static String[] splitStringsOrReturnNulls(String propertyName, int resultLengthIfAbsent) {
+        final String stringList = System.getProperty(propertyName);
+        if (stringList == null) {
+            return new String[resultLengthIfAbsent];
+        }
+        return stringList.split("\\|");
+    }
+
+    private static Class<?>[] splitClassNames(String propertyName) throws ClassNotFoundException {
         final String classNameList = System.getProperty(propertyName);
         if (classNameList == null) {
-            if (nullAllowed) {
-                return null;
-            } else {
-                throw new IllegalArgumentException(propertyName + " property not set");
-            }
+            throw new IllegalArgumentException(propertyName + " property not set");
         }
         final String[] classNames = classNameList.split("\\|");
         final Class<?>[] result = new Class<?>[classNames.length];
         for (int k = 0; k < result.length; k++) {
             final String name = classNames[k].trim();
-            result[k] = nullAllowed && name.isEmpty() ? null : Class.forName(name);
+            result[k] = Class.forName(name);
         }
         return result;
     }
 
     public static void main(String[] args) throws Exception {
-        new HttpPyramidServiceSimpleLauncher().doMain(args);
+        new SimpleHttpPyramidServiceLauncher().doMain(args);
     }
 }
