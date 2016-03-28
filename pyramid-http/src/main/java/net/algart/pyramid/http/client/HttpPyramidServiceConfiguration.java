@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.configuration;
+package net.algart.pyramid.http.client;
 
 import javax.json.*;
 import java.io.IOException;
