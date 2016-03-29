@@ -35,13 +35,15 @@ import org.glassfish.grizzly.http.server.Response;
 import java.io.IOException;
 import java.util.Objects;
 
-public class TMSTileHttpPyramidCommand implements HttpPyramidCommand {
+public class TmsHttpPyramidCommand implements HttpPyramidCommand {
     private static final int TMS_TILE_DIM = Math.max(16, Integer.getInteger(
         "net.algart.pyramid.http.tmsTileSize", 256));
+    private static final boolean TMS_INVERSE_Y_DIRECTION = Boolean.getBoolean(
+        "net.algart.pyramid.http.tmsInverseYDirection");
 
     private HttpPyramidService httpPyramidService;
 
-    public TMSTileHttpPyramidCommand(HttpPyramidService httpPyramidService) {
+    public TmsHttpPyramidCommand(HttpPyramidService httpPyramidService) {
         this.httpPyramidService = Objects.requireNonNull(httpPyramidService);
     }
 
@@ -65,8 +67,9 @@ public class TMSTileHttpPyramidCommand implements HttpPyramidCommand {
         final int x = Integer.parseInt(tmsComponents[3]);
         final int y = Integer.parseInt(removeFileExtension(tmsComponents[4]));
         final String configuration = pyramidIdToConfiguration(pyramidId);
+//        System.out.println("tms-Configuration: " + configuration);
         final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
-        final PlanePyramidImageRequest imageRequest = tmsToImageRequest(x, y, z, pyramidId, pyramid.information());
+        final PlanePyramidImageRequest imageRequest = tmsToImageRequest(x, y, z, configuration, pyramid.information());
         httpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
     }
 
@@ -83,7 +86,7 @@ public class TMSTileHttpPyramidCommand implements HttpPyramidCommand {
         int x,
         int y,
         int z,
-        String pyramidId,
+        String pyramidConfiguration,
         PlanePyramidInformation info)
     {
         int maxZ = 0;
@@ -96,10 +99,12 @@ public class TMSTileHttpPyramidCommand implements HttpPyramidCommand {
         }
         final long tileDim = Math.round(TMS_TILE_DIM * compression);
         final long fromX = x * tileDim;
-        final long fromY = info.getZeroLevelDimY() - (y + 1) * tileDim;
+        final long fromY = TMS_INVERSE_Y_DIRECTION ?
+            info.getZeroLevelDimY() - (y + 1) * tileDim :
+            y * tileDim;
         final long toX = fromX + tileDim;
         final long toY = fromY + tileDim;
-        return new PlanePyramidImageRequest(pyramidId, compression, fromX, fromY, toX, toY);
+        return new PlanePyramidImageRequest(pyramidConfiguration, compression, fromX, fromY, toX, toY);
     }
 
     private static String removeFileExtension(String fileName) {

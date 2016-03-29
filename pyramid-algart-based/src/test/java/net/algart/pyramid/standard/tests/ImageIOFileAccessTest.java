@@ -28,7 +28,7 @@ import net.algart.pyramid.http.HttpPyramidService;
 import net.algart.pyramid.http.SimpleHttpPyramidServiceLauncher;
 import net.algart.pyramid.http.handlers.InformationHttpPyramidCommand;
 import net.algart.pyramid.http.handlers.ReadRectangleHttpPyramidCommand;
-import net.algart.pyramid.http.handlers.TMSTileHttpPyramidCommand;
+import net.algart.pyramid.http.handlers.TmsHttpPyramidCommand;
 import net.algart.pyramid.standard.StandardPlanePyramidFactory;
 import net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory;
 
@@ -37,7 +37,7 @@ import java.io.IOException;
 public class ImageIOFileAccessTest {
     public static void main(String[] args) throws Exception {
         System.setProperty(
-            "net.algart.pyramid.http.port", "82");
+            "net.algart.pyramid.http.port", "9001");
         System.setProperty(
             "net.algart.pyramid.http.planePyramidFactory",
             StandardPlanePyramidFactory.class.getName());
@@ -60,10 +60,15 @@ public class ImageIOFileAccessTest {
                         return pyramidId;
                     }
                 });
-                service.addHandler("/unsafe-tms", new TMSTileHttpPyramidCommand(service) {
+                service.addHandler("/unsafe-tms", new TmsHttpPyramidCommand(service) {
                     @Override
                     protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
-                        return pyramidId;
+                        return pyramidId
+                            .replace("~~2F", "/")
+                            .replace("~~3A", ":")
+                            .replace("~~7B", "{")
+                            .replace("~~7D", "}")
+                            .replace("~~22", "\"");
                     }
                 });
             }

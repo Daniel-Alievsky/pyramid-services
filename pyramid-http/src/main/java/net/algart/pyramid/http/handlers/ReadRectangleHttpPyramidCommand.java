@@ -56,6 +56,7 @@ public class ReadRectangleHttpPyramidCommand implements HttpPyramidCommand {
         final long fromY = getLongParameter(request, "fromY");
         final long toX = getLongParameter(request, "toX");
         final long toY = getLongParameter(request, "toY");
+//        System.out.println("Configuration: " + configuration);
         final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
         final PlanePyramidImageRequest imageRequest = new PlanePyramidImageRequest(
             configuration, compression, fromX, fromY, toX, toY);

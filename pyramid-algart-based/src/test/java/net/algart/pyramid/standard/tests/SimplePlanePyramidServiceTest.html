@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>StreamingPlanePyramid</title>
+</head>
+<body bgcolor="#e3efcc">
+<div id="information"></div>
+<script>
+    var search = document.location.search.substr(1);
+    var parameters = search.split(":");
+    var pyramidId = parameters[0];
+    var tmsPyramidId = pyramidId;
+    var port = parameters[1];
+    var compression = parameters.length >= 3 ? parseInt(parameters[2]) : 2;
+    var unsafe = parameters.length >= 4 ? parameters[3] == "unsafe" : false;
+    var urlStart = 'http://localhost:' + port + (unsafe ? '/unsafe-' : '/pp-');
+    if (unsafe) {
+        pyramidId = encodeURI('{"pyramidPath": "') + pyramidId + encodeURI('"}');
+        tmsPyramidId = '~~7B~~22pyramidPath~~22~~3A~~22'
+                + tmsPyramidId.replace(/%3A/g, '~~3A').replace(/\//g, '~~2F') + '~~22~~7D';
+    }
+    document.writeln("Opening '" + pyramidId + "',<br/>tms '" + tmsPyramidId + "'<br/>");
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', urlStart + 'information?pyramidId=' + pyramidId, true);
+    xhr.send();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState != 4) {
+            return;
+        }
+        var result = "";
+        if (xhr.status != 200) {
+            result = "Error: cannot read pyramid information!</br>";
+        } else {
+            var info = JSON.parse(xhr.responseText);
+            result = "Detected pyramid information:<br/>";
+            result += "channelCount = " + info.channelCount + "<br/>";
+            result += "zeroLevelDimX = " + info.zeroLevelDimX + "<br/>";
+            result += "zeroLevelDimY = " + info.zeroLevelDimY + "<br/>";
+            result += "elementType = " + info.elementType + "<br/>";
+        }
+        document.getElementById("information").innerHTML = result;
+    }
+//    document.writeln("<plaintext>");
+//    document.writeln(urlStart);
+
+    var args = 'pyramidId=' + pyramidId + encodeURI('&compression=5&fromX=0&fromY=0&toX=1000&toY=1000');
+    document.writeln('<br/><img src="' + urlStart + 'read-rectangle?' + args + '"><br/>');
+
+    var tileDimX = 128 * compression;
+    var tileDimY = 128 * compression;
+    var sizeX = 1024 * compression;
+    var sizeY = 512 * compression;
+    for (var y = 0; y < sizeY; y += tileDimX) {
+        document.writeln("Line y=" + y + "<br/>");
+        for (var x = 0; x < sizeX; x += tileDimX) {
+            args = 'pyramidId=' + pyramidId
+                    + encodeURI('&compression=' + compression
+                            + '&fromX=' + x
+                            + '&fromY=' + y
+                            + '&toX=' + (x + tileDimX)
+                            + '&toY=' + (y + tileDimY));
+            document.writeln(
+                    '<img border="1" '
+                    + 'src="' + urlStart + 'read-rectangle?' + args + '">&nbsp;');
+        }
+        document.writeln("<br/>");
+    }
+
+    document.writeln("<br/>TMS:<br/>");
+    var tmsXCount = 5;
+    var tmsYCount = 5;
+    var tmsZ = 2;
+    for (var y = 0; y < tmsYCount; y++) {
+        document.writeln("Line y=" + y + "<br/>");
+        for (var x = 0; x < tmsXCount; x++) {
+            args = tmsPyramidId + "/" + tmsZ + "/" + x + "/" + y;
+            document.writeln(
+                    '<img border="1" '
+                    + 'src="' + urlStart + 'tms/' + args + '">&nbsp;');
+        }
+        document.writeln("<br/>");
+    }
+
+    document.writeln('<iframe width="100%" height="100" '
+            + 'src="' + urlStart + 'information?pyramidId=' + pyramidId + '"><br/>');
+</script>
+
+</body>
+</html>
