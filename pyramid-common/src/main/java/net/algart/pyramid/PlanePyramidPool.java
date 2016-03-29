@@ -56,19 +56,19 @@ public final class PlanePyramidPool {
         return factory;
     }
 
-    public PlanePyramid getHttpPlanePyramid(String configJson) throws Exception {
-        Objects.requireNonNull(configJson, "Null configJson");
+    public PlanePyramid getHttpPlanePyramid(String pyramidConfiguration) throws Exception {
+        Objects.requireNonNull(pyramidConfiguration, "Null pyramidConfiguration argument");
         if (!POOL_ENABLED) {
-            return factory.newPyramid(configJson);
+            return factory.newPyramid(pyramidConfiguration);
         }
         synchronized (pool) {
-            PlanePyramid pyramid = pool.get(configJson);
+            PlanePyramid pyramid = pool.get(pyramidConfiguration);
             if (pyramid != null) {
                 return pyramid;
             }
-            pyramid = factory.newPyramid(configJson);
+            pyramid = factory.newPyramid(pyramidConfiguration);
             LOG.info("New pyramid has been created: " + pyramid);
-            pool.put(configJson, pyramid);
+            pool.put(pyramidConfiguration, pyramid);
             return pyramid;
         }
     }

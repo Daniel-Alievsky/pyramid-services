@@ -64,8 +64,8 @@ public class TMSTileHttpPyramidCommand implements HttpPyramidCommand {
         final int z = Integer.parseInt(tmsComponents[2]);
         final int x = Integer.parseInt(tmsComponents[3]);
         final int y = Integer.parseInt(removeFileExtension(tmsComponents[4]));
-        final String configJson = pyramidIdToConfig(pyramidId);
-        final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configJson);
+        final String configuration = pyramidIdToConfiguration(pyramidId);
+        final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
         final PlanePyramidImageRequest imageRequest = tmsToImageRequest(x, y, z, pyramidId, pyramid.information());
         httpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
     }
@@ -75,8 +75,8 @@ public class TMSTileHttpPyramidCommand implements HttpPyramidCommand {
         return true;
     }
 
-    protected String pyramidIdToConfig(String pyramidId) throws IOException {
-        return httpPyramidService.pyramidIdToConfig(pyramidId);
+    protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
+        return httpPyramidService.pyramidIdToConfiguration(pyramidId);
     }
 
     private static PlanePyramidImageRequest tmsToImageRequest(

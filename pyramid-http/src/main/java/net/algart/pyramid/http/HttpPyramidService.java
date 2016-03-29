@@ -109,7 +109,7 @@ public class HttpPyramidService {
         return threadPool.createReadImageTask(request, response, pyramid, imageRequest);
     }
 
-    public String pyramidIdToConfig(String pyramidId) throws IOException {
+    public String pyramidIdToConfiguration(String pyramidId) throws IOException {
         final Path path = Paths.get(CONFIG_ROOT_DIR, pyramidId, CONFIG_FILE_NAME);
         if (!Files.isRegularFile(path)) {
             throw new FileNotFoundException("File " + path.toAbsolutePath() + " does not exists");
@@ -140,13 +140,13 @@ public class HttpPyramidService {
 
         @Override
         public void service(Request request, Response response) throws IOException {
-    //            System.out.println(request.getRequestURI());
-    //            System.out.println("path info: " + request.getPathInfo());
-    //            System.out.println("context: " + request.getContextPath());
-    //            System.out.println("query:" + request.getQueryString());
-    //            for (String name : request.getParameterNames()) {
-    //                System.out.printf("%s: %s%n", name, request.getParameter(name));
-    //            }
+//            System.out.println(request.getRequestURI());
+//            System.out.println("path info: " + request.getPathInfo());
+//            System.out.println("context: " + request.getContextPath());
+//            System.out.println("query:" + request.getQueryString());
+//            for (String name : request.getParameterNames()) {
+//                System.out.printf("%s: %s%n", name, request.getParameter(name));
+//            }
             final String path = request.getRequestURI();
             if (!command.isSubFoldersAllowed() && !prefix.equals(path) && !(prefix + "/").equals(path)) {
                 response.setStatus(404, "Invalid request path");

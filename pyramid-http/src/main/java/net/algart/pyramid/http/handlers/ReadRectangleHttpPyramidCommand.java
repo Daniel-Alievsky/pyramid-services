@@ -50,19 +50,19 @@ public class ReadRectangleHttpPyramidCommand implements HttpPyramidCommand {
         Response response)
         throws Exception
     {
-        final String configJson = pyramidIdToConfig(getParameter(request, "pyramidId"));
+        final String configuration = pyramidIdToConfiguration(getParameter(request, "pyramidId"));
         final double compression = getDoubleParameter(request, "compression");
         final long fromX = getLongParameter(request, "fromX");
         final long fromY = getLongParameter(request, "fromY");
         final long toX = getLongParameter(request, "toX");
         final long toY = getLongParameter(request, "toY");
-        final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configJson);
+        final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
         final PlanePyramidImageRequest imageRequest = new PlanePyramidImageRequest(
-            pyramid.uniqueId(), compression, fromX, fromY, toX, toY);
+            configuration, compression, fromX, fromY, toX, toY);
         httpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
     }
 
-    protected String pyramidIdToConfig(String pyramidId) throws IOException {
-        return httpPyramidService.pyramidIdToConfig(pyramidId);
+    protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
+        return httpPyramidService.pyramidIdToConfiguration(pyramidId);
     }
 }

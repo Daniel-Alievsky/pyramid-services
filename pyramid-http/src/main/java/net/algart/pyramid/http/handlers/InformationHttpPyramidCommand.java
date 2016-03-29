@@ -47,8 +47,8 @@ public class InformationHttpPyramidCommand implements HttpPyramidCommand {
         Response response)
         throws Exception
     {
-        final String configJson = pyramidIdToConfig(HttpPyramidCommand.getParameter(request, "pyramidId"));
-        final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configJson);
+        final String configuration = pyramidIdToConfiguration(HttpPyramidCommand.getParameter(request, "pyramidId"));
+        final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
         response.setContentType("application/json; charset=utf-8");
         response.addHeader("Access-Control-Allow-Origin", "*");
         // - Allows browser JavaScript to access this via XMLHttpRequest.
@@ -60,7 +60,7 @@ public class InformationHttpPyramidCommand implements HttpPyramidCommand {
         response.finish();
     }
 
-    protected String pyramidIdToConfig(String pyramidId) throws IOException {
-        return httpPyramidService.pyramidIdToConfig(pyramidId);
+    protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
+        return httpPyramidService.pyramidIdToConfiguration(pyramidId);
     }
 }

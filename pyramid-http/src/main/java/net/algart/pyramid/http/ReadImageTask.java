@@ -89,6 +89,7 @@ final class ReadImageTask {
                 && previousCachedData.getCreationTime() < ifModifiedSince + 1000;
         // the 2nd check is to be on the safe side: usually these data are never modified
         if (alreadyInClientCache) {
+            LOG.info("Not modified (304): " + this);
             response.setStatus(304, "Not modified");
         } else {
             response.setContentType(
@@ -136,6 +137,7 @@ final class ReadImageTask {
                 cache.put(planePyramidImageRequest, imageData);
             }
         } else {
+            LOG.info("Image loaded from cache: " + this);
             assert cacheable;
             // - checked in the constructor
         }

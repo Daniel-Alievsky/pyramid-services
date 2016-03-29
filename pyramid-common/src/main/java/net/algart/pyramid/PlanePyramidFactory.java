@@ -45,20 +45,26 @@ public interface PlanePyramidFactory {
 
 
     /**
-     * <p>Creates new remote pyramid. Typical example of <tt>configJson</tt>:</p>
+     * <p>Creates new remote pyramid.</p>
+     *
+     * <p>The <tt>pyramidConfiguration</tt> argument is usually JSON-file. Typical example:</p>
      *
      * <pre>
      *     {
-     *         "path": "\pathogensRoot\Users\root\XXXXX<i>(project_id)</i></project_id>\image01\p-XXXX<i>(image-id)</i>",
+     *         "path": "/pathogensRoot/Users/root/XXXXX<i>(project_id)</i>/image01/p-XXXX<i>(image-id)</i>",
      *         "renderer": {"format": "jpeg"}
      *     }
      * </pre>
      *
-     * <p>The argument <tt>configJson</tt> must be identical for pyramids with identical
-     * {@link PlanePyramid#uniqueId()}</p>.
+     * <p>Note: the <tt>pyramidConfiguration</tt> string must be an unique pyramid digest,
+     * that must be different for different pyramids.
+     * We recommend to use the same value for identical actual pyramids with identical data and behaviour
+     * (results of other methods), for example, when the same pyramid on the disk is accessed
+     * via different instances of this class.
      *
-     * @param configJson all information about the data source and parameters.
+     * @param pyramidConfiguration all information about the data source and parameters.
      * @return new remote pyramid.
+     * @see PlanePyramid#pyramidConfiguration()
      */
-    PlanePyramid newPyramid(String configJson) throws Exception;
+    PlanePyramid newPyramid(String pyramidConfiguration) throws Exception;
 }

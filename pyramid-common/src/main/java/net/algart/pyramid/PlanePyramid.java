@@ -29,14 +29,24 @@ import java.io.IOException;
 public interface PlanePyramid {
 
     /**
-     * Returns some digest that must be different for different pyramids.
+     * We recommend to use this key in JSON string {@link #pyramidConfiguration()} to specify the visual behaviour
+     * of this pyramid (the method {@link #readImageData(PlanePyramidImageRequest)}.
+     * See an example of JSON in {@link PlanePyramidFactory#newPyramid(String)} method.
+     */
+    String RENDERER_KEY = "renderer";
+
+    /**
+     * <p>Return the pyramid configuration passed to {@link PlanePyramidFactory#newPyramid(String)} method
+     * as <tt><pyramidConfiguration/tt> argument while creating this pyramid.</p>
+     *
+     * <p>Note: this string must be an unique pyramid digest, that must be different for different pyramids.
      * We recommend to return the same value for identical actual pyramids with identical data and behaviour
      * (results of other methods), for example, when the same pyramid on the disk is accessed
      * via different instances of this class.
      *
-     * @return unique identifier of the given pyramid.
+     * @return all information about the data source and parameters.
      */
-    String uniqueId();
+    String pyramidConfiguration();
 
     PlanePyramidInformation information();
 

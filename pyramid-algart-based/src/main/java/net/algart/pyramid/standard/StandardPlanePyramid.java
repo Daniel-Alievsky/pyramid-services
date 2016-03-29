@@ -43,9 +43,11 @@ import java.io.IOException;
 import java.util.Objects;
 
 class StandardPlanePyramid implements PlanePyramid {
-    private static final long TIMEOUT = 30000; // ms
+    private static final long TIMEOUT = Math.max(16, Integer.getInteger(
+        "net.algart.pyramid.standard.pyramidTimeout", 60000));
+    // - in milliseconds
 
-    private final String uniqueId;
+    private final String pyramidConfiguration;
     private final ScalablePlanePyramidSource source;
     private final String formatName;
     private final Color backgroundColor;
@@ -61,11 +63,11 @@ class StandardPlanePyramid implements PlanePyramid {
         JsonObject rendererJson,
         boolean rawBytes,
         boolean cacheable,
-        String uniqueId)
+        String pyramidConfiguration)
     {
         Objects.requireNonNull(parentSource, "Null plane pyramid source");
         Objects.requireNonNull(rendererJson, "Null renderer JSON");
-        Objects.requireNonNull(uniqueId);
+        Objects.requireNonNull(pyramidConfiguration, "Null pyramid configuration");
         this.source = ScalablePlanePyramidSource.newInstance(parentSource);
         this.formatName = rendererJson.getString("format", "png");
         final boolean transparencySupported = transparencySupported(formatName);
@@ -82,13 +84,13 @@ class StandardPlanePyramid implements PlanePyramid {
         // - opacity is not used in DEFAULT renderer
         this.rawBytes = rawBytes;
         this.cacheable = cacheable;
-        this.uniqueId = uniqueId;
+        this.pyramidConfiguration = pyramidConfiguration;
         this.lastAccessTime = System.currentTimeMillis();
     }
 
     @Override
-    public String uniqueId() {
-        return uniqueId;
+    public String pyramidConfiguration() {
+        return pyramidConfiguration;
     }
 
     @Override

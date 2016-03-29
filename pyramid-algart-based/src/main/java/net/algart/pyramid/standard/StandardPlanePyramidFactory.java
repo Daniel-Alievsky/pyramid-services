@@ -56,13 +56,13 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
     }
 
     @Override
-    public PlanePyramid newPyramid(final String configJson) throws Exception {
-        Objects.requireNonNull(configJson);
+    public PlanePyramid newPyramid(final String pyramidConfiguration) throws Exception {
+        Objects.requireNonNull(pyramidConfiguration);
         final JsonObject config;
         try {
-            config = Json.createReader(new StringReader(configJson)).readObject();
+            config = Json.createReader(new StringReader(pyramidConfiguration)).readObject();
         } catch (JsonException e) {
-            throw new IOException("Invalid configuration json: <<<" + configJson + ">>>", e);
+            throw new IOException("Invalid configuration json: <<<" + pyramidConfiguration + ">>>", e);
         }
         final Path path = Paths.get(config.getString("pyramidPath"));
         final JsonObject pyramidJson;
@@ -76,7 +76,7 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
         if (!Files.exists(pyramidPath)) {
             throw new IOException("Pyramid file at " + pyramidPath + " does not exist");
         }
-        JsonObject rendererJson = config.getJsonObject("renderer");
+        JsonObject rendererJson = config.getJsonObject(PlanePyramid.RENDERER_KEY);
         if (rendererJson == null) {
             rendererJson = Json.createObjectBuilder().build();
         }
@@ -86,7 +86,7 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
             pyramidPath.toAbsolutePath().toString(),
             pyramidJson.toString(),
             rendererJson.toString());
-        return new StandardPlanePyramid(planePyramidSource, rendererJson, rawBytes, cacheable, configJson);
+        return new StandardPlanePyramid(planePyramidSource, rendererJson, rawBytes, cacheable, pyramidConfiguration);
     }
 
     @Override

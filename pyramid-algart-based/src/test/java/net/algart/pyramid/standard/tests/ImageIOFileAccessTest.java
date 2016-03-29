@@ -50,19 +50,19 @@ public class ImageIOFileAccessTest {
                 super.addHandlers(service);
                 service.addHandler("/unsafe-information", new InformationHttpPyramidCommand(service) {
                     @Override
-                    protected String pyramidIdToConfig(String pyramidId) throws IOException {
+                    protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
                         return pyramidId;
                     }
                 });
                 service.addHandler("/unsafe-read-rectangle", new ReadRectangleHttpPyramidCommand(service) {
                     @Override
-                    protected String pyramidIdToConfig(String pyramidId) throws IOException {
+                    protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
                         return pyramidId;
                     }
                 });
                 service.addHandler("/unsafe-tms", new TMSTileHttpPyramidCommand(service) {
                     @Override
-                    protected String pyramidIdToConfig(String pyramidId) throws IOException {
+                    protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
                         return pyramidId;
                     }
                 });

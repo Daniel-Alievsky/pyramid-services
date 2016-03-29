@@ -65,7 +65,7 @@ public class DummyPyramidTest {
             protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
                 return new HttpPyramidService(factory, port) {
                     @Override
-                    public String pyramidIdToConfig(String pyramidId) throws IOException {
+                    public String pyramidIdToConfiguration(String pyramidId) throws IOException {
                         return pyramidId;
                         // So, pyramidId shoild contain JSON with path to the pyramid;
                         // VERY UNSAFE for end-user server, but convenient for testing
@@ -81,9 +81,9 @@ public class DummyPyramidTest {
         }
 
         @Override
-        public PlanePyramid newPyramid(String configJson) throws Exception {
-            LOG.info("Creating pyramid on JSON " + configJson);
-            final JsonObject config = Json.createReader(new StringReader(configJson)).readObject();
+        public PlanePyramid newPyramid(String pyramidConfiguration) throws Exception {
+            LOG.info("Creating pyramid on JSON " + pyramidConfiguration);
+            final JsonObject config = Json.createReader(new StringReader(pyramidConfiguration)).readObject();
             final Color color = Color.decode("#" + config.getString("color"));
             LOG.info("Creating pyramid with color " + color);
             return new MyPyramid(color);
@@ -98,7 +98,7 @@ public class DummyPyramidTest {
         }
 
         @Override
-        public String uniqueId() {
+        public String pyramidConfiguration() {
             return String.valueOf(color.hashCode());
         }
 
