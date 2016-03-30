@@ -43,7 +43,7 @@ import java.util.logging.Logger;
 
 public class HttpPyramidService {
     private static final String CONFIG_ROOT_DIR = System.getProperty(
-        "net.algart.pyramid.http.configRoot", "/pp-directory");
+        "net.algart.pyramid.http.configRoot", "/pp-links");
     private static final String CONFIG_FILE_NAME = System.getProperty(
         "net.algart.pyramid.http.configFile", "config.json");
     private static final String FINISH_PREFIX = "/pp-finish";

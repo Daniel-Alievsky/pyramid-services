@@ -30,21 +30,22 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class HttpPyramidServiceConfiguration {
-    public static class ViewerService {
+    public static class ViewerService implements ConvertibleToJson {
         private final String formatName;
         private final String planePyramidFactory;
-        private final String planePyramidSubFactory;
+        private final String planePyramidFactoryConfiguration;
         private final int port;
 
         public ViewerService(JsonObject json) {
             Objects.requireNonNull(json);
             this.formatName = getRequiredString(json, "formatName");
             this.planePyramidFactory = getRequiredString(json, "planePyramidFactory");
-            this.planePyramidSubFactory = json.getString("planePyramidFactoryConfiguration", null);
+            this.planePyramidFactoryConfiguration = json.getString("planePyramidFactoryConfiguration", null);
             this.port = getRequiredInt(json, "port");
         }
 
@@ -56,16 +57,25 @@ public class HttpPyramidServiceConfiguration {
             return planePyramidFactory;
         }
 
-        public String getPlanePyramidSubFactory() {
-            return planePyramidSubFactory;
+        public String getPlanePyramidFactoryConfiguration() {
+            return planePyramidFactoryConfiguration;
         }
 
         public int getPort() {
             return port;
         }
+
+        public JsonObject toJson() {
+            final JsonObjectBuilder builder = Json.createObjectBuilder();
+            builder.add("formatName", formatName);
+            builder.add("planePyramidFactory", planePyramidFactory);
+            builder.add("planePyramidFactoryConfiguration", planePyramidFactoryConfiguration);
+            builder.add("port", port);
+            return builder.build();
+        }
     }
 
-    public static class ViewerProcess {
+    public static class ViewerProcess implements ConvertibleToJson {
         private final List<String> classPath;
         private final List<String> vmOptions;
         private final List<ViewerService> viewerServices;
@@ -87,6 +97,26 @@ public class HttpPyramidServiceConfiguration {
             for (int k = 0, n = viewerServices.size(); k < n; k++) {
                 this.viewerServices.add(new ViewerService(viewerServices.getJsonObject(k)));
             }
+        }
+
+        public List<String> getClassPath() {
+            return classPath;
+        }
+
+        public List<String> getVmOptions() {
+            return vmOptions;
+        }
+
+        public List<ViewerService> getViewerServices() {
+            return Collections.unmodifiableList(viewerServices);
+        }
+
+        public JsonObject toJson() {
+            final JsonObjectBuilder builder = Json.createObjectBuilder();
+            builder.add("classPath", toJsonArray(classPath));
+            builder.add("vmOptions", toJsonArray(vmOptions));
+            builder.add("viewerServices", toJsonArray(viewerServices));
+            return builder.build();
         }
     }
 
@@ -113,7 +143,26 @@ public class HttpPyramidServiceConfiguration {
         for (int k = 0, n = commonVmOptions.size(); k < n; k++) {
             this.commonVmOptions.add(commonVmOptions.getString(k));
         }
+    }
 
+    public List<ViewerProcess> getViewerProcesses() {
+        return Collections.unmodifiableList(viewerProcesses);
+    }
+
+    public List<String> getCommonClassPath() {
+        return Collections.unmodifiableList(commonClassPath);
+    }
+
+    public List<String> getCommonVmOptions() {
+        return Collections.unmodifiableList(commonVmOptions);
+    }
+
+    public JsonObject toJson() {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        builder.add("viewerProcesses", toJsonArray(viewerProcesses));
+        builder.add("commonClassPath", toJsonArray(commonClassPath));
+        builder.add("commonVmOptions", toJsonArray(commonVmOptions));
+        return builder.build();
     }
 
     public static HttpPyramidServiceConfiguration getConfiguration(JsonObject configuration) {
@@ -142,5 +191,23 @@ public class HttpPyramidServiceConfiguration {
             throw new JsonException("Invalid JSON: \"" + name + "\" value required");
         }
         return result.intValue();
+    }
+
+    private static JsonArray toJsonArray(List<?> list) {
+        final JsonArrayBuilder builder = Json.createArrayBuilder();
+        for(Object o : list) {
+            if (o instanceof String) {
+                builder.add((String) o);
+            } else if (o instanceof ConvertibleToJson) {
+                builder.add(((ConvertibleToJson) o).toJson());
+            } else {
+                throw new AssertionError();
+            }
+        }
+        return builder.build();
+    }
+
+    interface ConvertibleToJson {
+        JsonObject toJson();
     }
 }

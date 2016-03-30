@@ -77,7 +77,7 @@ public class DummyPyramidTest {
 
     public static class MyPyramidFactory implements PlanePyramidFactory {
         @Override
-        public void initializeConfiguration(Object configuration) {
+        public void initializeConfiguration(Object factoryConfiguration) {
         }
 
         @Override
