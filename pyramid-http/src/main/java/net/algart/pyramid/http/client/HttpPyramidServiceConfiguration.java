@@ -29,28 +29,45 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class HttpPyramidServiceConfiguration {
+    private static final String GLOBAL_CONFIGURATION_FILE_NAME = ".GlobalConfiguration.json";
+
     public static class ViewerService implements ConvertibleToJson {
         private final String formatName;
+        private final String groupId;
         private final String planePyramidFactory;
         private final String planePyramidFactoryConfiguration;
+        private final Set<String> classPath;
+        private final Set<String> vmOptions;
         private final int port;
 
-        public ViewerService(JsonObject json) {
+        private ViewerService(JsonObject json) {
             Objects.requireNonNull(json);
             this.formatName = getRequiredString(json, "formatName");
+            this.groupId = json.getString("groupId", null);
             this.planePyramidFactory = getRequiredString(json, "planePyramidFactory");
             this.planePyramidFactoryConfiguration = json.getString("planePyramidFactoryConfiguration", null);
+            final JsonArray classPath = json.getJsonArray("classPath");
+            this.classPath = new TreeSet<>();
+            for (int k = 0, n = classPath.size(); k < n; k++) {
+                this.classPath.add(classPath.getString(k));
+            }
+            final JsonArray vmOptions = json.getJsonArray("vmOptions");
+            this.vmOptions = new TreeSet<>();
+            for (int k = 0, n = vmOptions.size(); k < n; k++) {
+                this.vmOptions.add(vmOptions.getString(k));
+            }
             this.port = getRequiredInt(json, "port");
         }
 
         public String getFormatName() {
             return formatName;
+        }
+
+        public String getGroupId() {
+            return groupId;
         }
 
         public String getPlanePyramidFactory() {
@@ -61,6 +78,14 @@ public class HttpPyramidServiceConfiguration {
             return planePyramidFactoryConfiguration;
         }
 
+        public Collection<String> getClassPath() {
+            return Collections.unmodifiableSet(classPath);
+        }
+
+        public Collection<String> getVmOptions() {
+            return Collections.unmodifiableSet(vmOptions);
+        }
+
         public int getPort() {
             return port;
         }
@@ -68,56 +93,45 @@ public class HttpPyramidServiceConfiguration {
         public JsonObject toJson() {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
             builder.add("formatName", formatName);
+            builder.add("groupId", groupId);
             builder.add("planePyramidFactory", planePyramidFactory);
             builder.add("planePyramidFactoryConfiguration", planePyramidFactoryConfiguration);
+            builder.add("classPath", toJsonArray(classPath));
+            builder.add("vmOptions", toJsonArray(vmOptions));
             builder.add("port", port);
             return builder.build();
         }
     }
 
     public static class ViewerProcess implements ConvertibleToJson {
-        private final List<String> classPath;
-        private final List<String> vmOptions;
         private final List<ViewerService> viewerServices;
 
-        public ViewerProcess(JsonObject json) {
-            Objects.requireNonNull(json);
-            final JsonArray classPath = json.getJsonArray("classPath");
-            this.classPath = new ArrayList<>();
-            for (int k = 0, n = classPath.size(); k < n; k++) {
-                this.classPath.add(classPath.getString(k));
-            }
-            final JsonArray vmOptions = json.getJsonArray("vmOptions");
-            this.vmOptions = new ArrayList<>();
-            for (int k = 0, n = vmOptions.size(); k < n; k++) {
-                this.vmOptions.add(vmOptions.getString(k));
-            }
-            final JsonArray viewerServices = json.getJsonArray("viewerServices");
-            this.viewerServices = new ArrayList<>();
-            for (int k = 0, n = viewerServices.size(); k < n; k++) {
-                this.viewerServices.add(new ViewerService(viewerServices.getJsonObject(k)));
-            }
-        }
-
-        public List<String> getClassPath() {
-            return classPath;
-        }
-
-        public List<String> getVmOptions() {
-            return vmOptions;
-        }
-
-        public List<ViewerService> getViewerServices() {
-            return Collections.unmodifiableList(viewerServices);
+        private ViewerProcess(List<ViewerService> viewerServices) {
+            this.viewerServices = viewerServices;
         }
 
         public JsonObject toJson() {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
-            builder.add("classPath", toJsonArray(classPath));
-            builder.add("vmOptions", toJsonArray(vmOptions));
             builder.add("viewerServices", toJsonArray(viewerServices));
             return builder.build();
         }
+
+        public Collection<String> getClassPath() {
+            final Set<String> result = new TreeSet<>();
+            for (ViewerService viewerService : viewerServices) {
+                result.addAll(viewerService.classPath);
+            }
+            return result;
+        }
+
+        public Collection<String> getVmOptions() {
+            final Set<String> result = new TreeSet<>();
+            for (ViewerService viewerService : viewerServices) {
+                result.addAll(viewerService.vmOptions);
+            }
+            return result;
+        }
+
     }
 
     private final List<ViewerProcess> viewerProcesses;
@@ -126,19 +140,16 @@ public class HttpPyramidServiceConfiguration {
     private final List<String> commonVmOptions;
     // - for example, here we can add -ea -esa to all processes
 
-    private HttpPyramidServiceConfiguration(JsonObject configuration) {
-        Objects.requireNonNull(configuration);
-        final JsonArray viewerProcesses = configuration.getJsonArray("viewerProcesses");
-        this.viewerProcesses = new ArrayList<>();
-        for (int k = 0, n = viewerProcesses.size(); k < n; k++) {
-            this.viewerProcesses.add(new ViewerProcess(viewerProcesses.getJsonObject(k)));
-        }
-        final JsonArray commonClassPath = configuration.getJsonArray("commonClassPath");
+    private HttpPyramidServiceConfiguration(JsonObject globalConfiguration, List<ViewerProcess> viewerProcesses) {
+        Objects.requireNonNull(globalConfiguration);
+        Objects.requireNonNull(viewerProcesses);
+        this.viewerProcesses = viewerProcesses;
+        final JsonArray commonClassPath = globalConfiguration.getJsonArray("commonClassPath");
         this.commonClassPath = new ArrayList<>();
         for (int k = 0, n = commonClassPath.size(); k < n; k++) {
             this.commonClassPath.add(commonClassPath.getString(k));
         }
-        final JsonArray commonVmOptions = configuration.getJsonArray("commonVmOptions");
+        final JsonArray commonVmOptions = globalConfiguration.getJsonArray("commonVmOptions");
         this.commonVmOptions = new ArrayList<>();
         for (int k = 0, n = commonVmOptions.size(); k < n; k++) {
             this.commonVmOptions.add(commonVmOptions.getString(k));
@@ -165,16 +176,9 @@ public class HttpPyramidServiceConfiguration {
         return builder.build();
     }
 
-    public static HttpPyramidServiceConfiguration getConfiguration(JsonObject configuration) {
-        return new HttpPyramidServiceConfiguration(configuration);
-    }
-
-    public static HttpPyramidServiceConfiguration getConfiguration(Path configurationFile) throws IOException {
-        try (final JsonReader reader = Json.createReader(Files.newBufferedReader(
-            configurationFile.resolve(".pp.json"), StandardCharsets.UTF_8)))
-        {
-            return getConfiguration(reader.readObject());
-        }
+    public static HttpPyramidServiceConfiguration getConfiguration(Path configurationFolder) throws IOException {
+        //TODO!! read all .*.json files from configurationFolder
+        throw new UnsupportedOperationException();
     }
 
     private static String getRequiredString(JsonObject json, String name) {
@@ -193,9 +197,9 @@ public class HttpPyramidServiceConfiguration {
         return result.intValue();
     }
 
-    private static JsonArray toJsonArray(List<?> list) {
+    private static JsonArray toJsonArray(Collection<?> collection) {
         final JsonArrayBuilder builder = Json.createArrayBuilder();
-        for(Object o : list) {
+        for(Object o : collection) {
             if (o instanceof String) {
                 builder.add((String) o);
             } else if (o instanceof ConvertibleToJson) {
