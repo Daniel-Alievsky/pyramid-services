@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="pyramid-algart-based-with-test:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/pyramid_algart_based_with_test_jar</output-path>
+    <root id="archive" name="pyramid-algart-based.jar">
+      <element id="module-output" name="pyramid-algart-based" />
+      <element id="module-test-output" name="pyramid-algart-based" />
+    </root>
+  </artifact>
+</component>

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="ImageIO test " type="JavascriptDebugType" factoryName="JavaScript Debug" uri="http://localhost:63342/pyramid-services/pyramid-algart-based/net/algart/pyramid/standard/tests/PlanePyramidServiceTest.html?55e9afimageio:9001:32">
+  <configuration default="false" name="ImageIO test " type="JavascriptDebugType" factoryName="JavaScript Debug" uri="http://localhost:63342/pyramid-services/pyramid-algart-based/test-launcher/configuration-example/html/PlanePyramidServiceTest.html?55e9afimageio:9001:32">
     <method />
   </configuration>
 </component>

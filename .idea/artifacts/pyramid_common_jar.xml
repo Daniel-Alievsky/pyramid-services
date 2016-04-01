@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="pyramid-common:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/pyramid_common_jar</output-path>
+    <root id="archive" name="pyramid-common.jar">
+      <element id="module-output" name="pyramid-common" />
+    </root>
+  </artifact>
+</component>

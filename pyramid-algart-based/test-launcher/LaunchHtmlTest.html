@@ -29,46 +29,15 @@
 </head>
 <body>
 <!-- An example of calling the test -->
-<p>Please create folder /pp-links/55e9afimageio/ and place there config.json with description of the pyramid,
-for example:</p>
+<p>Please copy subfolders</p>
 <pre>
-    {
-    "pyramidPath": "C:/Image/BIG/ImageIO/withPPJson",
-    "renderer": {
-        "format": "jpeg"
-    }
-}
+    pp-links
+    images
 </pre>
-<p>withPPJson folder must contain 2 files:</p>
-<ul>
-    <li>data.tif - some image</li>
-    <li>.pp.json - configuration file with the following minimal content:
-        <pre>
-    {
-        "fileName": "data.tif",
-        "formatName": "imageIO"
-    }
-        </pre>
-    </li>
-</ul>
+<p>into the root of your disk.</p>
+<p>Then start LaunchJavaTest.cmd.</p>
 
-<p>Then start LaunchJavaTest.cmd. Note that the following JARs must present in the subfolder .m2:</p>
-<pre>
-algart-1.2.7.jar
-grizzly-framework-2.3.22.jar
-grizzly-http-2.3.22.jar
-grizzly-http-server-2.3.22.jar
-grizzly-http-servlet-2.3.22.jar
-jai-imageio-core-1.3.1.jar
-javax.json-1.0.4.jar
-javax.json-api-1.0.jar
-pyramid-algart-based-1.0.1.jar
-pyramid-common-1.0.1.jar
-pyramid-http-1.0.1.jar
-simagis-plane-pyramid-sdk-1.2.13.jar
-</pre>
-<p>and pyramid-algart-based/target subfolder must contain normally compiled class-files.</p>
-
-<p><a href="java/net/algart/pyramid/standard/tests/PlanePyramidServiceTest.html?55e9afimageio:9001:32">Open test</a></p>
+<p><a href="html/PlanePyramidServiceTest.html?55e9afimageio:9001:32">
+    Open test for 55e9afimageio pyramid</a></p>
 </body>
 </html>
