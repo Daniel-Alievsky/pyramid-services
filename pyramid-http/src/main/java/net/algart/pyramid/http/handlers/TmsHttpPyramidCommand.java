@@ -36,12 +36,14 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class TmsHttpPyramidCommand implements HttpPyramidCommand {
-    private static final int TMS_TILE_DIM = Math.max(16, Integer.getInteger(
-        "net.algart.pyramid.http.tmsTileSize", 256));
-    private static final boolean TMS_INVERSE_Y_DIRECTION = Boolean.getBoolean(
-        "net.algart.pyramid.http.tmsInverseYDirection");
+    private static final int DEFAULT_TMS_TILE_DIM = Math.max(16, Integer.getInteger(
+        "net.algart.pyramid.http.tmsTileDim", 256));
+    private static final boolean DEFAULT_INVERSE_Y_DIRECTION = getBooleanProperty(
+        "net.algart.pyramid.http.tmsInverseYDirection", false);
 
-    private HttpPyramidService httpPyramidService;
+    private final HttpPyramidService httpPyramidService;
+    private volatile int tmsTileDim = DEFAULT_TMS_TILE_DIM;
+    private volatile boolean inverseYDirection = DEFAULT_INVERSE_Y_DIRECTION;
 
     public TmsHttpPyramidCommand(HttpPyramidService httpPyramidService) {
         this.httpPyramidService = Objects.requireNonNull(httpPyramidService);
@@ -78,11 +80,35 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
         return true;
     }
 
+    public int getTmsTileDim() {
+        return tmsTileDim;
+    }
+
+    public TmsHttpPyramidCommand setTmsTileDim(int tmsTileDim) {
+        if (tmsTileDim < 16) {
+            throw new IllegalArgumentException("tmsTileDim=" + tmsTileDim + ", but it must be >=16");
+        }
+        if ((tmsTileDim & (tmsTileDim - 1)) != 0) {
+            throw new IllegalArgumentException("tmsTileDim=" + tmsTileDim + ", but it must be a power of 2");
+        }
+        this.tmsTileDim = tmsTileDim;
+        return this;
+    }
+
+    public boolean isInverseYDirection() {
+        return inverseYDirection;
+    }
+
+    public TmsHttpPyramidCommand setInverseYDirection(boolean inverseYDirection) {
+        this.inverseYDirection = inverseYDirection;
+        return this;
+    }
+
     protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
         return httpPyramidService.pyramidIdToConfiguration(pyramidId);
     }
 
-    private static PlanePyramidImageRequest tmsToImageRequest(
+    private PlanePyramidImageRequest tmsToImageRequest(
         int x,
         int y,
         int z,
@@ -90,18 +116,16 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
         PlanePyramidInformation info)
     {
         int maxZ = 0;
-        for (long dim = Math.max(info.getZeroLevelDimX(), info.getZeroLevelDimY()); dim > TMS_TILE_DIM; dim /= 2) {
+        for (long dim = Math.max(info.getZeroLevelDimX(), info.getZeroLevelDimY()); dim > tmsTileDim; dim /= 2) {
             maxZ++;
         }
         double compression = 1;
         for (int i = maxZ; i > z; i--) {
             compression *= 2;
         }
-        final long tileDim = Math.round(TMS_TILE_DIM * compression);
+        final long tileDim = Math.round(tmsTileDim * compression);
         final long fromX = x * tileDim;
-        final long fromY = TMS_INVERSE_Y_DIRECTION ?
-            info.getZeroLevelDimY() - (y + 1) * tileDim :
-            y * tileDim;
+        final long fromY = inverseYDirection ? info.getZeroLevelDimY() - (y + 1) * tileDim : y * tileDim;
         final long toX = fromX + tileDim;
         final long toY = fromY + tileDim;
         return new PlanePyramidImageRequest(pyramidConfiguration, compression, fromX, fromY, toX, toY);
@@ -115,4 +139,12 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
         return fileName.substring(0, p);
     }
 
+    private static boolean getBooleanProperty(String propertyName, boolean defaultValue) {
+        if (defaultValue) {
+            return !"false".equalsIgnoreCase(System.getProperty(propertyName));
+        } else {
+            return Boolean.getBoolean(propertyName);
+        }
+    }
 }
+

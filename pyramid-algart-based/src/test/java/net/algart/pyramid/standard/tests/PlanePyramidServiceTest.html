@@ -39,7 +39,8 @@
     function getMyUrl(bounds) {
         var res = this.map.getResolution();
         var x = Math.round ((bounds.left - this.maxExtent.left) / (res * this.tileSize.w));
-        var y = Math.round ((this.maxExtent.top - bounds.top) / (res * this.tileSize.h));
+        var y = Math.round ((this.maxExtent.top - bounds.top) / (res * this.tileSize.h)); // downward y
+//        var y = Math.round ((bounds.top - this.maxExtent.top) / (res * this.tileSize.h));
         var z = this.map.getZoom();
 
         return urlStart + "tms/" + tmsPyramidId + "/" + z + "/" + x + "/" + y + "." + this.type;

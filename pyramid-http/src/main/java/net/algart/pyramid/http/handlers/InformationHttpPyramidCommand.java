@@ -35,7 +35,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class InformationHttpPyramidCommand implements HttpPyramidCommand {
-    private HttpPyramidService httpPyramidService;
+    private final HttpPyramidService httpPyramidService;
 
     public InformationHttpPyramidCommand(HttpPyramidService httpPyramidService) {
         this.httpPyramidService = Objects.requireNonNull(httpPyramidService);
