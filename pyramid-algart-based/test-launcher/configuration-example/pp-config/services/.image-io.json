@@ -1,0 +1,14 @@
+{
+  "formatName" : "imageIO",
+  "groupId" : "image-io",
+  "planePyramidFactory" : "net.algart.pyramid.standard.StandardPlanePyramidFactory",
+  "planePyramidFactoryConfiguration" : "net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory",
+  "port" : 9001,
+  "classPath" : [
+    "../../api/*",
+    ";../../.m2/*"
+  ],
+  "vmOptions" : [
+    "-Xmx8g"
+  ]
+}

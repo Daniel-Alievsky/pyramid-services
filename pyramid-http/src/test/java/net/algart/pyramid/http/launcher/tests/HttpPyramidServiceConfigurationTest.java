@@ -22,16 +22,18 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.client;
+package net.algart.pyramid.http.launcher.tests;
 
-import java.util.Objects;
+import net.algart.pyramid.http.launcher.HttpPyramidServiceConfiguration;
 
-public class HttpPyramidServiceLauncher {
-    private final HttpPyramidServiceConfiguration configuration;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-    public HttpPyramidServiceLauncher(HttpPyramidServiceConfiguration configuration) {
-        this.configuration = Objects.requireNonNull(configuration);
+public class HttpPyramidServiceConfigurationTest {
+    public static void main(String args[]) throws IOException {
+        Path file = Paths.get(args[0]);
+        final HttpPyramidServiceConfiguration configuration = HttpPyramidServiceConfiguration.getConfiguration(file);
+        System.out.println(configuration);
     }
-
-    //TODO!!
 }

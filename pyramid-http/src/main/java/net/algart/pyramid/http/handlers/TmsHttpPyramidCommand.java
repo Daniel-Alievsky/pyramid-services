@@ -67,7 +67,7 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
         final String pyramidId = tmsComponents[1];
         final int z = Integer.parseInt(tmsComponents[2]);
         final int x = Integer.parseInt(tmsComponents[3]);
-        final int y = Integer.parseInt(removeFileExtension(tmsComponents[4]));
+        final int y = Integer.parseInt(removeExtension(tmsComponents[4]));
         final String configuration = pyramidIdToConfiguration(pyramidId);
 //        System.out.println("tms-Configuration: " + configuration);
         final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
@@ -131,7 +131,7 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
         return new PlanePyramidImageRequest(pyramidConfiguration, compression, fromX, fromY, toX, toY);
     }
 
-    private static String removeFileExtension(String fileName) {
+    private static String removeExtension(String fileName) {
         int p = fileName.lastIndexOf('.');
         if (p == -1) {
             return fileName;
