@@ -26,7 +26,7 @@
 
 <blockquote style="margin:30px 50px">
     <p>TMS map:</p>
-<div id="map" style="width:80%;height:1500px;border:3px solid red"></div>
+<div id="map" style="width:80%;height:800px;border:3px solid red"></div>
 </blockquote>
 
 
@@ -46,9 +46,10 @@
         return urlStart + "tms/" + tmsPyramidId + "/" + z + "/" + x + "/" + y + "." + this.type;
 
     }
-    function init(){
+    function initTms(zeroLevelDimX, zeroLevelDimY){
+//        alert("init: " + zeroLevelDimX + "x" + zeroLevelDimY);
         var map = new OpenLayers.Map( 'map', {
-            maxExtent: new OpenLayers.Bounds(0, 0, 10000, 6250),
+            maxExtent: new OpenLayers.Bounds(0, 0, zeroLevelDimX, zeroLevelDimY),
             maxResolution: 10000 / 256,
             numZoomLevels: 4
         } );
@@ -60,7 +61,6 @@
         map.zoomToMaxExtent();
 //        map.setCenter(new OpenLayers.LonLat(lon, lat), zoom);
   }
-    setTimeout(init, 1000);
 </script>
 <hr>
 
@@ -82,6 +82,7 @@
             result += "zeroLevelDimX = " + info.zeroLevelDimX + "<br/>";
             result += "zeroLevelDimY = " + info.zeroLevelDimY + "<br/>";
             result += "elementType = " + info.elementType + "<br/>";
+            setTimeout("initTms(" + info.zeroLevelDimX + ", " + info.zeroLevelDimY + ")", 100);
         }
         document.getElementById("information").innerHTML = result;
     }
