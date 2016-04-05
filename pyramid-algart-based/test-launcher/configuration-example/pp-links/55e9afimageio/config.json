@@ -1,8 +1,8 @@
 {
-    "pyramidPath": "/images/imageIO/withPPJson",
-    "rawBytes_": true,
-    "cacheable_":false,
-    "renderer": {
-        "format": "jpeg"
-    }
+  "pyramidPath": "/images/imageIO/withPPJson1",
+  "rawBytes_": true,
+  "cacheable_": false,
+  "renderer": {
+    "format": "jpeg"
+  }
 }
