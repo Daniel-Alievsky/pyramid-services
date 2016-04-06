@@ -34,16 +34,19 @@ import net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory;
 
 import java.io.IOException;
 
-public class ImageIOFileAccessTest {
+public class OpenSourceImageFileAccessTest {
     public static void main(String[] args) throws Exception {
+        boolean addGnu = args.length >= 1 && args[0].equals("-gnu");
         System.setProperty(
-            "net.algart.pyramid.http.port", "9001");
+            "net.algart.pyramid.http.port", "9001" + (addGnu ? "|9100" : ""));
         System.setProperty(
             "net.algart.pyramid.http.planePyramidFactory",
-            StandardPlanePyramidFactory.class.getName());
+            StandardPlanePyramidFactory.class.getName()
+                + (addGnu ? "|" + StandardPlanePyramidFactory.class.getName() : ""));
         System.setProperty(
             "net.algart.pyramid.http.planePyramidSubFactory",
-            ImageIOPlanePyramidSourceFactory.class.getName());
+            ImageIOPlanePyramidSourceFactory.class.getName()
+                + (addGnu ? "|com.simagis.pyramid.loci.server.LociPlanePyramidSourceFactory" : ""));
         new SimpleHttpPyramidServiceLauncher() {
             @Override
             protected void addHandlers(HttpPyramidService service) {
