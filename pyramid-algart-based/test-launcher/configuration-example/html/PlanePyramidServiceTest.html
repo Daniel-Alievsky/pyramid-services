@@ -32,9 +32,7 @@
 
 <script src="http://openlayers.org/api/OpenLayers.js"></script>
 <script>
-    var lon = 5;
-    var lat = 40;
-    var zoom = 1;
+    var tileDim = 256;
 
     function getMyUrl(bounds) {
         var res = this.map.getResolution();
@@ -46,18 +44,30 @@
         return urlStart + "tms/" + tmsPyramidId + "/" + z + "/" + x + "/" + y + "." + this.type;
 
     }
+
     function initTms(zeroLevelDimX, zeroLevelDimY){
 //        alert("init: " + zeroLevelDimX + "x" + zeroLevelDimY);
-        var map = new OpenLayers.Map( 'map', {
-            maxExtent: new OpenLayers.Bounds(0, 0, zeroLevelDimX, zeroLevelDimY),
-            maxResolution: 10000 / 256,
-            numZoomLevels: 4
-        } );
+        var maxDim = Math.max(zeroLevelDimX, zeroLevelDimY);
+        var dim = tileDim;
+        var zNum = 1;
+        while (dim < maxDim) {
+            dim *= 2;
+            zNum++;
+        }
+        var options = {
+            maxExtent: new OpenLayers.Bounds(0,0,zeroLevelDimX,zeroLevelDimY),
+           // restrictedExtent: new OpenLayers.Bounds(0,0,zeroLevelDimX,zeroLevelDimY),
+            maxResolution: dim / tileDim,
+            numZoomLevels: zNum
+        };
+        var map = new OpenLayers.Map( 'map', options );
+
         var layer = new OpenLayers.Layer.TMS( "TMS",
-                "http://localhost/", {layername: 'basic', getURL:getMyUrl, type:'jpg'} );
+                "http://localhost/", {layername: 'basic', getURL:getMyUrl, type:'jpg', isBaseLayer : true} );
         map.addLayer(layer);
         map.addControl(new OpenLayers.Control.LayerSwitcher());
-        map.addControl(new OpenLayers.Control.OverviewMap());
+        options.maxResolution = 'auto';
+        map.addControl(new OpenLayers.Control.OverviewMap({mapOptions : options}));
         map.zoomToMaxExtent();
 //        map.setCenter(new OpenLayers.LonLat(lon, lat), zoom);
   }
