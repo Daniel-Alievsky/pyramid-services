@@ -26,7 +26,7 @@
 
 <blockquote style="margin:30px 50px">
     <p>TMS map:</p>
-<div id="map" style="width:80%;height:800px;border:3px solid red"></div>
+<div id="map" style="width:80%;height:500px;border:3px solid red"></div>
 </blockquote>
 
 
@@ -47,18 +47,23 @@
 
     function initTms(zeroLevelDimX, zeroLevelDimY){
 //        alert("init: " + zeroLevelDimX + "x" + zeroLevelDimY);
-        var maxDim = Math.max(zeroLevelDimX, zeroLevelDimY);
-        var dim = tileDim;
-        var zNum = 1;
-        while (dim < maxDim) {
-            dim *= 2;
-            zNum++;
+        var dimX = tileDim;
+        var dimY = tileDim;
+        var zNumX = 1;
+        var zNumY = 1;
+        while (dimX < zeroLevelDimX) {
+            dimX *= 2;
+            zNumX++;
+        }
+        while (dimY < zeroLevelDimY) {
+            dimY *= 2;
+            zNumY++;
         }
         var options = {
-            maxExtent: new OpenLayers.Bounds(0,0,dim,dim),
+            maxExtent: new OpenLayers.Bounds(0,0,dimX,dimY),
            // restrictedExtent: new OpenLayers.Bounds(0,0,zeroLevelDimX,zeroLevelDimY),
-            maxResolution: dim / tileDim,
-            numZoomLevels: zNum
+            maxResolution: Math.max(dimX, dimY) / tileDim,
+            numZoomLevels: Math.max(zNumX, zNumY)
         };
         var map = new OpenLayers.Map( 'map', options );
 
