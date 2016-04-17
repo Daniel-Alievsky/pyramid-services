@@ -26,22 +26,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Simple pyramid service Web launcher</title>
 </head>
 <body>
 <!-- An example of calling the test -->
 <p>Please copy subfolders</p>
 <pre>
     pp-links
-    images
+    pp-images
 </pre>
 <p>into the root of your disk.</p>
-<p>Then start LaunchJavaTest.cmd.</p>
+<p>Then start</p>
+<pre>
+    LaunchJavaTestGnu.cmd
+</pre>
+<p><small>Note: you need to have the following additional JARs from GNU library in .m2 subfolder:</small></p>
+<pre>
+    loci_tools-5.0.6.jar
+    PlanePyramidSourceBioFormats.jar
+</pre>
+<p><small>You may use <code>LaunchJavaTest.cmd</code> to test without additional GNU JARs.</small></p>
 
-<p><a href="html/PlanePyramidServiceTest.html?55e9afimageio:9001:32">
-    Open test for 55e9afimageio pyramid</a></p>
-<p><a href="html/PlanePyramidServiceTest.html?14tr43svs:9100:32">
-    Open test for 14tr43svs Loci pyramid</a> (for this test,
-    you should create this subfolder yourself and start &quot;LaunchJavaTest.cmd -gnu&quot;).
-</p>
+<p><a href="html/PlanePyramidServiceTest.html?some-unique-folder-18572:9001:32">
+    Some ready test for simple image (gif)</a></p>
+<p>To add new image, please use</p>
+<pre>
+    AddImage.cmd someImage.jpg
+</pre>
+<p>for standard formats (jpg, png, gif) or</p>
+<pre>
+    AddImage.cmd someImage.svs -gnu
+</pre>
+<p>for pyramid formats supported by LOCI. The links to added images will appear, correspondingly, in the files</p>
+<pre>
+    <a href="PyramidsStandard.html">PyramidsStandard.html</a> and
+    <a href="PyramidsGnu.html">PyramidsGnu.html</a>
+</pre>
+
+<p><b>Warning!</b> Please use the same disk drive for /pp-links, /pp-images folders and added images.
+AddImage.cmd adds links to /pp-links and /pp-images at the <b>current</b> drive.</p>
 </body>
 </html>

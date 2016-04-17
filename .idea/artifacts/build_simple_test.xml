@@ -22,6 +22,10 @@
         <element id="artifact" artifact-name="pyramid-common:jar" />
         <element id="artifact" artifact-name="pyramid-http:jar" />
       </element>
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/AddImage.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/PyramidsGnu.html" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/PyramidsStandard.html" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/LaunchJavaTestGnu.cmd" />
     </root>
   </artifact>
 </component>
