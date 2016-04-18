@@ -44,7 +44,7 @@ import java.util.Objects;
 
 class StandardPlanePyramid implements PlanePyramid {
     private static final long TIMEOUT = Math.max(16, Integer.getInteger(
-        "net.algart.pyramid.standard.pyramidTimeout", 60000));
+        "net.algart.pyramid.standard.pyramidTimeout", 120000));
     // - in milliseconds
 
     private final String pyramidConfiguration;

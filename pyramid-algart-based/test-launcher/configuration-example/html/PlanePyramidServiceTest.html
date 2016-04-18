@@ -129,15 +129,16 @@
 //    document.writeln("<plaintext>");
 //    document.writeln(urlStart);
 
-    var args = 'pyramidId=' + pyramidId + encodeURI('&compression=5&fromX=0&fromY=0&toX=1000&toY=1000');
-    document.writeln('<br/><img src="' + urlStart + 'read-rectangle?' + args + '"><br/>');
+//    var args = 'pyramidId=' + pyramidId + encodeURI('&compression=5&fromX=0&fromY=0&toX=1000&toY=1000');
+//    document.writeln('<br/><img src="' + urlStart + 'read-rectangle?' + args + '"><br/>');
 
+    window.readRectangleHTML = "<br/>Random rectangles:<br/>";
     var tileDimX = 128 * compression;
     var tileDimY = 128 * compression;
     var sizeX = 1024 * compression;
     var sizeY = 512 * compression;
     for (var y = 0; y < sizeY; y += tileDimX) {
-        document.writeln("Line y=" + y + "<br/>");
+        readRectangleHTML += "Line y=" + y + "<br/>";
         for (var x = 0; x < sizeX; x += tileDimX) {
             args = 'pyramidId=' + pyramidId
                     + encodeURI('&compression=' + compression
@@ -145,34 +146,41 @@
                             + '&fromY=' + y
                             + '&toX=' + (x + tileDimX)
                             + '&toY=' + (y + tileDimY));
-            document.writeln(
-                    '<img border="1" '
-                    + 'src="' + urlStart + 'read-rectangle?' + args + '">&nbsp;');
+            readRectangleHTML += '<img border="1" src="' + urlStart + 'read-rectangle?' + args + '">&nbsp;';
         }
-        document.writeln("<br/>");
+        readRectangleHTML += "<br/>";
     }
 
-    document.writeln("<br/>TMS:<br/>");
+    window.tmsHTML = "<br/>TMS:<br/>";
     var tmsXCount = 5;
     var tmsYCount = 5;
     var tmsZ = 3;
     for (var y = 0; y < tmsYCount; y++) {
-        document.writeln("Line y=" + y + "<br/>");
+        tmsHTML += "Line y=" + y + "<br/>";
         for (var x = 0; x < tmsXCount; x++) {
             args = tmsPyramidId + "/" + tmsZ + "/" + x + "/" + y;
-            document.writeln(
-                    '<img border="1" '
-                    + 'src="' + urlStart + 'tms/' + args + '">&nbsp;');
+            tmsHTML +=  '<img border="1" src="' + urlStart + 'tms/' + args + '">&nbsp;';
         }
-        document.writeln("<br/>");
+        tmsHTML += "<br/>";
     }
 </script>
+<div id="readRectangleTest" style="margin:20px">
+    <button onclick="document.getElementById('readRectangleTest').innerHTML = readRectangleHTML">
+        Show test with random access to rectangles
+    </button>
+</div>
+<div id="tmsTest" style="margin:20px">
+    <button onclick="document.getElementById('tmsTest').innerHTML = tmsHTML">
+        Show test with access to rectangles via TMS protocol
+    </button>
+</div>
 
-
+<!--
 <script>
     document.writeln('<iframe width="100%" height="100" '
             + 'src="' + urlStart + 'information?pyramidId=' + pyramidId + '"><br/>');
 </script>
+-->
 
 </body>
 </html>

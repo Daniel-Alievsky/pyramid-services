@@ -22,17 +22,16 @@ if %~x1.==.NDPI. set GNU=TRUE
 if %~x1.==.scn. set gnu=TRUE
 if %~x1.==.scn. set GNU=TRUE
 
+set HTML_FILE=pyramids.html
 if %GNU%==TRUE (
     echo GNU support required
     set FORMAT_NAME=loci
     set MY_FOLDER=\pp-images\gnu
-    set HTML_FILE=PyramidsGnu.html
     set PORT=9100
 ) else (
     echo Standard image format
     set FORMAT_NAME=imageIO
     set MY_FOLDER=\pp-images\standard
-    set HTML_FILE=PyramidsStandard.html
     set PORT=9001
 )
 call :rand
