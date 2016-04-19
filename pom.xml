@@ -48,6 +48,13 @@
         </plugins>
     </build>
 
+    <repositories>
+        <repository>
+            <id>simagis-open-releases</id>
+            <url>https://simagis.artifactoryonline.com/simagis/open-releases-local</url>
+        </repository>
+    </repositories>
+
     <distributionManagement>
         <repository>
             <id>simagis-open-releases</id>
