@@ -35,17 +35,14 @@ import org.glassfish.grizzly.http.server.Response;
 import java.io.IOException;
 import java.util.Objects;
 
-public class TmsHttpPyramidCommand implements HttpPyramidCommand {
-    private static final int DEFAULT_TMS_TILE_DIM = Math.max(16, Integer.getInteger(
-        "net.algart.pyramid.http.tmsTileDim", 256));
-    private static final boolean DEFAULT_INVERSE_Y_DIRECTION = getBooleanProperty(
-        "net.algart.pyramid.http.tmsInverseYDirection", false);
+public class ZoomifyHttpPyramidCommand implements HttpPyramidCommand {
+    private static final int DEFAULT_ZOOMIFY_TILE_DIM = Math.max(16, Integer.getInteger(
+        "net.algart.pyramid.http.zoomifyTileDim", 256));
 
     private final HttpPyramidService httpPyramidService;
-    private volatile int tileDim = DEFAULT_TMS_TILE_DIM;
-    private volatile boolean inverseYDirection = DEFAULT_INVERSE_Y_DIRECTION;
+    private volatile int tileDim = DEFAULT_ZOOMIFY_TILE_DIM;
 
-    public TmsHttpPyramidCommand(HttpPyramidService httpPyramidService) {
+    public ZoomifyHttpPyramidCommand(HttpPyramidService httpPyramidService) {
         this.httpPyramidService = Objects.requireNonNull(httpPyramidService);
     }
 
@@ -60,21 +57,22 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
             path = path.substring(1);
         }
         final String[] components = path.split("/");
-        if (components.length != 5) {
-            throw new IllegalArgumentException("TMS path must contain 5 parts separated by /: "
-                + "http://some-server.com:NNNN/some-prefix/pyramidId/z/x/y.jpg; "
+        if (components.length != 4) {
+            throw new IllegalArgumentException("Zoomify path must contain 4 parts separated by /: "
+                + "http://some-server.com:NNNN/some-prefix/pyramidId/tileGroupXXX/z-x-y.jpg; "
                 + "but actual path consists of " + components.length + " parts: http://some-server.com:NNNN/" + path);
         }
         // path[0] is the command prefix "pp-tms"
         final String pyramidId = components[1];
-        final int z = Integer.parseInt(components[2]);
-        final int x = Integer.parseInt(components[3]);
-        final int y = Integer.parseInt(removeExtension(components[4]));
+        final String[] zxy = components[3].split("-");
+        final int z = Integer.parseInt(zxy[0]);
+        final int x = Integer.parseInt(zxy[1]);
+        final int y = Integer.parseInt(TmsHttpPyramidCommand.removeExtension(zxy[2]));
         final String configuration = pyramidIdToConfiguration(pyramidId);
 //        System.out.println("tms-Configuration: " + configuration);
         final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
         final PlanePyramidImageRequest imageRequest =
-            tmsToImageRequest(x, y, z, configuration, pyramid.information());
+            zoomfyToImageRequest(x, y, z, configuration, pyramid.information());
         httpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
     }
 
@@ -87,7 +85,7 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
         return tileDim;
     }
 
-    public TmsHttpPyramidCommand setTileDim(int tileDim) {
+    public ZoomifyHttpPyramidCommand setTileDim(int tileDim) {
         if (tileDim < 16) {
             throw new IllegalArgumentException("tileDim=" + tileDim + ", but it must be >=16");
         }
@@ -98,20 +96,11 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
         return this;
     }
 
-    public boolean isInverseYDirection() {
-        return inverseYDirection;
-    }
-
-    public TmsHttpPyramidCommand setInverseYDirection(boolean inverseYDirection) {
-        this.inverseYDirection = inverseYDirection;
-        return this;
-    }
-
     protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
         return httpPyramidService.pyramidIdToConfiguration(pyramidId);
     }
 
-    private PlanePyramidImageRequest tmsToImageRequest(
+    private PlanePyramidImageRequest zoomfyToImageRequest(
         int x,
         int y,
         int z,
@@ -119,7 +108,9 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
         PlanePyramidInformation info)
     {
         int maxZ = 0;
-        for (long dim = Math.max(info.getZeroLevelDimX(), info.getZeroLevelDimY()); dim > tileDim; dim /= 2) {
+        final long zeroLevelDimX = info.getZeroLevelDimX();
+        final long zeroLevelDimY = info.getZeroLevelDimY();
+        for (long dim = Math.max(zeroLevelDimX, zeroLevelDimY); dim > tileDim; dim /= 2) {
             maxZ++;
         }
         double compression = 1;
@@ -128,27 +119,10 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
         }
         final long tileDim = Math.round(this.tileDim * compression);
         final long zeroLevelFromX = x * tileDim;
-        final long zeroLevelFromY = inverseYDirection ? info.getZeroLevelDimY() - (y + 1) * tileDim : y * tileDim;
-        final long zeroLevelToX = zeroLevelFromX + tileDim;
-        final long zeroLevelToY = zeroLevelFromY + tileDim;
+        final long zeroLevelFromY = y * tileDim;
+        final long zeroLevelToX = Math.min(zeroLevelFromX + tileDim, zeroLevelDimX);
+        final long zeroLevelToY = Math.min(zeroLevelFromY + tileDim, zeroLevelDimY);
         return new PlanePyramidImageRequest(
             pyramidConfiguration, compression, zeroLevelFromX, zeroLevelFromY, zeroLevelToX, zeroLevelToY);
     }
-
-    static String removeExtension(String fileName) {
-        int p = fileName.lastIndexOf('.');
-        if (p == -1) {
-            return fileName;
-        }
-        return fileName.substring(0, p);
-    }
-
-    static boolean getBooleanProperty(String propertyName, boolean defaultValue) {
-        if (defaultValue) {
-            return !"false".equalsIgnoreCase(System.getProperty(propertyName));
-        } else {
-            return Boolean.getBoolean(propertyName);
-        }
-    }
 }
-

@@ -124,10 +124,10 @@ class StandardPlanePyramid implements PlanePyramid {
     public PlanePyramidImageData readImageData(PlanePyramidImageRequest readImageRequest) throws IOException {
         Objects.requireNonNull(readImageRequest);
         final double compression = readImageRequest.getCompression();
-        final long fromX = readImageRequest.getFromX();
-        final long fromY = readImageRequest.getFromY();
-        final long toX = readImageRequest.getToX();
-        final long toY = readImageRequest.getToY();
+        final long fromX = readImageRequest.getZeroLevelFromX();
+        final long fromY = readImageRequest.getZeroLevelFromY();
+        final long toX = readImageRequest.getZeroLevelToX();
+        final long toY = readImageRequest.getZeroLevelToY();
         if (rawBytes) {
             //TODO!! return RGBRGB bytes/short/... froe readImage method
         }

@@ -29,34 +29,36 @@ import java.util.Objects;
 public final class PlanePyramidImageRequest {
     private final String pyramidUniqueId;
     private final double compression;
-    private final long fromX;
-    private final long fromY;
-    private final long toX;
-    private final long toY;
+    private final long zeroLevelFromX;
+    private final long zeroLevelFromY;
+    private final long zeroLevelToX;
+    private final long zeroLevelToY;
 
     public PlanePyramidImageRequest(
         String pyramidUniqueId,
         double compression,
-        long fromX,
-        long fromY,
-        long toX,
-        long toY)
+        long zeroLevelFromX,
+        long zeroLevelFromY,
+        long zeroLevelToX,
+        long zeroLevelToY)
     {
         this.pyramidUniqueId = Objects.requireNonNull(pyramidUniqueId);
         if (compression <= 0.0) {
             throw new IllegalArgumentException("Zero or negative compression = " + compression);
         }
-        if (toX < fromX) {
-            throw new IllegalArgumentException("Illegal fromX/toX = " + fromX + "/" + toX + ": toX < fromX");
+        if (zeroLevelToX < zeroLevelFromX) {
+            throw new IllegalArgumentException("Illegal zeroLevelFromX/zeroLevelToX = "
+                + zeroLevelFromX + "/" + zeroLevelToX + ": zeroLevelToX < zeroLevelFromX");
         }
-        if (toY < fromY) {
-            throw new IllegalArgumentException("Illegal fromY/toY = " + fromY + "/" + toY + ": toY < fromY");
+        if (zeroLevelToY < zeroLevelFromY) {
+            throw new IllegalArgumentException("Illegal zeroLevelFromY/zeroLevelToY = "
+                + zeroLevelFromY + "/" + zeroLevelToY + ": zeroLevelToY < zeroLevelFromY");
         }
         this.compression = compression;
-        this.fromX = fromX;
-        this.fromY = fromY;
-        this.toX = toX;
-        this.toY = toY;
+        this.zeroLevelFromX = zeroLevelFromX;
+        this.zeroLevelFromY = zeroLevelFromY;
+        this.zeroLevelToX = zeroLevelToX;
+        this.zeroLevelToY = zeroLevelToY;
     }
 
     public String getPyramidUniqueId() {
@@ -67,31 +69,27 @@ public final class PlanePyramidImageRequest {
         return compression;
     }
 
-    public long getFromX() {
-        return fromX;
+    public long getZeroLevelFromX() {
+        return zeroLevelFromX;
     }
 
-    public long getFromY() {
-        return fromY;
+    public long getZeroLevelFromY() {
+        return zeroLevelFromY;
     }
 
-    public long getToX() {
-        return toX;
+    public long getZeroLevelToX() {
+        return zeroLevelToX;
     }
 
-    public long getToY() {
-        return toY;
+    public long getZeroLevelToY() {
+        return zeroLevelToY;
     }
 
     @Override
     public String toString() {
-        return "PlanePyramidImageRequest{" +
-            "compression=" + compression +
-            ", fromX=" + fromX +
-            ", fromY=" + fromY +
-            ", toX=" + toX +
-            ", toY=" + toY +
-            '}';
+        return "PlanePyramidImageRequest: " +
+            "compression " + compression +
+            ", zero ךevel " + zeroLevelFromX + ".." + zeroLevelToX + "x" + zeroLevelFromY + ".." + zeroLevelToY;
     }
 
     @Override
@@ -108,16 +106,16 @@ public final class PlanePyramidImageRequest {
         if (Double.compare(that.compression, compression) != 0) {
             return false;
         }
-        if (fromX != that.fromX) {
+        if (zeroLevelFromX != that.zeroLevelFromX) {
             return false;
         }
-        if (fromY != that.fromY) {
+        if (zeroLevelFromY != that.zeroLevelFromY) {
             return false;
         }
-        if (toX != that.toX) {
+        if (zeroLevelToX != that.zeroLevelToX) {
             return false;
         }
-        if (toY != that.toY) {
+        if (zeroLevelToY != that.zeroLevelToY) {
             return false;
         }
         return pyramidUniqueId.equals(that.pyramidUniqueId);
@@ -131,10 +129,10 @@ public final class PlanePyramidImageRequest {
         result = pyramidUniqueId.hashCode();
         temp = Double.doubleToLongBits(compression);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
-        result = 31 * result + (int) (fromX ^ (fromX >>> 32));
-        result = 31 * result + (int) (fromY ^ (fromY >>> 32));
-        result = 31 * result + (int) (toX ^ (toX >>> 32));
-        result = 31 * result + (int) (toY ^ (toY >>> 32));
+        result = 31 * result + (int) (zeroLevelFromX ^ (zeroLevelFromX >>> 32));
+        result = 31 * result + (int) (zeroLevelFromY ^ (zeroLevelFromY >>> 32));
+        result = 31 * result + (int) (zeroLevelToX ^ (zeroLevelToX >>> 32));
+        result = 31 * result + (int) (zeroLevelToY ^ (zeroLevelToY >>> 32));
         return result;
     }
 }

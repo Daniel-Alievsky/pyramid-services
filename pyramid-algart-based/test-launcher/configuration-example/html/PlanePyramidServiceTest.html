@@ -12,6 +12,7 @@
     var parameters = search.split(":");
     var pyramidId = parameters[0];
     var tmsPyramidId = pyramidId;
+    var zoomifyPyramidId = pyramidId;
     var port = parameters[1];
     var compression = parameters.length >= 3 ? parseInt(parameters[2]) : 2;
     var unsafe = parameters.length >= 4 ? parameters[3] == "unsafe" : false;
@@ -34,7 +35,7 @@
 <script>
     var tileDim = 256;
 
-    function getMyUrl(bounds) {
+    function getMyTmsUrl(bounds) {
         var res = this.map.getResolution();
         var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
         var y = Math.round((this.tileOrigin.lat - bounds.top) / (res * this.tileSize.h));
@@ -47,9 +48,12 @@
     function initTms(zeroLevelDimX, zeroLevelDimY){
 //        alert("init: " + zeroLevelDimX + "x" + zeroLevelDimY);
         var imSize = new OpenLayers.Size(zeroLevelDimX, zeroLevelDimY);
-        OpenLayers.Layer.Zoomify.prototype.getURL = getMyUrl;
+
+        // The following line allows to emulate TMS intead of Zoomify, but not correct for boundary tiles:
+        // OpenLayers.Layer.Zoomify.prototype.getURL = getMyTmsUrl;
+
         var zoomify = new OpenLayers.Layer.Zoomify( "Zoomify",
-                "http://localhost/", imSize );
+                "http://localhost:" + port + "/pp-zoomify/" + zoomifyPyramidId + "/", imSize );
         /* Map with raster coordinates (pixels) from Zoomify image */
         var options = {
             maxExtent: new OpenLayers.Bounds(0, 0, zeroLevelDimX, zeroLevelDimY),
