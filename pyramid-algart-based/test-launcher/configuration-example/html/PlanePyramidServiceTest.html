@@ -42,10 +42,9 @@
         var z = this.map.getZoom();
 
         return urlStart + "tms/" + tmsPyramidId + "/" + z + "/" + x + "/" + y + ".jpg";
-
     }
 
-    function initTms(zeroLevelDimX, zeroLevelDimY){
+    function initZoomify(zeroLevelDimX, zeroLevelDimY){
 //        alert("init: " + zeroLevelDimX + "x" + zeroLevelDimY);
         var imSize = new OpenLayers.Size(zeroLevelDimX, zeroLevelDimY);
 
@@ -95,7 +94,7 @@
             result += "zeroLevelDimX = " + info.zeroLevelDimX + "<br/>";
             result += "zeroLevelDimY = " + info.zeroLevelDimY + "<br/>";
             result += "elementType = " + info.elementType + "<br/>";
-            setTimeout("initTms(" + info.zeroLevelDimX + ", " + info.zeroLevelDimY + ")", 100);
+            setTimeout("initZoomify(" + info.zeroLevelDimX + ", " + info.zeroLevelDimY + ")", 100);
         }
         document.getElementById("information").innerHTML = result;
     }
