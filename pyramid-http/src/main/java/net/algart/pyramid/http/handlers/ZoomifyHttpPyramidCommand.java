@@ -72,7 +72,7 @@ public class ZoomifyHttpPyramidCommand implements HttpPyramidCommand {
 //        System.out.println("tms-Configuration: " + configuration);
         final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
         final PlanePyramidImageRequest imageRequest =
-            zoomfyToImageRequest(x, y, z, configuration, pyramid.information());
+            zoomifyToImageRequest(x, y, z, configuration, pyramid.information());
         httpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
     }
 
@@ -100,7 +100,7 @@ public class ZoomifyHttpPyramidCommand implements HttpPyramidCommand {
         return httpPyramidService.pyramidIdToConfiguration(pyramidId);
     }
 
-    private PlanePyramidImageRequest zoomfyToImageRequest(
+    private PlanePyramidImageRequest zoomifyToImageRequest(
         int x,
         int y,
         int z,
