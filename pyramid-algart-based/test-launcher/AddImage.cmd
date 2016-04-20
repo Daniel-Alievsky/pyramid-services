@@ -42,7 +42,7 @@ copy %1 %PYRAMID_FOLDER%\%RESULT_FILE_NAME%
 echo Creating %PYRAMID_FOLDER%\.pp.json
 echo {>%PYRAMID_FOLDER%\.pp.json
 echo     "fileName": "%RESULT_FILE_NAME%",>>%PYRAMID_FOLDER%\.pp.json
-if %FORMAT_NAME%==loci echo     "flattenedResolutions": false,>>%PYRAMID_FOLDER%\.pp.json
+if %FORMAT_NAME%==loci echo     "format": {"loci": {"flattenedResolutions": false}},>>%PYRAMID_FOLDER%\.pp.json
 rem flattenedResolutions works bad in Loci system
 echo     "formatName": "%FORMAT_NAME%">>%PYRAMID_FOLDER%\.pp.json
 echo }>>%PYRAMID_FOLDER%\.pp.json
