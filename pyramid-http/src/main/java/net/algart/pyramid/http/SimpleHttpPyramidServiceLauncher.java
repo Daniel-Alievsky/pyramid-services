@@ -61,15 +61,24 @@ public class SimpleHttpPyramidServiceLauncher {
                 + ") and factories (" + planePyramidFactoryClasses.length + ")");
         }
         HttpPyramidService[] services = new HttpPyramidService[planePyramidFactoryClasses.length];
-        for (int k = 0; k < services.length; k++) {
-            final PlanePyramidFactory factory = (PlanePyramidFactory)
-                planePyramidFactoryClasses[k].newInstance();
-            if (planePyramidSubFactoryClasses[k] != null) {
-                factory.initializeConfiguration(planePyramidSubFactoryClasses[k]);
+        try {
+            for (int k = 0; k < services.length; k++) {
+                final PlanePyramidFactory factory = (PlanePyramidFactory)
+                    planePyramidFactoryClasses[k].newInstance();
+                if (planePyramidSubFactoryClasses[k] != null) {
+                    factory.initializeConfiguration(planePyramidSubFactoryClasses[k]);
+                }
+                services[k] = newService(factory, ports[k]);
+                addHandlers(services[k]);
+                services[k].start();
             }
-            services[k] = newService(factory, ports[k]);
-            addHandlers(services[k]);
-            services[k].start();
+        } catch (Exception | Error e) {
+            for (final HttpPyramidService service : services) {
+                if (service != null) {
+                    service.shutdown();
+                }
+            }
+            throw e;
         }
         for (final HttpPyramidService service : services) {
             new Thread() {

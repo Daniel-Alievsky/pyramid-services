@@ -96,6 +96,13 @@ public class HttpPyramidService {
         LOG.info("Finishing " + this);
     }
 
+    public void shutdown() {
+        LOG.log(Level.INFO, "Shutting down pyramid service...");
+        threadPool.shutdown();
+        server.shutdown();
+        shutdown = true;
+    }
+
     public final PlanePyramidPool getPyramidPool() {
         return pyramidPool;
     }
@@ -174,10 +181,7 @@ public class HttpPyramidService {
             Response response)
             throws Exception
         {
-            LOG.log(Level.INFO, "Shutting down pyramid service...");
-            threadPool.shutdown();
-            server.shutdown();
-            shutdown = true;
+            shutdown();
             response.setContentType("text/plain");
             response.setStatus(200, "OK");
             response.getWriter().write("Finishing service");
