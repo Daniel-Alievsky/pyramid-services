@@ -36,9 +36,6 @@
 
     function getMyUrl(bounds) {
         var res = this.map.getResolution();
-//        var x = Math.round ((bounds.left - this.maxExtent.left) / (res * this.tileSize.w));
-//        var y = Math.round ((this.maxExtent.top - bounds.top) / (res * this.tileSize.h)); // downward y
-//        var y = Math.round ((bounds.top - this.maxExtent.top) / (res * this.tileSize.h));
         var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
         var y = Math.round((this.tileOrigin.lat - bounds.top) / (res * this.tileSize.h));
         var z = this.map.getZoom();
@@ -49,36 +46,6 @@
 
     function initTms(zeroLevelDimX, zeroLevelDimY){
 //        alert("init: " + zeroLevelDimX + "x" + zeroLevelDimY);
-/*        var dimX = tileDim;
-        var dimY = tileDim;
-        var zNumX = 1;
-        var zNumY = 1;
-        while (dimX < zeroLevelDimX) {
-            dimX *= 2;
-            zNumX++;
-        }
-        while (dimY < zeroLevelDimY) {
-            dimY *= 2;
-            zNumY++;
-        }
-        var imBounds = new OpenLayers.Bounds(0, dimY - zeroLevelDimY,
-                zeroLevelDimX,zeroLevelDimY);
-        var options = {
-            maxExtent: new OpenLayers.Bounds(0,0,dimX,dimY),
-            //restrictedExtent: new OpenLayers.Bounds(0,0,zeroLevelDimX,zeroLevelDimY),
-            maxResolution: Math.max(dimX, dimY) / tileDim,
-            numZoomLevels: Math.max(zNumX, zNumY)
-        };
-        var map = new OpenLayers.Map( 'map', options );
-
-        var layer = new OpenLayers.Layer.TMS( "TMS",
-                "http://localhost/", {layername: 'basic', getURL:getMyUrl, type:'jpg', isBaseLayer : true} );
-        map.addLayer(layer);
-        map.addControl(new OpenLayers.Control.LayerSwitcher());
-        //options.maxResolution = 'auto';
-        map.addControl(new OpenLayers.Control.OverviewMap({mapOptions : options}));
-        map.zoomToMaxExtent();
- */        //map.zoomToExtent(imBounds);
         var imSize = new OpenLayers.Size(zeroLevelDimX, zeroLevelDimY);
         OpenLayers.Layer.Zoomify.prototype.getURL = getMyUrl;
         var zoomify = new OpenLayers.Layer.Zoomify( "Zoomify",
@@ -96,10 +63,12 @@
         map.addLayer(zoomify);
         map.setBaseLayer(zoomify);
         map.addControl(new OpenLayers.Control.LayerSwitcher());
-        //map.addControl(new OpenLayers.Control.OverviewMap({mapOptions : options}));
-        map.addControl(new OpenLayers.Control.OverviewMap({mapOptions: options}));
+        map.addControl(new OpenLayers.Control.OverviewMap({
+            minRatio: 0,
+            maxRatio: map.maxResolution,
+            mapOptions: options
+        }));
         map.zoomToMaxExtent();
-//        map.setCenter(new OpenLayers.LonLat(lon, lat), zoom);
   }
 </script>
 <hr>
