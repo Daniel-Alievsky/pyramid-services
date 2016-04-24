@@ -8,6 +8,7 @@
 <body bgcolor="#e3efcc">
 <div id="information"></div>
 <script>
+    var zeroLevelObjective = 20; // in future version will be loaded from the pyramid
     var search = document.location.search.substr(1);
     var parameters = search.split(":");
     var pyramidId = parameters[0];
@@ -28,10 +29,10 @@
 
 <blockquote style="margin:30px 50px">
     <div id="control" style="margin:10px;visibility:hidden">
-        <button onclick="changeObjective(1)">2.5x</button>
-        <button onclick="changeObjective(3)">10x</button>
-        <button onclick="changeObjective(4)">20x</button>
-        <button onclick="changeObjective(5)">40x</button>
+        <button onclick="changeObjective(2.5)">2.5x</button>
+        <button onclick="changeObjective(5)">5x</button>
+        <button onclick="changeObjective(10)">10x</button>
+        <button onclick="changeObjective(20)">20x</button>
         &nbsp&nbsp;<span id="currentZoom"></span>
     </div>
     <div id="map" style="width:80%;height:500px;border:3px solid red"></div>
@@ -90,17 +91,27 @@
         // setTimeout is necessary to allow browser to really visually hide "control" element
     }
 
-    function changeObjective(objective) {
+    function changeObjective(newObjective) {
         if (window.openLayersMap == null) {
             // openLayersMap is not ready yet
             return;
         }
-        window.openLayersMap.zoomTo(objective);
+        var objective = zeroLevelObjective;
+        var level = window.openLayersMap.getNumZoomLevels() - 1;
+        while (objective > newObjective && level > 0) {
+            objective /= 2;
+            level--;
+        }
+        window.openLayersMap.zoomTo(level);
     }
 
     function showCurrentZoom() {
         if (window.openLayersMap != null) {
-            document.getElementById("currentZoom").innerHTML = "Zoom level: " + window.openLayersMap.getZoom();
+            document.getElementById("currentZoom").innerHTML =
+                    "Level " + (window.openLayersMap.getZoom() + 1)
+                    + " / " + window.openLayersMap.getNumZoomLevels()
+                    + ", resolution " + window.openLayersMap.getResolution()
+//                    + ", zoom " + window.openLayersMap.getZoomForResolution(window.openLayersMap.getResolution())
         }
     }
     setInterval(showCurrentZoom, 1000);
