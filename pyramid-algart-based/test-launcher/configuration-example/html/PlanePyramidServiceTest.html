@@ -27,7 +27,7 @@
 
 
 <blockquote style="margin:30px 50px">
-    <div style="margin:10px">
+    <div id="control" style="margin:10px;visibility:hidden">
         <button onclick="changeObjective(10)">10x</button>
         <button onclick="changeObjective(20)">20x</button>
         <button onclick="changeObjective(40)">40x</button>
@@ -77,11 +77,17 @@
             mapOptions: options
         }));
         map.zoomToMaxExtent();
+        document.getElementById("control").style.visibility = "visible";
     }
 
     function changeObjective(objective) {
+        if (window.zoomify == null) {
+            // map is not ready yet
+            return;
+        }
         alert(objective);
-        // подобрать соответствующий resolution
+        alert(window.zoomify);
+        // подобрать соответствующий resolution и использовать window.zoomify
     }
 
 </script>
@@ -148,7 +154,9 @@
     }
 </script>
 <div id="changePyramid" style="margin:20px">
-    <button onclick="document.getElementById('map').innerHTML='';initZoomify(10000,6250,9001,'some-unique-folder-18572')">
+    <button onclick="document.getElementById('control').style.visibility = 'hidden';
+    document.getElementById('map').innerHTML='';
+    initZoomify(10000,6250,9001,'some-unique-folder-18572')">
         Switch to some-unique-folder-18572
     </button>
 </div>
