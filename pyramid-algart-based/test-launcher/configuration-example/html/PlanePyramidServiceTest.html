@@ -28,9 +28,11 @@
 
 <blockquote style="margin:30px 50px">
     <div id="control" style="margin:10px;visibility:hidden">
-        <button onclick="changeObjective(10)">10x</button>
-        <button onclick="changeObjective(20)">20x</button>
-        <button onclick="changeObjective(40)">40x</button>
+        <button onclick="changeObjective(1)">2.5x</button>
+        <button onclick="changeObjective(3)">10x</button>
+        <button onclick="changeObjective(4)">20x</button>
+        <button onclick="changeObjective(5)">40x</button>
+        &nbsp&nbsp;<span id="currentZoom"></span>
     </div>
     <div id="map" style="width:80%;height:500px;border:3px solid red"></div>
 </blockquote>
@@ -56,39 +58,52 @@
         // The following line allows to emulate TMS intead of Zoomify, but not correct for boundary tiles:
         // OpenLayers.Layer.Zoomify.prototype.getURL = getMyTmsUrl;
 
-        window.zoomify = new OpenLayers.Layer.Zoomify("Zoomify",
+        var zoomify = new OpenLayers.Layer.Zoomify("Zoomify",
                 "http://localhost:" + port + "/pp-zoomify/" + zoomifyPyramidId + "/", imSize );
         /* Map with raster coordinates (pixels) from Zoomify image */
         var options = {
             maxExtent: new OpenLayers.Bounds(0, 0, zeroLevelDimX, zeroLevelDimY),
-            maxResolution: Math.pow(2, zoomify.numberOfTiers-1 ),
+            maxResolution: Math.pow(2, zoomify.numberOfTiers-1),
             numZoomLevels: zoomify.numberOfTiers,
             units: 'pixels'
         };
 
-        var map = new OpenLayers.Map("map", options);
+        window.openLayersMap = new OpenLayers.Map("map", options);
 
-        map.addLayer(zoomify);
-        map.setBaseLayer(zoomify);
-        map.addControl(new OpenLayers.Control.LayerSwitcher());
-        map.addControl(new OpenLayers.Control.OverviewMap({
+        openLayersMap.addLayer(zoomify);
+        openLayersMap.setBaseLayer(zoomify);
+        openLayersMap.addControl(new OpenLayers.Control.LayerSwitcher());
+        openLayersMap.addControl(new OpenLayers.Control.OverviewMap({
             minRatio: 0,
-            maxRatio: map.maxResolution,
+            maxRatio: openLayersMap.maxResolution,
             mapOptions: options
         }));
-        map.zoomToMaxExtent();
+        openLayersMap.zoomToMaxExtent();
         document.getElementById("control").style.visibility = "visible";
     }
 
+    function changeImage(pyramidId) {
+        document.getElementById("control").style.visibility = "hidden";
+        window.openLayersMap = null;
+        document.getElementById("map").innerHTML = "";
+        setTimeout("initZoomify(10000, 6250, 9001, '" + pyramidId + "')", 100);
+        // setTimeout is necessary to allow browser to really visually hide "control" element
+    }
+
     function changeObjective(objective) {
-        if (window.zoomify == null) {
-            // map is not ready yet
+        if (window.openLayersMap == null) {
+            // openLayersMap is not ready yet
             return;
         }
-        alert(objective);
-        alert(window.zoomify);
-        // подобрать соответствующий resolution и использовать window.zoomify
+        window.openLayersMap.zoomTo(objective);
     }
+
+    function showCurrentZoom() {
+        if (window.openLayersMap != null) {
+            document.getElementById("currentZoom").innerHTML = "Zoom level: " + window.openLayersMap.getZoom();
+        }
+    }
+    setInterval(showCurrentZoom, 1000);
 
 </script>
 <hr>
@@ -154,9 +169,7 @@
     }
 </script>
 <div id="changePyramid" style="margin:20px">
-    <button onclick="document.getElementById('control').style.visibility = 'hidden';
-    document.getElementById('map').innerHTML='';
-    initZoomify(10000,6250,9001,'some-unique-folder-18572')">
+    <button onclick="changeImage('some-unique-folder-18572')">
         Switch to some-unique-folder-18572
     </button>
 </div>
