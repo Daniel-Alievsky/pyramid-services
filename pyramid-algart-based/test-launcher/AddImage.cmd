@@ -19,8 +19,8 @@ if %~x1.==.svs. set GNU=TRUE
 if %~x1.==.SVS. set GNU=TRUE
 if %~x1.==.ndpi. set GNU=TRUE
 if %~x1.==.NDPI. set GNU=TRUE
-if %~x1.==.scn. set gnu=TRUE
 if %~x1.==.scn. set GNU=TRUE
+if %~x1.==.SCN. set GNU=TRUE
 
 set HTML_FILE=pyramids.html
 if %GNU%==TRUE (

@@ -25,9 +25,14 @@
     document.writeln("Opening '" + pyramidId + "',<br/>tms '" + tmsPyramidId + "'<br/>");
 </script>
 
+
 <blockquote style="margin:30px 50px">
-    <p>TMS map:</p>
-<div id="map" style="width:80%;height:500px;border:3px solid red"></div>
+    <div style="margin:10px">
+        <button onclick="changeObjective(10)">10x</button>
+        <button onclick="changeObjective(20)">20x</button>
+        <button onclick="changeObjective(40)">40x</button>
+    </div>
+    <div id="map" style="width:80%;height:500px;border:3px solid red"></div>
 </blockquote>
 
 
@@ -35,23 +40,23 @@
 <script>
     var tileDim = 256;
 
-    function getMyTmsUrl(bounds) {
-        var res = this.map.getResolution();
-        var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
-        var y = Math.round((this.tileOrigin.lat - bounds.top) / (res * this.tileSize.h));
-        var z = this.map.getZoom();
+//    function getMyTmsUrl(bounds) {
+//        var res = this.map.getResolution();
+//        var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
+//        var y = Math.round((this.tileOrigin.lat - bounds.top) / (res * this.tileSize.h));
+//        var z = this.map.getZoom();
+//
+//        return urlStart + "tms/" + tmsPyramidId + "/" + z + "/" + x + "/" + y + ".jpg";
+//    }
 
-        return urlStart + "tms/" + tmsPyramidId + "/" + z + "/" + x + "/" + y + ".jpg";
-    }
-
-    function initZoomify(zeroLevelDimX, zeroLevelDimY){
+    function initZoomify(zeroLevelDimX, zeroLevelDimY, port, zoomifyPyramidId){
 //        alert("init: " + zeroLevelDimX + "x" + zeroLevelDimY);
         var imSize = new OpenLayers.Size(zeroLevelDimX, zeroLevelDimY);
 
         // The following line allows to emulate TMS intead of Zoomify, but not correct for boundary tiles:
         // OpenLayers.Layer.Zoomify.prototype.getURL = getMyTmsUrl;
 
-        var zoomify = new OpenLayers.Layer.Zoomify( "Zoomify",
+        window.zoomify = new OpenLayers.Layer.Zoomify("Zoomify",
                 "http://localhost:" + port + "/pp-zoomify/" + zoomifyPyramidId + "/", imSize );
         /* Map with raster coordinates (pixels) from Zoomify image */
         var options = {
@@ -72,7 +77,13 @@
             mapOptions: options
         }));
         map.zoomToMaxExtent();
-  }
+    }
+
+    function changeObjective(objective) {
+        alert(objective);
+        // подобрать соответствующий resolution
+    }
+
 </script>
 <hr>
 
@@ -94,7 +105,7 @@
             result += "zeroLevelDimX = " + info.zeroLevelDimX + "<br/>";
             result += "zeroLevelDimY = " + info.zeroLevelDimY + "<br/>";
             result += "elementType = " + info.elementType + "<br/>";
-            setTimeout("initZoomify(" + info.zeroLevelDimX + ", " + info.zeroLevelDimY + ")", 100);
+            initZoomify(info.zeroLevelDimX, info.zeroLevelDimY, port, zoomifyPyramidId);
         }
         document.getElementById("information").innerHTML = result;
     }
@@ -136,6 +147,11 @@
         tmsHTML += "<br/>";
     }
 </script>
+<div id="changePyramid" style="margin:20px">
+    <button onclick="document.getElementById('map').innerHTML='';initZoomify(10000,6250,9001,'some-unique-folder-18572')">
+        Switch to some-unique-folder-18572
+    </button>
+</div>
 <div id="readRectangleTest" style="margin:20px">
     <button onclick="document.getElementById('readRectangleTest').innerHTML = readRectangleHTML">
         Show test with random access to rectangles

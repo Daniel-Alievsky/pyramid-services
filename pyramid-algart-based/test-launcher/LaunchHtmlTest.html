@@ -28,20 +28,49 @@
     <meta charset="UTF-8">
     <title>Simple pyramid service Web launcher</title>
 </head>
-<body>
-<!-- An example of calling the test -->
-<p>Please start</p>
+<body style="font-family: sans-serif">
+<p>Please start the service by the following cmd-file:</p>
 <pre>
     LaunchJavaTestGnu.cmd
 </pre>
-<p>Note: this cmd-file will copy the subfolders pp-links and pp-images into the root of your disk.</p>
-
-<p><small>Also note: you need to have the following additional JARs from GNU library in .m2 subfolder:</small></p>
+<p>Note:</p>
+<ol>
+    <li>This cmd-file will copy the subfolders pp-links and pp-images into the root of your disk.
+        If it will fail due to insufficient permissions, please copy these folders into the root
+        of the current disk manually.
+    </li>
+    <li><p>Also note: this cmd-file starts Java Machine via call</p>
+<pre>
+    java -Xmx8g -classpath api/*;.m2/* net.algart.pyramid.standard.tests.OpenSourceImageFileAccessTest
+</pre>
+        <p>It means that java.exe <b>must be available in system paths</b>, and <b>it must be 64-bit</b> (not 32-bit).
+            If this call fails, please replace &quot;java&quot; by the full path to the last installed 64-bit JRE,
+            version 8 or higher, for example:</p>
+<pre>
+    "C:\Program Files\Java\jre1.8.0_91\bin\java.exe" -Xmx8g -classpath api/*;.m2/* net.algart.pyramid.standard.tests.OpenSourceImageFileAccessTest
+</pre>
+    </li>
+    <li>This cmd-file should be started <b>only once</b>. Attempt to start this file 2nd time will fail
+        with an error message &quot;java.net.BindException: Address already in use: bind&quot;.
+        To stop previously started service, please switch to the console window when it is started (usually
+        with white text on black background) and click Ctrl+C.
+    </li>
+    <li>
+        <p>
+            <small>Also note: you need to have the following additional JARs from GNU library in .m2 subfolder:</small>
+        </p>
 <pre>
     loci_tools-5.0.6.jar
     PlanePyramidSourceBioFormats.jar
 </pre>
-<p><small>You may use <code>LaunchJavaTest.cmd</code> to test without additional GNU JARs.</small></p>
+        <p>
+            <small>Usually this demo is distrubuted with these JARs. But if not, the cmd-file will fail with
+                corresponding message, and you may use <code>LaunchJavaTest.cmd</code> instead:
+                then only standard formats (jpg, png, gif) will be available for viewing.</small>
+        </p>
+    </li>
+</ol>
+
 
 <p>To add new image, please use</p>
 <pre>
@@ -53,11 +82,11 @@
 </pre>
 <p>for pyramid formats supported by LOCI. The links to added images will appear at the end in the file</p>
 <pre>
-    <a href="pyramids.html">pyramids.html</a>
+    <big><b><a href="pyramids.html">pyramids.html</a></b></big>
 </pre>
-<p>Initially, it can contain links to some already existing demo images.</p>
+<p>Please open this file! Initially, it can contain links to some already existing demo images.</p>
 
 <p><b>Warning!</b> Please use the same disk drive for /pp-links, /pp-images folders and added images.
-AddImage.cmd adds links to /pp-links and /pp-images at the <b>current</b> drive.</p>
+    AddImage.cmd adds links to /pp-links and /pp-images at the <b>current</b> drive.</p>
 </body>
 </html>
