@@ -32,7 +32,7 @@
         <dependency>
             <groupId>net.algart.simagis</groupId>
             <artifactId>simagis-plane-pyramid-sdk</artifactId>
-            <version>1.2.14</version>
+            <version>1.2.15</version>
         </dependency>
         <dependency>
             <groupId>javax.json</groupId>

@@ -132,11 +132,8 @@
             result = "Error: cannot read pyramid information!</br>";
         } else {
             var info = JSON.parse(xhr.responseText);
-            result = "Detected pyramid information:<br/>";
-            result += "channelCount = " + info.channelCount + "<br/>";
-            result += "zeroLevelDimX = " + info.zeroLevelDimX + "<br/>";
-            result += "zeroLevelDimY = " + info.zeroLevelDimY + "<br/>";
-            result += "elementType = " + info.elementType + "<br/>";
+            result = "<p>Detected pyramid information:</p>";
+            result += "<pre>" + JSON.stringify(info, null, "  ") + "</pre>";
             initZoomify(info.zeroLevelDimX, info.zeroLevelDimY, port, zoomifyPyramidId);
         }
         document.getElementById("information").innerHTML = result;

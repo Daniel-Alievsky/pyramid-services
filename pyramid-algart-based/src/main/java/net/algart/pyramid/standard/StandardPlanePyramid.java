@@ -103,6 +103,9 @@ class StandardPlanePyramid implements PlanePyramid {
                     this.source.dimY(),
                     this.source.elementType()
                 );
+                information.setPixelSizeInMicrons(this.source.pixelSizeInMicrons());
+                information.setMagnification(this.source.magnification());
+                information.setAdditionalMetadata(this.source.additionalMetadata());
                 //TODO!! JSON metadata zeroLevelActualRectangles, zeroLevelActualAreaBoundaries
             }
             return information;

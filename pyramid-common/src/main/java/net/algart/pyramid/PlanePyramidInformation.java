@@ -34,7 +34,9 @@ public final class PlanePyramidInformation {
     private final long zeroLevelDimX;
     private final long zeroLevelDimY;
     private final Class<?> elementType;
-    private final String additionalMetadata;
+    private volatile Double pixelSizeInMicrons;
+    private volatile Double magnification;
+    private volatile String additionalMetadata;
     // - usually JSON
 
     public PlanePyramidInformation(
@@ -43,17 +45,6 @@ public final class PlanePyramidInformation {
         long zeroLevelDimY,
         Class<?> elementType)
     {
-        this(channelCount, zeroLevelDimX, zeroLevelDimY, elementType, null);
-    }
-
-    public PlanePyramidInformation(
-        int channelCount,
-        long zeroLevelDimX,
-        long zeroLevelDimY,
-        Class<?> elementType,
-        String additionalMetadata)
-    {
-        this.additionalMetadata = additionalMetadata;
         Objects.requireNonNull(elementType, "Null elementType");
         if (channelCount <= 0) {
             throw new IllegalArgumentException("Zero or negative bandCount = " + channelCount);
@@ -86,6 +77,28 @@ public final class PlanePyramidInformation {
         return elementType;
     }
 
+    public Double getPixelSizeInMicrons() {
+        return pixelSizeInMicrons;
+    }
+
+    public void setPixelSizeInMicrons(Double pixelSizeInMicrons) {
+        if (pixelSizeInMicrons != null && pixelSizeInMicrons <= 0.0) {
+            throw new IllegalArgumentException("Zero or negative pixelSizeInMicrons");
+        }
+        this.pixelSizeInMicrons = pixelSizeInMicrons;
+    }
+
+    public Double getMagnification() {
+        return magnification;
+    }
+
+    public void setMagnification(Double magnification) {
+        if (magnification != null && magnification <= 0.0) {
+            throw new IllegalArgumentException("Zero or negative magnification");
+        }
+        this.magnification = magnification;
+    }
+
     /**
      * Returns additional metadata, usually JSON.
      *
@@ -95,12 +108,22 @@ public final class PlanePyramidInformation {
         return additionalMetadata;
     }
 
+    public void setAdditionalMetadata(String additionalMetadata) {
+        this.additionalMetadata = additionalMetadata;
+    }
+
     public JsonObject toJson() {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("channelCount", channelCount);
         builder.add("zeroLevelDimX", zeroLevelDimX);
         builder.add("zeroLevelDimY", zeroLevelDimY);
         builder.add("elementType", elementType.toString());
+        if (pixelSizeInMicrons != null) {
+            builder.add("pixelSizeInMicrons", pixelSizeInMicrons);
+        }
+        if (magnification != null) {
+            builder.add("magnification", magnification);
+        }
         if (additionalMetadata != null) {
             builder.add("additionalMetadata", additionalMetadata);
         }

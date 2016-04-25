@@ -104,7 +104,7 @@ public class DummyPyramidTest {
 
         @Override
         public PlanePyramidInformation information() {
-            return new PlanePyramidInformation(3, DIM_X, DIM_Y, byte.class, null);
+            return new PlanePyramidInformation(3, DIM_X, DIM_Y, byte.class);
         }
 
         @Override
