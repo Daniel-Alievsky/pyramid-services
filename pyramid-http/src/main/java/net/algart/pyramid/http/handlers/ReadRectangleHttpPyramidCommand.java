@@ -26,22 +26,18 @@
 package net.algart.pyramid.http.handlers;
 
 import net.algart.pyramid.PlanePyramid;
-import net.algart.pyramid.PlanePyramidImageRequest;
 import net.algart.pyramid.http.HttpPyramidCommand;
 import net.algart.pyramid.http.HttpPyramidService;
+import net.algart.pyramid.requests.PlanePyramidImageRequest;
+import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
 import java.io.IOException;
-import java.util.Objects;
 
-import static net.algart.pyramid.http.HttpPyramidCommand.*;
-
-public class ReadRectangleHttpPyramidCommand implements HttpPyramidCommand {
-    private final HttpPyramidService httpPyramidService;
-
+public class ReadRectangleHttpPyramidCommand extends HttpPyramidCommand {
     public ReadRectangleHttpPyramidCommand(HttpPyramidService httpPyramidService) {
-        this.httpPyramidService = Objects.requireNonNull(httpPyramidService);
+        super(httpPyramidService);
     }
 
     @Override
@@ -58,7 +54,7 @@ public class ReadRectangleHttpPyramidCommand implements HttpPyramidCommand {
         final long toY = getLongParameter(request, "toY");
 //        System.out.println("Configuration: " + configuration);
         final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
-        final PlanePyramidImageRequest imageRequest = new PlanePyramidImageRequest(
+        final PlanePyramidRequest imageRequest = new PlanePyramidImageRequest(
             configuration, compression, fromX, fromY, toX, toY);
         httpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
     }

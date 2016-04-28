@@ -27,7 +27,8 @@ package net.algart.pyramid.http;
 
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidFactory;
-import net.algart.pyramid.PlanePyramidImageRequest;
+import net.algart.pyramid.http.handlers.*;
+import net.algart.pyramid.requests.PlanePyramidRequest;
 import net.algart.pyramid.PlanePyramidPool;
 import org.glassfish.grizzly.http.server.*;
 
@@ -68,7 +69,7 @@ public class HttpPyramidService {
         this.port = port;
         server.addListener(new NetworkListener(HttpPyramidService.class.getName(), "localhost", port));
         this.serverConfiguration = server.getServerConfiguration();
-        addStandardHandlers();
+        addBuiltInHandlers();
     }
 
     public final void addHandler(String urlPrefix, HttpPyramidCommand command) {
@@ -76,6 +77,14 @@ public class HttpPyramidService {
         Objects.requireNonNull(command, "Null HTTP-pyramid command");
         serverConfiguration.addHttpHandler(new HttpPyramidHandler(urlPrefix, command), urlPrefix);
         LOG.info("Adding HTTP handler " + urlPrefix);
+    }
+
+    public final void addStandardHandlers() {
+        addHandler("/pp-information", new InformationHttpPyramidCommand(this));
+        addHandler("/pp-read-rectangle", new ReadRectangleHttpPyramidCommand(this));
+        addHandler("/pp-tms", new TmsHttpPyramidCommand(this));
+        addHandler("/pp-zoomify", new ZoomifyHttpPyramidCommand(this));
+        addHandler("/pp-read-special-image", new ReadSpecialImagePyramidCommand(this));
     }
 
     public final void start() throws IOException {
@@ -111,9 +120,9 @@ public class HttpPyramidService {
         Request request,
         Response response,
         PlanePyramid pyramid,
-        PlanePyramidImageRequest imageRequest)
+        PlanePyramidRequest pyramidRequest)
     {
-        return threadPool.createReadImageTask(request, response, pyramid, imageRequest);
+        return threadPool.createReadImageTask(request, response, pyramid, pyramidRequest);
     }
 
     public String pyramidIdToConfiguration(String pyramidId) throws IOException {
@@ -129,8 +138,8 @@ public class HttpPyramidService {
         return getClass().getName() + " on port " + port + " with factory " + pyramidPool.getFactory();
     }
 
-    private void addStandardHandlers() {
-        addHandler(FINISH_PREFIX, new FinishCommand());
+    private void addBuiltInHandlers() {
+        addHandler(FINISH_PREFIX, new FinishCommand(this));
     }
 
     private class HttpPyramidHandler extends HttpHandler {
@@ -174,7 +183,11 @@ public class HttpPyramidService {
         }
     }
 
-    private class FinishCommand implements HttpPyramidCommand {
+    private class FinishCommand extends HttpPyramidCommand {
+        public FinishCommand(HttpPyramidService httpPyramidService) {
+            super(httpPyramidService);
+        }
+
         @Override
         public void service(
             Request request,

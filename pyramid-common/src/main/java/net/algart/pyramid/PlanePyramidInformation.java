@@ -25,9 +25,10 @@
 package net.algart.pyramid;
 
 import javax.json.Json;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import java.util.Objects;
+import java.util.*;
 
 public final class PlanePyramidInformation {
     private final int channelCount;
@@ -36,6 +37,7 @@ public final class PlanePyramidInformation {
     private final Class<?> elementType;
     private volatile Double pixelSizeInMicrons;
     private volatile Double magnification;
+    private volatile Set<String> existingSpecialImages = new LinkedHashSet<>();
     private volatile String additionalMetadata;
     // - usually JSON
 
@@ -99,6 +101,16 @@ public final class PlanePyramidInformation {
         this.magnification = magnification;
     }
 
+    public Set<String> getExistingSpecialImages() {
+        return Collections.unmodifiableSet(existingSpecialImages);
+    }
+
+    public void setExistingSpecialImages(Collection<String> existingSpecialImages) {
+        Objects.requireNonNull(existingSpecialImages, "Null existingSpecialImages (use empty set instead");
+        this.existingSpecialImages.clear();
+        this.existingSpecialImages.addAll(existingSpecialImages);
+    }
+
     /**
      * Returns additional metadata, usually JSON.
      *
@@ -124,6 +136,11 @@ public final class PlanePyramidInformation {
         if (magnification != null) {
             builder.add("magnification", magnification);
         }
+        final JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        for (String name : existingSpecialImages) {
+            arrayBuilder.add(name);
+        }
+        builder.add("existingSpecialImages", arrayBuilder.build());
         if (additionalMetadata != null) {
             builder.add("additionalMetadata", additionalMetadata);
         }

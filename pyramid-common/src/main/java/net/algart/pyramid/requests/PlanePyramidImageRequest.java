@@ -22,12 +22,14 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid;
+package net.algart.pyramid.requests;
 
-import java.util.Objects;
+import net.algart.pyramid.PlanePyramid;
+import net.algart.pyramid.PlanePyramidData;
 
-public final class PlanePyramidImageRequest {
-    private final String pyramidUniqueId;
+import java.io.IOException;
+
+public final class PlanePyramidImageRequest extends PlanePyramidRequest {
     private final double compression;
     private final long zeroLevelFromX;
     private final long zeroLevelFromY;
@@ -42,7 +44,7 @@ public final class PlanePyramidImageRequest {
         long zeroLevelToX,
         long zeroLevelToY)
     {
-        this.pyramidUniqueId = Objects.requireNonNull(pyramidUniqueId);
+        super(pyramidUniqueId);
         if (compression <= 0.0) {
             throw new IllegalArgumentException("Zero or negative compression = " + compression);
         }
@@ -61,8 +63,9 @@ public final class PlanePyramidImageRequest {
         this.zeroLevelToY = zeroLevelToY;
     }
 
-    public String getPyramidUniqueId() {
-        return pyramidUniqueId;
+    @Override
+    public PlanePyramidData read(PlanePyramid pyramid) throws IOException {
+        return pyramid.readImage(this);
     }
 
     public double getCompression() {
@@ -97,12 +100,10 @@ public final class PlanePyramidImageRequest {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof PlanePyramidImageRequest)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         PlanePyramidImageRequest that = (PlanePyramidImageRequest) o;
-
         if (Double.compare(that.compression, compression) != 0) {
             return false;
         }

@@ -6,6 +6,7 @@
     <title>PlanePyramidTest</title>
 </head>
 <body bgcolor="#e3efcc">
+<div id="macro" style="float:right"></div>
 <div id="information"></div>
 <script>
     var zeroLevelObjective = 20; // in future version will be loaded from the pyramid
@@ -27,7 +28,7 @@
 </script>
 
 
-<blockquote style="margin:30px 50px">
+<blockquote style="margin:30px 50px;clear:both">
     <div id="control" style="margin:10px;visibility:hidden">
         <button onclick="changeObjective(2.5)">2.5x</button>
         <button onclick="changeObjective(5)">5x</button>
@@ -52,7 +53,7 @@
 //        return urlStart + "tms/" + tmsPyramidId + "/" + z + "/" + x + "/" + y + ".jpg";
 //    }
 
-    function initZoomify(zeroLevelDimX, zeroLevelDimY, port, zoomifyPyramidId){
+    function initPyramid(zeroLevelDimX, zeroLevelDimY, port, pyramidId){
 //        alert("init: " + zeroLevelDimX + "x" + zeroLevelDimY);
         var imSize = new OpenLayers.Size(zeroLevelDimX, zeroLevelDimY);
 
@@ -60,7 +61,7 @@
         // OpenLayers.Layer.Zoomify.prototype.getURL = getMyTmsUrl;
 
         var zoomify = new OpenLayers.Layer.Zoomify("Zoomify",
-                "http://localhost:" + port + "/pp-zoomify/" + zoomifyPyramidId + "/", imSize );
+                "http://localhost:" + port + "/pp-zoomify/" + pyramidId + "/", imSize );
         /* Map with raster coordinates (pixels) from Zoomify image */
         var options = {
             maxExtent: new OpenLayers.Bounds(0, 0, zeroLevelDimX, zeroLevelDimY),
@@ -81,13 +82,17 @@
         }));
         openLayersMap.zoomToMaxExtent();
         document.getElementById("control").style.visibility = "visible";
+        document.getElementById("macro").innerHTML = 'Macro image:<br/><img '
+                + 'style="margin:5px 0 0;border:2px solid blue" src="'
+                + 'http://localhost:' + port + '/pp-read-special-image?pyramidId=' + pyramidId
+                + '&specialImageName=WHOLE_SLIDE&width=200"/>';
     }
 
     function changeImage(pyramidId) {
         document.getElementById("control").style.visibility = "hidden";
         window.openLayersMap = null;
         document.getElementById("map").innerHTML = "";
-        setTimeout("initZoomify(10000, 6250, 9001, '" + pyramidId + "')", 100);
+        setTimeout("initPyramid(10000, 6250, 9001, '" + pyramidId + "')", 100);
         // setTimeout is necessary to allow browser to really visually hide "control" element
     }
 
@@ -134,7 +139,7 @@
             var info = JSON.parse(xhr.responseText);
             result = "<p>Detected pyramid information:</p>";
             result += "<pre>" + JSON.stringify(info, null, "  ") + "</pre>";
-            initZoomify(info.zeroLevelDimX, info.zeroLevelDimY, port, zoomifyPyramidId);
+            initPyramid(info.zeroLevelDimX, info.zeroLevelDimY, port, zoomifyPyramidId);
         }
         document.getElementById("information").innerHTML = result;
     }

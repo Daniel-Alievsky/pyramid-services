@@ -27,8 +27,8 @@ package net.algart.pyramid.http;
 
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidImageCache;
-import net.algart.pyramid.PlanePyramidImageData;
-import net.algart.pyramid.PlanePyramidImageRequest;
+import net.algart.pyramid.PlanePyramidData;
+import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.WriteHandler;
 import org.glassfish.grizzly.http.io.NIOOutputStream;
@@ -54,10 +54,10 @@ final class ReadImageTask {
 
     private final Response response;
     private volatile PlanePyramid pyramid;
-    private final PlanePyramidImageRequest planePyramidImageRequest;
+    private final PlanePyramidRequest pyramidRequest;
     private final ReadImageActiveTaskSet activeTaskSet;
     private final PlanePyramidImageCache cache;
-    private final PlanePyramidImageData previousCachedData;
+    private final PlanePyramidData previousCachedData;
     private final boolean alreadyInClientCache;
     private byte[] responseBytes;
     private int responseBytesCurrentOffset;
@@ -72,16 +72,16 @@ final class ReadImageTask {
         Request request,
         Response response,
         PlanePyramid pyramid,
-        PlanePyramidImageRequest planePyramidImageRequest,
+        PlanePyramidRequest pyramidRequest,
         ReadImageActiveTaskSet activeTaskSet,
         PlanePyramidImageCache cache)
     {
         this.response = Objects.requireNonNull(response);
         this.pyramid = Objects.requireNonNull(pyramid);
-        this.planePyramidImageRequest = Objects.requireNonNull(planePyramidImageRequest);
+        this.pyramidRequest = Objects.requireNonNull(pyramidRequest);
         this.activeTaskSet = Objects.requireNonNull(activeTaskSet);
         this.cache = Objects.requireNonNull(cache);
-        this.previousCachedData = pyramid.isCacheable() ? cache.get(planePyramidImageRequest) : null;
+        this.previousCachedData = pyramid.isCacheable() ? cache.get(pyramidRequest) : null;
         final long ifModifiedSince = request.getDateHeader("If-Modified-Since");
         this.alreadyInClientCache =
             previousCachedData != null
@@ -106,7 +106,7 @@ final class ReadImageTask {
 
     @Override
     public String toString() {
-        return "ReadImageTask for request " + planePyramidImageRequest
+        return "ReadImageTask for request " + pyramidRequest
             + ", elapsed time=" + (System.currentTimeMillis() - lastAccessTime) + "ms";
     }
 
@@ -130,18 +130,18 @@ final class ReadImageTask {
         }
 //        try {Thread.sleep(5000);} catch (InterruptedException e) {}
         final boolean cacheable = pyramid.isCacheable();
-        PlanePyramidImageData imageData = previousCachedData;
-        if (imageData == null) {
-            imageData = pyramid.readImageData(planePyramidImageRequest);
+        PlanePyramidData data = previousCachedData;
+        if (data == null) {
+            data = pyramid.read(pyramidRequest);
             if (cacheable) {
-                cache.put(planePyramidImageRequest, imageData);
+                cache.put(pyramidRequest, data);
             }
         } else {
             LOG.info("Image loaded from cache: " + this);
             assert cacheable;
             // - checked in the constructor
         }
-        this.responseBytes = imageData.getBytes();
+        this.responseBytes = data.getBytes();
         this.pyramid = null;
         // - since this moment the garbage collector can remove this pyramid, if other tasks do not use it
         if (USE_GRIZZLY_TIMEOUT_FOR_RESPONSE && cancelledByGrizzly) {
@@ -156,7 +156,7 @@ final class ReadImageTask {
         this.responseBytesCurrentOffset = 0;
         response.setContentLength(responseBytes.length);
         if (cacheable) {
-            response.setDateHeader("Last-Modified", imageData.getCreationTime());
+            response.setDateHeader("Last-Modified", data.getCreationTime());
         } else {
             response.setHeader("Cache-Control", "no-cache");
         }

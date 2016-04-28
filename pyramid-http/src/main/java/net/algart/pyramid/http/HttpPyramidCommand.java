@@ -30,21 +30,27 @@ import org.glassfish.grizzly.http.server.Response;
 
 import java.util.Objects;
 
-public interface HttpPyramidCommand {
-    void service(
+public abstract class HttpPyramidCommand {
+    protected final HttpPyramidService httpPyramidService;
+
+    protected HttpPyramidCommand(HttpPyramidService httpPyramidService) {
+        this.httpPyramidService = Objects.requireNonNull(httpPyramidService, "Null httpPyramidService");
+    }
+
+    protected abstract void service(
         Request request,
         Response response)
         throws Exception;
 
-    default boolean isSubFoldersAllowed() {
+    protected boolean isSubFoldersAllowed() {
         return false;
     }
 
-    static String getParameter(Request request, String name) {
+    public static String getParameter(Request request, String name) {
         return Objects.requireNonNull(request.getParameter(name), "Parameter " + name + " required");
     }
 
-    static double getDoubleParameter(Request request, String name) {
+    public static double getDoubleParameter(Request request, String name) {
         final String result = getParameter(request, name);
         try {
             return Double.parseDouble(result);
@@ -53,7 +59,16 @@ public interface HttpPyramidCommand {
         }
     }
 
-    static long getLongParameter(Request request, String name) {
+    public static int getIntParameter(Request request, String name) {
+        final String result = getParameter(request, name);
+        try {
+            return Integer.parseInt(result);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Parameter " + name + " is not a correct integer: " + result);
+        }
+    }
+
+    public static long getLongParameter(Request request, String name) {
         final String result = getParameter(request, name);
         try {
             return Long.parseLong(result);

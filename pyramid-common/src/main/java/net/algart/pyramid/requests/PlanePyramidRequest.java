@@ -22,24 +22,25 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid;
+package net.algart.pyramid.requests;
 
+import net.algart.pyramid.PlanePyramid;
+import net.algart.pyramid.PlanePyramidData;
+
+import java.io.IOException;
 import java.util.Objects;
 
-public final class PlanePyramidImageData {
-    byte[] bytes;
-    long creationTime;
+public abstract class PlanePyramidRequest {
+    final String pyramidUniqueId;
 
-    public PlanePyramidImageData(byte[] bytes) {
-        this.bytes = Objects.requireNonNull(bytes);
-        this.creationTime = System.currentTimeMillis();
+    protected PlanePyramidRequest(String pyramidUniqueId) {
+        this.pyramidUniqueId = Objects.requireNonNull(pyramidUniqueId, "Null pyramidUniqueId");
     }
 
-    public byte[] getBytes() {
-        return bytes;
+    public final String getPyramidUniqueId() {
+        return pyramidUniqueId;
     }
 
-    public long getCreationTime() {
-        return creationTime;
-    }
+    public abstract PlanePyramidData read(PlanePyramid pyramid) throws IOException;
 }
+

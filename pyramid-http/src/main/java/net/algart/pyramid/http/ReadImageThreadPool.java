@@ -27,7 +27,7 @@ package net.algart.pyramid.http;
 
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidImageCache;
-import net.algart.pyramid.PlanePyramidImageRequest;
+import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
@@ -65,11 +65,11 @@ final class ReadImageThreadPool {
         Request request,
         Response response,
         PlanePyramid pyramid,
-        PlanePyramidImageRequest imageRequest
+        PlanePyramidRequest pyramidRequest
 
     ) {
         final ReadImageTask task = new ReadImageTask(
-            request, response, pyramid, imageRequest, activeTaskSet, imageCache);
+            request, response, pyramid, pyramidRequest, activeTaskSet, imageCache);
         final boolean result = !task.is304();
         if (result) {
             queue.add(task);

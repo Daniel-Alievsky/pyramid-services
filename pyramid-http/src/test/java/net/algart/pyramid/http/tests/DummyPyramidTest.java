@@ -27,6 +27,8 @@ package net.algart.pyramid.http.tests;
 import net.algart.pyramid.*;
 import net.algart.pyramid.http.HttpPyramidService;
 import net.algart.pyramid.http.SimpleHttpPyramidServiceLauncher;
+import net.algart.pyramid.requests.PlanePyramidImageRequest;
+import net.algart.pyramid.requests.PlanePyramidSpecialImageRequest;
 
 import javax.imageio.ImageIO;
 import javax.json.Json;
@@ -103,11 +105,6 @@ public class DummyPyramidTest {
         }
 
         @Override
-        public PlanePyramidInformation information() {
-            return new PlanePyramidInformation(3, DIM_X, DIM_Y, byte.class);
-        }
-
-        @Override
         public void loadResources() {
         }
 
@@ -116,12 +113,24 @@ public class DummyPyramidTest {
         }
 
         @Override
-        public PlanePyramidImageData readImageData(PlanePyramidImageRequest readImageRequest) throws IOException {
-            final long fromX = readImageRequest.getZeroLevelFromX();
-            final long fromY = readImageRequest.getZeroLevelFromY();
-            final long toX = readImageRequest.getZeroLevelToX();
-            final long toY = readImageRequest.getZeroLevelToY();
-            return new PlanePyramidImageData(makePngBytes((int) (toX - fromX), (int) (toY - fromY)));
+        public PlanePyramidInformation readInformation() {
+            return new PlanePyramidInformation(3, DIM_X, DIM_Y, byte.class);
+        }
+
+        @Override
+        public PlanePyramidData readImage(PlanePyramidImageRequest imageRequest) throws IOException {
+            final long fromX = imageRequest.getZeroLevelFromX();
+            final long fromY = imageRequest.getZeroLevelFromY();
+            final long toX = imageRequest.getZeroLevelToX();
+            final long toY = imageRequest.getZeroLevelToY();
+            return new PlanePyramidData(makePngBytes((int) (toX - fromX), (int) (toY - fromY)));
+        }
+
+        @Override
+        public PlanePyramidData readSpecialImage(PlanePyramidSpecialImageRequest specialImageRequest)
+            throws IOException
+        {
+            throw new UnsupportedOperationException();
         }
 
         @Override

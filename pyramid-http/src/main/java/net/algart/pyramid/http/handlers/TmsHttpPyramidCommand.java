@@ -25,28 +25,27 @@
 package net.algart.pyramid.http.handlers;
 
 import net.algart.pyramid.PlanePyramid;
-import net.algart.pyramid.PlanePyramidImageRequest;
 import net.algart.pyramid.PlanePyramidInformation;
 import net.algart.pyramid.http.HttpPyramidCommand;
 import net.algart.pyramid.http.HttpPyramidService;
+import net.algart.pyramid.requests.PlanePyramidImageRequest;
+import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
 import java.io.IOException;
-import java.util.Objects;
 
-public class TmsHttpPyramidCommand implements HttpPyramidCommand {
+public class TmsHttpPyramidCommand extends HttpPyramidCommand {
     private static final int DEFAULT_TMS_TILE_DIM = Math.max(16, Integer.getInteger(
         "net.algart.pyramid.http.tmsTileDim", 256));
     private static final boolean DEFAULT_INVERSE_Y_DIRECTION = getBooleanProperty(
         "net.algart.pyramid.http.tmsInverseYDirection", false);
 
-    private final HttpPyramidService httpPyramidService;
     private volatile int tileDim = DEFAULT_TMS_TILE_DIM;
     private volatile boolean inverseYDirection = DEFAULT_INVERSE_Y_DIRECTION;
 
     public TmsHttpPyramidCommand(HttpPyramidService httpPyramidService) {
-        this.httpPyramidService = Objects.requireNonNull(httpPyramidService);
+        super(httpPyramidService);
     }
 
     @Override
@@ -73,9 +72,9 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
         final String configuration = pyramidIdToConfiguration(pyramidId);
 //        System.out.println("tms-Configuration: " + configuration);
         final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
-        final PlanePyramidImageRequest imageRequest =
-            tmsToImageRequest(x, y, z, configuration, pyramid.information());
-        httpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
+        final PlanePyramidRequest pyramidRequest =
+            tmsToImageRequest(x, y, z, configuration, pyramid.readInformation());
+        httpPyramidService.createReadImageTask(request, response, pyramid, pyramidRequest);
     }
 
     @Override
@@ -111,7 +110,7 @@ public class TmsHttpPyramidCommand implements HttpPyramidCommand {
         return httpPyramidService.pyramidIdToConfiguration(pyramidId);
     }
 
-    private PlanePyramidImageRequest tmsToImageRequest(
+    private PlanePyramidRequest tmsToImageRequest(
         int x,
         int y,
         int z,

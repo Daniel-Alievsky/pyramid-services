@@ -24,13 +24,17 @@
 
 package net.algart.pyramid;
 
+import net.algart.pyramid.requests.PlanePyramidImageRequest;
+import net.algart.pyramid.requests.PlanePyramidRequest;
+import net.algart.pyramid.requests.PlanePyramidSpecialImageRequest;
+
 import java.io.IOException;
 
 public interface PlanePyramid {
 
     /**
      * We recommend to use this key in JSON string {@link #pyramidConfiguration()} to specify the visual behaviour
-     * of this pyramid (the method {@link #readImageData(PlanePyramidImageRequest)}.
+     * of this pyramid (the method {@link #readImage(PlanePyramidImageRequest)}.
      * See an example of JSON in {@link PlanePyramidFactory#newPyramid(String)} method.
      */
     String RENDERER_KEY = "renderer";
@@ -48,22 +52,28 @@ public interface PlanePyramid {
      */
     String pyramidConfiguration();
 
-    PlanePyramidInformation information();
-
     void loadResources();
 
     void freeResources();
 
-    PlanePyramidImageData readImageData(PlanePyramidImageRequest readImageRequest) throws IOException;
+    PlanePyramidInformation readInformation();
+
+    default PlanePyramidData read(PlanePyramidRequest pyramidRequest) throws IOException {
+        return pyramidRequest.read(this);
+    }
+
+    PlanePyramidData readImage(PlanePyramidImageRequest imageRequest) throws IOException;
+
+    PlanePyramidData readSpecialImage(PlanePyramidSpecialImageRequest specialImageRequest) throws IOException;
 
     boolean isRawBytes();
 
     /**
-     * Returns the format of the byte sequence, returned by {@link #readImageData} method: <tt>png</tt>,
+     * Returns the format of the byte sequence, returned by {@link #readImage} method: <tt>png</tt>,
      * <tt>jpeg</tt>, etc.
      * It may be ignored if {@link #isRawBytes()} returns <tt>true</tt>.
      *
-     * @return format of the image, returned as a byte sequence by {@link #readImageData}.
+     * @return format of the image, returned as a byte sequence by {@link #readImage}.
      */
     String format();
 

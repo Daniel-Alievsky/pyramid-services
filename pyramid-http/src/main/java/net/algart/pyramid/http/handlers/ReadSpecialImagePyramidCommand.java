@@ -20,7 +20,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
  */
 
 package net.algart.pyramid.http.handlers;
@@ -28,13 +27,15 @@ package net.algart.pyramid.http.handlers;
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.http.HttpPyramidCommand;
 import net.algart.pyramid.http.HttpPyramidService;
+import net.algart.pyramid.requests.PlanePyramidRequest;
+import net.algart.pyramid.requests.PlanePyramidSpecialImageRequest;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
 import java.io.IOException;
 
-public class InformationHttpPyramidCommand extends HttpPyramidCommand {
-    public InformationHttpPyramidCommand(HttpPyramidService httpPyramidService) {
+public class ReadSpecialImagePyramidCommand extends HttpPyramidCommand {
+    public ReadSpecialImagePyramidCommand(HttpPyramidService httpPyramidService) {
         super(httpPyramidService);
     }
 
@@ -44,17 +45,14 @@ public class InformationHttpPyramidCommand extends HttpPyramidCommand {
         Response response)
         throws Exception
     {
-        final String configuration = pyramidIdToConfiguration(HttpPyramidCommand.getParameter(request, "pyramidId"));
+        final String configuration = pyramidIdToConfiguration(getParameter(request, "pyramidId"));
+        final String specialImageName = getParameter(request, "specialImageName");
+        final Integer width = request.getParameter("width") == null ? null : getIntParameter(request, "width");
+        final Integer height = request.getParameter("height") == null ? null : getIntParameter(request, "height");
         final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
-        response.setContentType("application/json; charset=utf-8");
-        response.addHeader("Access-Control-Allow-Origin", "*");
-        // - Allows browser JavaScript to access this via XMLHttpRequest.
-        // It does not violate security, because other client can access this information in any case,
-        // and Web pages cannot abuse it: it is not more dangerous than simple ability to read images.
-        final String message = pyramid.readInformation().toJson().toString();
-        response.setStatus(200, "OK");
-        response.getWriter().write(message);
-        response.finish();
+        final PlanePyramidRequest imageRequest = new PlanePyramidSpecialImageRequest(
+            configuration, specialImageName, width, height);
+        httpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
     }
 
     protected String pyramidIdToConfiguration(String pyramidId) throws IOException {

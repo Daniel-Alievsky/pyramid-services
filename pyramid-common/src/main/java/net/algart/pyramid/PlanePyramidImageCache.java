@@ -24,6 +24,8 @@
 
 package net.algart.pyramid;
 
+import net.algart.pyramid.requests.PlanePyramidRequest;
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -33,7 +35,7 @@ public final class PlanePyramidImageCache {
 
     private final long maxMemory;
     private volatile long memory = 0;
-    private final Map<PlanePyramidImageRequest, PlanePyramidImageData> map = new LinkedHashMap<>(16, 0.75f, true);
+    private final Map<PlanePyramidRequest, PlanePyramidData> map = new LinkedHashMap<>(16, 0.75f, true);
     // - accessOrder = true
 
     public PlanePyramidImageCache(long maxMemory) {
@@ -43,8 +45,8 @@ public final class PlanePyramidImageCache {
         this.maxMemory = maxMemory;
     }
 
-    public synchronized PlanePyramidImageData get(PlanePyramidImageRequest request) {
-        final PlanePyramidImageData result = map.get(request);
+    public synchronized PlanePyramidData get(PlanePyramidRequest request) {
+        final PlanePyramidData result = map.get(request);
         if (result == null) {
             return null;
         }
@@ -52,22 +54,17 @@ public final class PlanePyramidImageCache {
         return result;
     }
 
-    public synchronized void put(PlanePyramidImageRequest request, PlanePyramidImageData data) {
+    public synchronized void put(PlanePyramidRequest request, PlanePyramidData data) {
         map.put(request, data);
         increaseMemory(data);
         clean();
     }
 
-    private synchronized void remove(PlanePyramidImageRequest request) {
-        final PlanePyramidImageData removed = map.remove(request);
-        decreaseMemory(removed);
-    }
-
-    private void increaseMemory(PlanePyramidImageData data) {
+    private void increaseMemory(PlanePyramidData data) {
         memory += data.bytes.length;
     }
 
-    private void decreaseMemory(PlanePyramidImageData removed) {
+    private void decreaseMemory(PlanePyramidData removed) {
         memory -= removed.bytes.length;
         if (memory < 0) {
             throw new AssertionError("Non-balanced adding and removing: " + memory);
@@ -75,10 +72,10 @@ public final class PlanePyramidImageCache {
     }
 
     private void clean() {
-        for (Iterator<Map.Entry<PlanePyramidImageRequest, PlanePyramidImageData>> iterator = map.entrySet().iterator();
+        for (Iterator<Map.Entry<PlanePyramidRequest, PlanePyramidData>> iterator = map.entrySet().iterator();
              iterator.hasNext() && memory > maxMemory; )
         {
-            Map.Entry<PlanePyramidImageRequest, PlanePyramidImageData> entry = iterator.next();
+            Map.Entry<PlanePyramidRequest, PlanePyramidData> entry = iterator.next();
             iterator.remove();
             decreaseMemory(entry.getValue());
 //            System.out.println("Removing " + entry.getKey() + " from cache");

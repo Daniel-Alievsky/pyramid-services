@@ -24,11 +24,15 @@
 
 package net.algart.pyramid.standard;
 
+import net.algart.arrays.Matrices;
+import net.algart.arrays.Matrix;
+import net.algart.arrays.PArray;
 import net.algart.external.MatrixToBufferedImageConverter;
 import net.algart.pyramid.PlanePyramid;
-import net.algart.pyramid.PlanePyramidImageData;
-import net.algart.pyramid.PlanePyramidImageRequest;
+import net.algart.pyramid.PlanePyramidData;
 import net.algart.pyramid.PlanePyramidInformation;
+import net.algart.pyramid.requests.PlanePyramidImageRequest;
+import net.algart.pyramid.requests.PlanePyramidSpecialImageRequest;
 import net.algart.simagis.pyramid.PlanePyramidSource;
 import net.algart.simagis.pyramid.sources.ScalablePlanePyramidSource;
 
@@ -40,7 +44,12 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+
+import static net.algart.simagis.pyramid.PlanePyramidSource.DIM_HEIGHT;
+import static net.algart.simagis.pyramid.PlanePyramidSource.DIM_WIDTH;
 
 class StandardPlanePyramid implements PlanePyramid {
     private static final long TIMEOUT = Math.max(16, Integer.getInteger(
@@ -52,6 +61,7 @@ class StandardPlanePyramid implements PlanePyramid {
     private final String formatName;
     private final Color backgroundColor;
     private final MatrixToBufferedImageConverter converter;
+    private final MatrixToBufferedImageConverter specialImageCconverter;
     private final boolean rawBytes;
     private final boolean cacheable;
 
@@ -82,6 +92,8 @@ class StandardPlanePyramid implements PlanePyramid {
             opacity != null ? opacity.doubleValue() : 1.0,
             transparencySupported);
         // - opacity is not used in DEFAULT renderer
+        this.specialImageCconverter = new MatrixToBufferedImageConverter.Packed3DToPackedRGB(true);
+            // TODO!! why error? new MatrixToBufferedImageConverter.Packed3DToPackedRGB(transparencySupported);
         this.rawBytes = rawBytes;
         this.cacheable = cacheable;
         this.pyramidConfiguration = pyramidConfiguration;
@@ -94,7 +106,17 @@ class StandardPlanePyramid implements PlanePyramid {
     }
 
     @Override
-    public PlanePyramidInformation information() {
+    public void loadResources() {
+        source.loadResources();
+    }
+
+    @Override
+    public void freeResources() {
+        source.freeResources(PlanePyramidSource.FlushMethod.STANDARD);
+    }
+
+    @Override
+    public PlanePyramidInformation readInformation() {
         synchronized (source) {
             if (information == null) {
                 information = new PlanePyramidInformation(
@@ -105,6 +127,13 @@ class StandardPlanePyramid implements PlanePyramid {
                 );
                 information.setPixelSizeInMicrons(this.source.pixelSizeInMicrons());
                 information.setMagnification(this.source.magnification());
+                final List<String> specialImageNames = new ArrayList<>();
+                for (PlanePyramidSource.SpecialImageKind kind : PlanePyramidSource.SpecialImageKind.values()) {
+                    if (source.isSpecialMatrixSupported(kind)) {
+                        specialImageNames.add(kind.name());
+                    }
+                }
+                information.setExistingSpecialImages(specialImageNames);
                 information.setAdditionalMetadata(this.source.additionalMetadata());
                 //TODO!! JSON metadata zeroLevelActualRectangles, zeroLevelActualAreaBoundaries
             }
@@ -113,24 +142,13 @@ class StandardPlanePyramid implements PlanePyramid {
     }
 
     @Override
-    public void loadResources() {
-        source.loadResources();
-    }
-
-    @Override
-    public void freeResources() {
-        source.freeResources(PlanePyramidSource.FlushMethod.STANDARD);
-    }
-
-
-    @Override
-    public PlanePyramidImageData readImageData(PlanePyramidImageRequest readImageRequest) throws IOException {
-        Objects.requireNonNull(readImageRequest);
-        final double compression = readImageRequest.getCompression();
-        final long fromX = readImageRequest.getZeroLevelFromX();
-        final long fromY = readImageRequest.getZeroLevelFromY();
-        final long toX = readImageRequest.getZeroLevelToX();
-        final long toY = readImageRequest.getZeroLevelToY();
+    public PlanePyramidData readImage(PlanePyramidImageRequest imageRequest) throws IOException {
+        Objects.requireNonNull(imageRequest);
+        final double compression = imageRequest.getCompression();
+        final long fromX = imageRequest.getZeroLevelFromX();
+        final long fromY = imageRequest.getZeroLevelFromY();
+        final long toX = imageRequest.getZeroLevelToX();
+        final long toY = imageRequest.getZeroLevelToY();
         if (rawBytes) {
             //TODO!! return RGBRGB bytes/short/... froe readImage method
         }
@@ -139,12 +157,34 @@ class StandardPlanePyramid implements PlanePyramid {
             bufferedImage = convertARGBtoBGR(bufferedImage, backgroundColor);
         }
         this.lastAccessTime = System.currentTimeMillis();
-        final ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        if (!ImageIO.write(bufferedImage, formatName, stream)) {
-            throw new IIOException(formatName + " image format is not supported for " + bufferedImage);
+        return bufferedImageToBytes(bufferedImage, formatName);
+    }
+
+    @Override
+    public PlanePyramidData readSpecialImage(PlanePyramidSpecialImageRequest specialImageRequest) throws IOException {
+        Objects.requireNonNull(specialImageRequest);
+        final String name = specialImageRequest.getSpecialImageName();
+        Integer width = specialImageRequest.getDesiredWidth();
+        Integer height = specialImageRequest.getDesiredHeight();
+        final PlanePyramidSource.SpecialImageKind kind;
+        try {
+            kind = PlanePyramidSource.SpecialImageKind.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            throw new IOException("Unknown special image name " + name);
         }
-        stream.flush();
-        return new PlanePyramidImageData(stream.toByteArray());
+        Matrix<? extends PArray> m = source.readSpecialMatrix(kind);
+        if (width != null || height != null && m.size() > 0) {
+            // Resizing to one or both these sizes:
+            if (height == null) {
+                height = (int) (width * (double) m.dim(DIM_HEIGHT) / (double) m.dim(DIM_WIDTH));
+            } else if (width == null) {
+                width = (int) (height * (double) m.dim(DIM_WIDTH) / (double) m.dim(DIM_HEIGHT));
+            }
+            m = Matrices.asResized(Matrices.ResizingMethod.POLYLINEAR_AVERAGING, m, m.dim(0), width, height);
+        }
+        final BufferedImage bufferedImage = specialImageCconverter.toBufferedImage(m);
+        return bufferedImageToBytes(bufferedImage, "png");
+        //TODO!! use pyramid format
     }
 
     @Override
@@ -189,5 +229,16 @@ class StandardPlanePyramid implements PlanePyramid {
         } else {
             return bufferedImage;
         }
+    }
+
+    private static PlanePyramidData bufferedImageToBytes(BufferedImage bufferedImage, String formatName)
+        throws IOException
+    {
+        final ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        if (!ImageIO.write(bufferedImage, formatName, stream)) {
+            throw new IIOException(formatName + " image format is not supported for " + bufferedImage);
+        }
+        stream.flush();
+        return new PlanePyramidData(stream.toByteArray());
     }
 }

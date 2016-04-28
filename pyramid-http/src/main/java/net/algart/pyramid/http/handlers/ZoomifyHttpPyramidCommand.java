@@ -25,25 +25,24 @@
 package net.algart.pyramid.http.handlers;
 
 import net.algart.pyramid.PlanePyramid;
-import net.algart.pyramid.PlanePyramidImageRequest;
 import net.algart.pyramid.PlanePyramidInformation;
 import net.algart.pyramid.http.HttpPyramidCommand;
 import net.algart.pyramid.http.HttpPyramidService;
+import net.algart.pyramid.requests.PlanePyramidImageRequest;
+import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
 import java.io.IOException;
-import java.util.Objects;
 
-public class ZoomifyHttpPyramidCommand implements HttpPyramidCommand {
+public class ZoomifyHttpPyramidCommand extends HttpPyramidCommand {
     private static final int DEFAULT_ZOOMIFY_TILE_DIM = Math.max(16, Integer.getInteger(
         "net.algart.pyramid.http.zoomifyTileDim", 256));
 
-    private final HttpPyramidService httpPyramidService;
     private volatile int tileDim = DEFAULT_ZOOMIFY_TILE_DIM;
 
     public ZoomifyHttpPyramidCommand(HttpPyramidService httpPyramidService) {
-        this.httpPyramidService = Objects.requireNonNull(httpPyramidService);
+        super(httpPyramidService);
     }
 
     @Override
@@ -71,9 +70,9 @@ public class ZoomifyHttpPyramidCommand implements HttpPyramidCommand {
         final String configuration = pyramidIdToConfiguration(pyramidId);
 //        System.out.println("tms-Configuration: " + configuration);
         final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
-        final PlanePyramidImageRequest imageRequest =
-            zoomifyToImageRequest(x, y, z, configuration, pyramid.information());
-        httpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
+        final PlanePyramidRequest pyramidRequest =
+            zoomifyToImageRequest(x, y, z, configuration, pyramid.readInformation());
+        httpPyramidService.createReadImageTask(request, response, pyramid, pyramidRequest);
     }
 
     @Override
@@ -100,7 +99,7 @@ public class ZoomifyHttpPyramidCommand implements HttpPyramidCommand {
         return httpPyramidService.pyramidIdToConfiguration(pyramidId);
     }
 
-    private PlanePyramidImageRequest zoomifyToImageRequest(
+    private PlanePyramidRequest zoomifyToImageRequest(
         int x,
         int y,
         int z,
