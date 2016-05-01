@@ -36,7 +36,17 @@ import java.io.IOException;
 
 public class OpenSourceImageFileAccessTest {
     public static void main(String[] args) throws Exception {
-        boolean addGnu = args.length >= 1 && args[0].equals("-gnu");
+        try {
+            doMain(args, true);
+            return;
+        } catch (ClassNotFoundException | NoClassDefFoundError e) {
+            System.err.printf("%nCannot find some classes, maybe additional GNU-licensed JARs "
+                + "are not installed. Error message:%n%s%n%n", e);
+        }
+        doMain(args, false);
+    }
+
+    private static void doMain(String[] args, boolean addGnu) throws Exception {
         System.setProperty(
             "net.algart.pyramid.http.port", "9001" + (addGnu ? "|9100" : ""));
         System.setProperty(
@@ -51,29 +61,24 @@ public class OpenSourceImageFileAccessTest {
             @Override
             protected void addHandlers(HttpPyramidService service) {
                 super.addHandlers(service);
-                service.addHandler("/unsafe-information", new InformationHttpPyramidCommand(service) {
-                    @Override
-                    protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
-                        return pyramidId;
-                    }
-                });
-                service.addHandler("/unsafe-read-rectangle", new ReadRectangleHttpPyramidCommand(service) {
-                    @Override
-                    protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
-                        return pyramidId;
-                    }
-                });
-                service.addHandler("/unsafe-tms", new TmsHttpPyramidCommand(service) {
-                    @Override
-                    protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
-                        return pyramidId
-                            .replace("~~2F", "/")
-                            .replace("~~3A", ":")
-                            .replace("~~7B", "{")
-                            .replace("~~7D", "}")
-                            .replace("~~22", "\"");
-                    }
-                });
+// Below is an example of processing more complex requests
+//                service.addHandler("/unsafe-tms", new TmsHttpPyramidCommand(service) {
+//                    @Override
+//                    protected String pyramidIdToConfiguration(String pyramidId) throws IOException {
+//                        return pyramidId
+//                            .replace("~~2F", "/")
+//                            .replace("~~3A", ":")
+//                            .replace("~~7B", "{")
+//                            .replace("~~7D", "}")
+//                            .replace("~~22", "\"");
+//                    }
+//                });
+// Client side:
+//                if (unsafe) {
+//                    pyramidId = encodeURI('{"pyramidPath": "') + pyramidId + encodeURI('"}');
+//                    tmsPyramidId = '~~7B~~22pyramidPath~~22~~3A~~22'
+//                        + tmsPyramidId.replace(/%3A/g, '~~3A').replace(/\//g, '~~2F') + '~~22~~7D';
+//                }
             }
 
         }.doMain(args);

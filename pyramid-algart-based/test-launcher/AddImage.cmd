@@ -1,8 +1,7 @@
 @echo off
-if %1.==. (
+if %2.==. (
     echo Usage:
-    echo     AddImage some-image [-gnu]
-    echo If it is pyramid format, please add -gnu flag; .svs, .ndpi, .scn formats are recognized automatically.
+    echo     AddImage some-image user-name
     goto end
 )
 if not exist %1 (
@@ -12,9 +11,9 @@ if not exist %1 (
 set CALLING_DIRECTORY=%~dp0
 set SOURCE_FILE=%~f1
 set RESULT_FILE_NAME=data%~x1
+set USER_NAME=%2
 
 set GNU=FALSE
-if %2.==-gnu. set GNU=TRUE
 if %~x1.==.svs. set GNU=TRUE
 if %~x1.==.SVS. set GNU=TRUE
 if %~x1.==.ndpi. set GNU=TRUE
@@ -26,14 +25,13 @@ set HTML_FILE=pyramids.html
 if %GNU%==TRUE (
     echo GNU support required
     set FORMAT_NAME=loci
-    set MY_FOLDER=\pp-images\gnu
     set PORT=9100
 ) else (
     echo Standard image format
     set FORMAT_NAME=imageIO
-    set MY_FOLDER=\pp-images\standard
     set PORT=9001
 )
+set MY_FOLDER=\pp-images\%USER_NAME%
 call :rand
 mkdir %MY_SUBFOLDER%
 set PYRAMID_FOLDER=%MY_SUBFOLDER%
@@ -61,7 +59,7 @@ echo     }>>%LINK_FOLDER%\config.json
 echo }>>%LINK_FOLDER%\config.json
 
 echo Adding HTML link to %CALLING_DIRECTORY%%HTML_FILE%
-echo ^<a href="html/PlanePyramidServiceTest.html?%LINK_NAME%:%PORT%:32"^>New test %LINK_NAME%: pyramid at %PYRAMID_FOLDER%, source file %SOURCE_FILE%^</a^>^<br^> >>%CALLING_DIRECTORY%%HTML_FILE%
+echo ^<a href="html/PlanePyramidServiceTest.html?%LINK_NAME%:%PORT%"^>New test %LINK_NAME%: pyramid at %PYRAMID_FOLDER%, source file %SOURCE_FILE%^</a^>^<br^> >>%CALLING_DIRECTORY%%HTML_FILE%
 goto :end
 
 :rand

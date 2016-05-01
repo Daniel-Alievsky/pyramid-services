@@ -52,8 +52,8 @@
     </li>
     <li>This cmd-file should be started <b>only once</b>. Attempt to start this file 2nd time will fail
         with an error message &quot;java.net.BindException: Address already in use: bind&quot;.
-        To stop previously started service, please switch to the console window when it is started (usually
-        with white text on black background) and click Ctrl+C.
+        If you want to stop previously started service, please switch to the console window when it is started
+        (usually with white text on black background) and click Ctrl+C.
     </li>
     <li>
         <p>
@@ -64,9 +64,8 @@
     PlanePyramidSourceBioFormats.jar
 </pre>
         <p>
-            <small>Usually this demo is distrubuted with these JARs. But if not, the cmd-file will fail with
-                corresponding message, and you may use <code>LaunchJavaTest.cmd</code> instead:
-                then only standard formats (jpg, png, gif) will be available for viewing.</small>
+            <small>Usually this demo is distrubuted with these JARs. But if not, the cmd-file will start
+                anyway, but only standard formats (jpg, png, gif) will be available for viewing.</small>
         </p>
     </li>
 </ol>
@@ -74,13 +73,11 @@
 
 <p>To add new image, please use</p>
 <pre>
-    AddImage.cmd someImage.jpg
+    AddImage.cmd someImage.jpg username
 </pre>
-<p>for standard formats (jpg, png, gif) or</p>
-<pre>
-    AddImage.cmd someImage.svs -gnu
-</pre>
-<p>for pyramid formats supported by LOCI. The links to added images will appear at the end in the file</p>
+<p>The user name can be any simple word, like &quot;Daniel&quot;, &quot;Anil&quot;, etc &mdash;
+    it is just the name of subfolder in /pp-image folder where the images are added.
+    The links to added images will appear at the end in the file</p>
 <pre>
     <big><b><a href="pyramids.html">pyramids.html</a></b></big>
 </pre>
