@@ -14,7 +14,7 @@
         <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http:2.3.22" />
         <element id="library" level="project" name="Maven: org.glassfish:javax.json:1.0.4" />
       </element>
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/LaunchHtmlTest.html" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/welcome.html" />
       <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration-example" />
       <element id="directory" name="api">
         <element id="artifact" artifact-name="pyramid-algart-based-with-test:jar" />
