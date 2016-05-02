@@ -41,13 +41,13 @@
     </li>
     <li><p>Also note: this cmd-file starts Java Machine via call</p>
 <pre>
-    java -Xmx8g -classpath api/*;.m2/* net.algart.pyramid.standard.tests.OpenSourceImageFileAccessTest
+    java -Xmx8g -classpath %CP% net.algart.pyramid.standard.tests.OpenSourceImageFileAccessTest -gnu
 </pre>
         <p>It means that java.exe <b>must be available in system paths</b>, and <b>it must be 64-bit</b> (not 32-bit).
             If this call fails, please replace &quot;java&quot; by the full path to the last installed 64-bit JRE,
             version 8 or higher, for example:</p>
 <pre>
-    "C:\Program Files\Java\jre1.8.0_91\bin\java.exe" -Xmx8g -classpath api/*;.m2/* net.algart.pyramid.standard.tests.OpenSourceImageFileAccessTest
+    "C:\Program Files\Java\jre1.8.0_91\bin\java.exe" -Xmx8g -classpath %CP% net.algart.pyramid.standard.tests.OpenSourceImageFileAccessTest -gnu
 </pre>
     </li>
     <li>This cmd-file should be started <b>only once</b>. Attempt to start this file 2nd time will fail
@@ -57,7 +57,8 @@
     </li>
     <li>
         <p>
-            <small>Also note: you need to have the following additional JARs from GNU library in .m2 subfolder:</small>
+            <small>Also note: you need to have the following additional JARs from GNU library
+                in <i>pp-config/lib/maven</i> subfolder:</small>
         </p>
 <pre>
     loci_tools-5.0.6.jar

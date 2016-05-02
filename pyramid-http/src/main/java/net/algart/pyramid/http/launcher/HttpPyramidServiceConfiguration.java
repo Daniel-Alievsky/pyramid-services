@@ -45,6 +45,8 @@ public class HttpPyramidServiceConfiguration {
         private final Set<String> vmOptions;
         // - classPath and vmOptions of all services of the single processes are joined
         private final int port;
+        private final Long xmx;
+        private ViewerProcess parent;
 
         private ViewerService(JsonObject json) {
             Objects.requireNonNull(json);
@@ -64,6 +66,9 @@ public class HttpPyramidServiceConfiguration {
                     this.vmOptions.add(vmOptions.getString(k));
                 }
             }
+
+            final String xmx = json.getString("xmx", null);
+            this.xmx = xmx != null ? parseLongWithMetricalSuffixes(xmx) : null;
             this.port = getRequiredInt(json, "port");
         }
 
@@ -103,6 +108,9 @@ public class HttpPyramidServiceConfiguration {
             builder.add("planePyramidFactoryConfiguration", planePyramidFactoryConfiguration);
             builder.add("classPath", toJsonArray(classPath));
             builder.add("vmOptions", toJsonArray(vmOptions));
+            if (xmx != null) {
+                builder.add("xmx", xmx);
+            }
             builder.add("port", port);
             return builder.build();
         }
@@ -110,9 +118,13 @@ public class HttpPyramidServiceConfiguration {
 
     public static class ViewerProcess implements ConvertibleToJson {
         private final List<ViewerService> viewerServices;
+        private HttpPyramidServiceConfiguration parent;
 
         private ViewerProcess(List<ViewerService> viewerServices) {
-            this.viewerServices = viewerServices;
+            this.viewerServices = Objects.requireNonNull(viewerServices);
+            for (ViewerService viewerService : viewerServices) {
+                viewerService.parent = this;
+            }
         }
 
         public JsonObject toJson() {
@@ -144,11 +156,16 @@ public class HttpPyramidServiceConfiguration {
     // - some common JARs used by all processes: common open-source API
     private final Set<String> commonVmOptions;
     // - for example, here we can add -ea -esa to all processes
+    private final Long commonXmx;
+    // - actual -Xmx for every process is a maximum of this value and xmx for all its services
 
     private HttpPyramidServiceConfiguration(JsonObject globalConfiguration, List<ViewerProcess> viewerProcesses) {
         Objects.requireNonNull(globalConfiguration);
         Objects.requireNonNull(viewerProcesses);
         this.viewerProcesses = viewerProcesses;
+        for (ViewerProcess viewerProcess : viewerProcesses) {
+            viewerProcess.parent = this;
+        }
         final JsonArray commonClassPath = globalConfiguration.getJsonArray("commonClassPath");
         this.commonClassPath = new TreeSet<>();
         if (commonClassPath != null) {
@@ -163,6 +180,8 @@ public class HttpPyramidServiceConfiguration {
                 this.commonVmOptions.add(commonVmOptions.getString(k));
             }
         }
+        final String commonXmx = globalConfiguration.getString("commonXmx", null);
+        this.commonXmx = commonXmx != null ? parseLongWithMetricalSuffixes(commonXmx) : null;
     }
 
     public List<ViewerProcess> getViewerProcesses() {
@@ -182,6 +201,9 @@ public class HttpPyramidServiceConfiguration {
         builder.add("viewerProcesses", toJsonArray(viewerProcesses));
         builder.add("commonClassPath", toJsonArray(commonClassPath));
         builder.add("commonVmOptions", toJsonArray(commonVmOptions));
+        if (commonXmx != null) {
+            builder.add("commonXmx", commonXmx);
+        }
         return builder.build().toString();
     }
 
@@ -253,10 +275,35 @@ public class HttpPyramidServiceConfiguration {
     }
 
     private static JsonObject readJson(Path path) throws IOException {
-        try (final JsonReader reader = Json.createReader(Files.newBufferedReader(path, StandardCharsets.UTF_8)))
-        {
+        try (final JsonReader reader = Json.createReader(Files.newBufferedReader(path, StandardCharsets.UTF_8))) {
             return reader.readObject();
         }
+    }
+
+    private static long parseLongWithMetricalSuffixes(String s) {
+        if (s == null) {
+            throw new NumberFormatException("null");
+        }
+        int sh = 0;
+        if (s.endsWith("K") || s.endsWith("k")) {
+            sh = 10;
+            s = s.substring(0, s.length() - 1);
+        } else if (s.endsWith("M") || s.endsWith("m")) {
+            sh = 20;
+            s = s.substring(0, s.length() - 1);
+        } else if (s.endsWith("G") || s.endsWith("g")) {
+            sh = 30;
+            s = s.substring(0, s.length() - 1);
+        } else if (s.endsWith("T") || s.endsWith("t")) {
+            sh = 40;
+            s = s.substring(0, s.length() - 1);
+        }
+        long result = Long.parseLong(s);
+        if (((result << sh) >> sh) != result) {
+            // overflow
+            throw new NumberFormatException("Too large 64-bit long integer value");
+        }
+        return result << sh;
     }
 
     private interface ConvertibleToJson {

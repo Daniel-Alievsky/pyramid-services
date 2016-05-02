@@ -32,6 +32,10 @@ import java.nio.file.Paths;
 
 public class HttpPyramidServiceConfigurationTest {
     public static void main(String args[]) throws IOException {
+        if (args.length == 0) {
+            System.out.printf("Usage: %s configurationFolder%n", HttpPyramidServiceConfigurationTest.class.getName());
+            return;
+        }
         Path file = Paths.get(args[0]);
         final HttpPyramidServiceConfiguration configuration = HttpPyramidServiceConfiguration.getConfiguration(file);
         System.out.println(configuration);

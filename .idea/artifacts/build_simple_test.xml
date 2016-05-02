@@ -2,28 +2,51 @@
   <artifact name="build-simple-test">
     <output-path>$PROJECT_DIR$/out/artifacts/build_simple_test</output-path>
     <root id="root">
-      <element id="directory" name=".m2">
-        <element id="library" level="project" name="Maven: com.github.jai-imageio:jai-imageio-core:1.3.1" />
-        <element id="library" level="project" name="Maven: javax.json:javax.json-api:1.0" />
-        <element id="library" level="project" name="Maven: net.algart.simagis:simagis-plane-pyramid-sdk:1.2.15" />
-        <element id="library" level="project" name="Maven: net.algart:algart:1.2.7" />
-        <element id="library" level="project" name="Maven: net.simagis.ext:json:0.1" />
-        <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-framework:2.3.22" />
-        <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-server:2.3.22" />
-        <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-servlet:2.3.22" />
-        <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http:2.3.22" />
-        <element id="library" level="project" name="Maven: org.glassfish:javax.json:1.0.4" />
-      </element>
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/welcome.html" />
-      <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration-example" />
-      <element id="directory" name="api">
-        <element id="artifact" artifact-name="pyramid-algart-based-with-test:jar" />
-        <element id="artifact" artifact-name="pyramid-common:jar" />
-        <element id="artifact" artifact-name="pyramid-http:jar" />
-      </element>
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/AddImage.cmd" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/LaunchJavaTestGnu.cmd" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/pyramids.html" />
+      <element id="directory" name="html">
+        <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/html" />
+      </element>
+      <element id="directory" name="pp-config">
+        <element id="directory" name="services">
+          <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-config/services" />
+        </element>
+        <element id="directory" name="lib">
+          <element id="directory" name="maven">
+            <element id="directory" name="grizzly">
+              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-server:2.3.22" />
+              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-framework:2.3.22" />
+              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-servlet:2.3.22" />
+              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http:2.3.22" />
+            </element>
+            <element id="directory" name="jai">
+              <element id="library" level="project" name="Maven: com.github.jai-imageio:jai-imageio-core:1.3.1" />
+            </element>
+            <element id="directory" name="json">
+              <element id="library" level="project" name="Maven: javax.json:javax.json-api:1.0" />
+              <element id="library" level="project" name="Maven: org.glassfish:javax.json:1.0.4" />
+            </element>
+            <element id="directory" name="algart">
+              <element id="library" level="project" name="Maven: net.algart.simagis:simagis-plane-pyramid-sdk:1.2.15" />
+              <element id="library" level="project" name="Maven: net.algart:algart:1.2.7" />
+              <element id="library" level="project" name="Maven: net.simagis.ext:json:0.1" />
+            </element>
+          </element>
+          <element id="directory" name="api">
+            <element id="artifact" artifact-name="pyramid-algart-based-with-test:jar" />
+            <element id="artifact" artifact-name="pyramid-common:jar" />
+            <element id="artifact" artifact-name="pyramid-http:jar" />
+          </element>
+        </element>
+      </element>
+      <element id="directory" name="pp-images">
+        <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-images" />
+      </element>
+      <element id="directory" name="pp-links">
+        <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-links" />
+      </element>
     </root>
   </artifact>
 </component>

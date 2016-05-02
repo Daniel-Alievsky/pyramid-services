@@ -33,5 +33,12 @@ public class HttpPyramidServiceLauncher {
         this.configuration = Objects.requireNonNull(configuration);
     }
 
-    //TODO!!
+    public void restartServices() {
+        //TODO!! if a service is alive, finish it and wait for finishing
+        //TODO!! start each service by a separate thread (don't delay others due to one bad services)
+    }
+
+    public void finishServices() {
+        //TODO!!
+    }
 }
