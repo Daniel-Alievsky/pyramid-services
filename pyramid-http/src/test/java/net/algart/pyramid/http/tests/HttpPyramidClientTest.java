@@ -22,29 +22,32 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.launcher;
+package net.algart.pyramid.http.tests;
 
-import java.util.Objects;
+import net.algart.pyramid.PlanePyramidInformation;
+import net.algart.pyramid.http.HttpPyramidClient;
 
-public class HttpPyramidServiceLauncher {
-    private final HttpPyramidServiceConfiguration configuration;
+import java.io.IOException;
 
-    public HttpPyramidServiceLauncher(HttpPyramidServiceConfiguration configuration) {
-        this.configuration = Objects.requireNonNull(configuration);
+public class HttpPyramidClientTest {
+    public static void main(String[] args) throws IOException {
+        if (args.length < 2) {
+            System.out.printf("Usage: %s host port [pyramidId]%n", HttpPyramidClientTest.class.getName());
+            return;
+        }
+        final String host = args[0];
+        final int port = Integer.parseInt(args[1]);
+        final String pyramidId = args.length >= 3 ? args[2] : null;
+
+        HttpPyramidClient client = new HttpPyramidClient(host, port);
+        if (client.isServiceAlive()) {
+            System.out.println("Service is alive");
+            if (pyramidId != null) {
+                final PlanePyramidInformation information = client.information(pyramidId);
+                System.out.printf("Pyramid information:%n%n%s%n", information);
+            }
+        } else {
+            System.out.println("Service is not active");
+        }
     }
-
-    public void restartServices() {
-        restartServices(false);
-    }
-
-    public void restartServices(boolean restartAliveServices) {
-        //TODO!! if a service is alive, finish it and wait for finishing
-        //TODO!! start each service by a separate thread (don't delay others due to one bad services)
-    }
-
-    public void finishServices() {
-        //TODO!!
-    }
-
-
 }

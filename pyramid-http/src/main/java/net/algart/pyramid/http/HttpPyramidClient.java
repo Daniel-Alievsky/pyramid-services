@@ -34,6 +34,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
@@ -45,6 +46,9 @@ public class HttpPyramidClient {
     public static final String TMS_COMMAND_PREFIX = "/pp-tms";
     public static final String ZOOMIFY_COMMAND_PREFIX = "/pp-zoomify";
     public static final String READ_SPECIAL_IMAGE_COMMAND_PREFIX = "/pp-read-special-image";
+
+    public static final String PYRAMID_ID_ARGUMENT_NAME = "pyramidId";
+
     public static final String ALIVE_RESPONSE = "Alive";
 
     private final String host;
@@ -60,7 +64,7 @@ public class HttpPyramidClient {
 
     public boolean isServiceAlive() throws IOException {
         //TODO!! timeout
-        final HttpURLConnection connection = openCustomConnection(ALIVE_RESPONSE, "GET");
+        final HttpURLConnection connection = openCustomConnection(ALIVE_STATUS_COMMAND_PREFIX, "GET");
         return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
     }
 
@@ -69,8 +73,10 @@ public class HttpPyramidClient {
         checkHttpOk(connection);
     }
 
-    public PlanePyramidInformation information() throws IOException {
-        final HttpURLConnection connection = openCustomConnection(INFORMATION_COMMAND_PREFIX, "GET");
+    public PlanePyramidInformation information(String pyramidId) throws IOException {
+        final HttpURLConnection connection = openCustomConnection(INFORMATION_COMMAND_PREFIX + "?"
+            + PYRAMID_ID_ARGUMENT_NAME + "=" + URLEncoder.encode(pyramidId, StandardCharsets.UTF_8.name()),
+            "GET");
         checkHttpOk(connection);
         try (final InputStreamReader reader = new InputStreamReader(connection.getInputStream(),
             StandardCharsets.UTF_8))
@@ -94,7 +100,7 @@ public class HttpPyramidClient {
         return result;
     }
 
-    public void checkHttpOk(HttpURLConnection connection) throws IOException {
+    private void checkHttpOk(HttpURLConnection connection) throws IOException {
         if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
             throw new IOException("Invalid response: code " + connection.getResponseCode()
                 + ", message " + connection.getResponseMessage());

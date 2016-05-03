@@ -25,6 +25,7 @@
 package net.algart.pyramid.http.handlers;
 
 import net.algart.pyramid.PlanePyramid;
+import net.algart.pyramid.http.HttpPyramidClient;
 import net.algart.pyramid.http.HttpPyramidCommand;
 import net.algart.pyramid.http.HttpPyramidService;
 import net.algart.pyramid.requests.PlanePyramidRequest;
@@ -35,6 +36,7 @@ import org.glassfish.grizzly.http.server.Response;
 import java.io.IOException;
 
 public class ReadSpecialImagePyramidCommand extends HttpPyramidCommand {
+
     public ReadSpecialImagePyramidCommand(HttpPyramidService httpPyramidService) {
         super(httpPyramidService);
     }
@@ -45,7 +47,8 @@ public class ReadSpecialImagePyramidCommand extends HttpPyramidCommand {
         Response response)
         throws Exception
     {
-        final String configuration = pyramidIdToConfiguration(getParameter(request, "pyramidId"));
+        final String configuration = pyramidIdToConfiguration(
+            getParameter(request, HttpPyramidClient.PYRAMID_ID_ARGUMENT_NAME));
         final String specialImageName = getParameter(request, "specialImageName");
         final Integer width = request.getParameter("width") == null ? null : getIntParameter(request, "width");
         final Integer height = request.getParameter("height") == null ? null : getIntParameter(request, "height");

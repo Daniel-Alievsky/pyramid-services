@@ -26,6 +26,7 @@
 package net.algart.pyramid.http.handlers;
 
 import net.algart.pyramid.PlanePyramid;
+import net.algart.pyramid.http.HttpPyramidClient;
 import net.algart.pyramid.http.HttpPyramidCommand;
 import net.algart.pyramid.http.HttpPyramidService;
 import org.glassfish.grizzly.http.server.Request;
@@ -44,7 +45,8 @@ public class InformationHttpPyramidCommand extends HttpPyramidCommand {
         Response response)
         throws Exception
     {
-        final String configuration = pyramidIdToConfiguration(HttpPyramidCommand.getParameter(request, "pyramidId"));
+        final String configuration = pyramidIdToConfiguration(
+            HttpPyramidCommand.getParameter(request, HttpPyramidClient.PYRAMID_ID_ARGUMENT_NAME));
         final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
         response.setContentType("application/json; charset=utf-8");
         response.addHeader("Access-Control-Allow-Origin", "*");
