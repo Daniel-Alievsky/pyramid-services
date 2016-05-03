@@ -43,17 +43,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HttpPyramidService {
+    static final long IMAGE_CACHING_MEMORY = Math.max(16, Long.getLong(
+        "net.algart.pyramid.http.imageCachingMemory", 256L * 1024L * 1024L));
+    static final Logger LOG = Logger.getLogger(HttpPyramidService.class.getName());
+
     private static final String CONFIG_ROOT_DIR = System.getProperty(
         "net.algart.pyramid.http.configRoot", "/pp-links");
     private static final String CONFIG_FILE_NAME = System.getProperty(
         "net.algart.pyramid.http.configFile", "config.json");
-    private static final String FINISH_PREFIX = "/pp-finish";
     private static final int MAX_NUMBER_OF_PYRAMIDS_IN_POOL = Math.max(16, Integer.getInteger(
         "net.algart.pyramid.http.imageCachingMemory", 256));
-
-    static final long IMAGE_CACHING_MEMORY = Math.max(16, Long.getLong(
-        "net.algart.pyramid.http.imageCachingMemory", 256L * 1024L * 1024L));
-    static final Logger LOG = Logger.getLogger(HttpPyramidService.class.getName());
 
     private final HttpServer server;
     private final int port;
@@ -80,11 +79,11 @@ public class HttpPyramidService {
     }
 
     public final void addStandardHandlers() {
-        addHandler("/pp-information", new InformationHttpPyramidCommand(this));
-        addHandler("/pp-read-rectangle", new ReadRectangleHttpPyramidCommand(this));
-        addHandler("/pp-tms", new TmsHttpPyramidCommand(this));
-        addHandler("/pp-zoomify", new ZoomifyHttpPyramidCommand(this));
-        addHandler("/pp-read-special-image", new ReadSpecialImagePyramidCommand(this));
+        addHandler(HttpPyramidClient.INFORMATION_COMMAND_PREFIX, new InformationHttpPyramidCommand(this));
+        addHandler(HttpPyramidClient.READ_RECTANGLE_COMMAND_PREFIX, new ReadRectangleHttpPyramidCommand(this));
+        addHandler(HttpPyramidClient.TMS_COMMAND_PREFIX, new TmsHttpPyramidCommand(this));
+        addHandler(HttpPyramidClient.ZOOMIFY_COMMAND_PREFIX, new ZoomifyHttpPyramidCommand(this));
+        addHandler(HttpPyramidClient.READ_SPECIAL_IMAGE_COMMAND_PREFIX, new ReadSpecialImagePyramidCommand(this));
     }
 
     public final void start() throws IOException {
@@ -97,7 +96,7 @@ public class HttpPyramidService {
             while (!shutdown) {
                 Thread.sleep(500);
             }
-            Thread.sleep(2000);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             LOG.log(Level.SEVERE, "Unexpected interrupted exception", e);
         }
@@ -105,10 +104,10 @@ public class HttpPyramidService {
         LOG.info("Finishing " + this);
     }
 
-    public void shutdown() {
+    public void finish() {
         LOG.log(Level.INFO, "Shutting down pyramid service...");
-        threadPool.shutdown();
         server.shutdown();
+        threadPool.shutdown();
         shutdown = true;
     }
 
@@ -139,7 +138,45 @@ public class HttpPyramidService {
     }
 
     private void addBuiltInHandlers() {
-        addHandler(FINISH_PREFIX, new FinishCommand(this));
+        addHandler(HttpPyramidClient.ALIVE_STATUS_COMMAND_PREFIX, new AliveStatusCommand(this));
+        addHandler(HttpPyramidClient.FINISH_COMMAND_PREFIX, new FinishCommand(this));
+    }
+
+    private class FinishCommand extends HttpPyramidCommand {
+        public FinishCommand(HttpPyramidService httpPyramidService) {
+            super(httpPyramidService);
+        }
+
+        @Override
+        public void service(
+            Request request,
+            Response response)
+            throws Exception
+        {
+            finish();
+            response.setContentType("text/plain");
+            response.setStatus(200, "OK");
+            response.getWriter().write("Finishing service");
+            response.finish();
+        }
+    }
+
+    private class AliveStatusCommand extends HttpPyramidCommand {
+        public AliveStatusCommand(HttpPyramidService httpPyramidService) {
+            super(httpPyramidService);
+        }
+
+        @Override
+        public void service(
+            Request request,
+            Response response)
+            throws Exception
+        {
+            response.setContentType("text/plain");
+            response.setStatus(200, "OK");
+            response.getWriter().write(HttpPyramidClient.ALIVE_RESPONSE);
+            response.finish();
+        }
     }
 
     private class HttpPyramidHandler extends HttpHandler {
@@ -183,22 +220,4 @@ public class HttpPyramidService {
         }
     }
 
-    private class FinishCommand extends HttpPyramidCommand {
-        public FinishCommand(HttpPyramidService httpPyramidService) {
-            super(httpPyramidService);
-        }
-
-        @Override
-        public void service(
-            Request request,
-            Response response)
-            throws Exception
-        {
-            shutdown();
-            response.setContentType("text/plain");
-            response.setStatus(200, "OK");
-            response.getWriter().write("Finishing service");
-            response.finish();
-        }
-    }
 }

@@ -22,25 +22,10 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.launcher;
+package net.algart.json;
 
-import java.util.Objects;
+import javax.json.JsonObject;
 
-public class HttpPyramidServiceLauncher {
-    private final HttpPyramidServiceConfiguration configuration;
-
-    public HttpPyramidServiceLauncher(HttpPyramidServiceConfiguration configuration) {
-        this.configuration = Objects.requireNonNull(configuration);
-    }
-
-    public void restartServices() {
-        //TODO!! if a service is alive, finish it and wait for finishing
-        //TODO!! start each service by a separate thread (don't delay others due to one bad services)
-    }
-
-    public void finishServices() {
-        //TODO!!
-    }
-
-
+public interface ConvertibleToJson {
+    JsonObject toJson();
 }

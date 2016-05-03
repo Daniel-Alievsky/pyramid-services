@@ -25,7 +25,6 @@
 package net.algart.pyramid.http;
 
 import net.algart.pyramid.PlanePyramidFactory;
-import net.algart.pyramid.http.handlers.*;
 
 import java.io.IOException;
 
@@ -69,7 +68,7 @@ public class SimpleHttpPyramidServiceLauncher {
         } catch (Exception | Error e) {
             for (final HttpPyramidService service : services) {
                 if (service != null) {
-                    service.shutdown();
+                    service.finish();
                 }
             }
             throw e;

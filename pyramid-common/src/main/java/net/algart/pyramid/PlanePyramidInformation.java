@@ -24,21 +24,20 @@
 
 package net.algart.pyramid;
 
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import javax.json.*;
 import java.util.*;
+
+import static net.algart.json.JsonHelper.*;
 
 public final class PlanePyramidInformation {
     private final int channelCount;
     private final long zeroLevelDimX;
     private final long zeroLevelDimY;
     private final Class<?> elementType;
-    private volatile Double pixelSizeInMicrons;
-    private volatile Double magnification;
+    private volatile Double pixelSizeInMicrons = null;
+    private volatile Double magnification = null;
     private volatile Set<String> existingSpecialImages = new LinkedHashSet<>();
-    private volatile String additionalMetadata;
+    private volatile String additionalMetadata = null;
     // - usually JSON
 
     public PlanePyramidInformation(
@@ -61,6 +60,36 @@ public final class PlanePyramidInformation {
         this.zeroLevelDimX = zeroLevelDimX;
         this.zeroLevelDimY = zeroLevelDimY;
         this.elementType = elementType;
+    }
+
+    public static PlanePyramidInformation valueOf(JsonObject json) {
+        final String elementTypeName = getRequiredString(json, "elementType");
+        final Class<?> elementType;
+        try {
+            elementType = Class.forName(elementTypeName);
+        } catch (ClassNotFoundException e) {
+            throw new JsonException("Invalid JSON: \"elementType\" value is not a class name (\""
+                + elementTypeName + "\")");
+        }
+        final PlanePyramidInformation result = new PlanePyramidInformation(
+            getRequiredInt(json, "channelCount"),
+            getRequiredLong(json, "zeroLevelDimX"),
+            getRequiredLong(json, "zeroLevelDimY"),
+            elementType);
+        final JsonNumber pixelSizeInMicrons = json.getJsonNumber("pixelSizeInMicrons");
+        if (pixelSizeInMicrons != null) {
+            result.setPixelSizeInMicrons(pixelSizeInMicrons.doubleValue());
+        }
+        final JsonNumber magnification = json.getJsonNumber("magnification");
+        if (magnification != null) {
+            result.setMagnification(magnification.doubleValue());
+        }
+        result.setExistingSpecialImages(toStringList(getRequiredJsonArray(json, "existingSpecialImages")));
+        final JsonString additionalMetadata = json.getJsonString("additionalMetadata");
+        if (additionalMetadata != null) {
+            result.setAdditionalMetadata(additionalMetadata.getString());
+        }
+        return result;
     }
 
     public int getChannelCount() {
