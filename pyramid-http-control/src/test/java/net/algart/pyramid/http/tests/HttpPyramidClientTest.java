@@ -44,7 +44,7 @@ public class HttpPyramidClientTest {
             System.out.println("Service is alive");
             if (pyramidId != null) {
                 final PlanePyramidInformation information = client.information(pyramidId);
-                System.out.printf("Pyramid information:%n%n%s%n", information);
+                System.out.printf("Pyramid information:%n%s%n", information);
             }
         } else {
             System.out.println("Service is not active");

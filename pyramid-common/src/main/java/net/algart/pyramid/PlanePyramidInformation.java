@@ -25,6 +25,8 @@
 package net.algart.pyramid;
 
 import javax.json.*;
+import javax.json.stream.JsonGenerator;
+import java.io.StringWriter;
 import java.util.*;
 
 import static net.algart.json.JsonHelper.*;
@@ -64,11 +66,17 @@ public final class PlanePyramidInformation {
 
     public static PlanePyramidInformation valueOf(JsonObject json) {
         final String elementTypeName = getRequiredString(json, "elementType");
-        final Class<?> elementType;
-        try {
-            elementType = Class.forName(elementTypeName);
-        } catch (ClassNotFoundException e) {
-            throw new JsonException("Invalid JSON: \"elementType\" value is not a class name (\""
+        Class<?> elementType = elementTypeName.equals("boolean") ? boolean.class
+            : elementTypeName.equals("char") ? char.class
+            : elementTypeName.equals("byte") ? byte.class
+            : elementTypeName.equals("short") ? short.class
+            : elementTypeName.equals("int") ? int.class
+            : elementTypeName.equals("long") ? long.class
+            : elementTypeName.equals("float") ? float.class
+            : elementTypeName.equals("double") ? double.class
+            : null;
+        if (elementType == null) {
+            throw new JsonException("Invalid JSON: \"elementType\" value is not a name of primitive type (\""
                 + elementTypeName + "\")");
         }
         final PlanePyramidInformation result = new PlanePyramidInformation(
@@ -174,5 +182,17 @@ public final class PlanePyramidInformation {
             builder.add("additionalMetadata", additionalMetadata);
         }
         return builder.build();
+    }
+
+    public String toString() {
+        final JsonObject jsonObject = toJson();
+        Map<String, Boolean> config = new HashMap<>();
+        config.put(JsonGenerator.PRETTY_PRINTING, true);
+        JsonWriterFactory jsonWriterFactory = Json.createWriterFactory(config);
+        StringWriter stringWriter = new StringWriter();
+        try (JsonWriter jsonWriter = jsonWriterFactory.createWriter(stringWriter)) {
+            jsonWriter.writeObject(jsonObject);
+        }
+        return stringWriter.toString();
     }
 }
