@@ -41,7 +41,7 @@
         </dependency>
         <dependency>
             <groupId>net.algart.pyramid</groupId>
-            <artifactId>pyramid-http</artifactId>
+            <artifactId>pyramid-http-server</artifactId>
             <version>1.0.1</version>
             <scope>test</scope>
         </dependency>

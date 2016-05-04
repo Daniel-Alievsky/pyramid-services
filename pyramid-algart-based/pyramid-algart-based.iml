@@ -12,11 +12,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="pyramid-common" />
+    <orderEntry type="module" module-name="json-helper" />
     <orderEntry type="library" name="Maven: net.algart:algart:1.2.7" level="project" />
     <orderEntry type="library" name="Maven: net.algart.simagis:simagis-plane-pyramid-sdk:1.2.15" level="project" />
     <orderEntry type="library" name="Maven: net.simagis.ext:json:0.1" level="project" />
     <orderEntry type="library" name="Maven: javax.json:javax.json-api:1.0" level="project" />
-    <orderEntry type="module" module-name="pyramid-http" scope="TEST" />
+    <orderEntry type="module" module-name="pyramid-http-server" scope="TEST" />
+    <orderEntry type="module" module-name="pyramid-http-api" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Maven: org.glassfish.grizzly:grizzly-framework:2.3.22" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.glassfish.grizzly:grizzly-http:2.3.22" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.glassfish.grizzly:grizzly-http-servlet:2.3.22" level="project" />

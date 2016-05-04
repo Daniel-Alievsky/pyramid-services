@@ -22,15 +22,21 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
+        <module name="json-helper" />
         <module name="pyramid-algart-based" />
         <module name="pyramid-common" />
-        <module name="pyramid-http" />
+        <module name="pyramid-http-api" />
+        <module name="pyramid-http-control" />
+        <module name="pyramid-http-server" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="json-helper" target="1.8" />
       <module name="pyramid-algart-based" target="1.8" />
       <module name="pyramid-common" target="1.8" />
-      <module name="pyramid-http" target="1.8" />
+      <module name="pyramid-http-api" target="1.8" />
+      <module name="pyramid-http-control" target="1.8" />
+      <module name="pyramid-http-server" target="1.8" />
       <module name="pyramid-services" target="1.8" />
     </bytecodeTargetLevel>
   </component>

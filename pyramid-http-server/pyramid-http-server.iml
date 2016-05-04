@@ -11,7 +11,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="pyramid-common" />
     <orderEntry type="module" module-name="json-helper" />
+    <orderEntry type="module" module-name="pyramid-http-api" />
+    <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-framework:2.3.22" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-http:2.3.22" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-http-servlet:2.3.22" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-http-server:2.3.22" level="project" />
     <orderEntry type="library" name="Maven: javax.json:javax.json-api:1.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.glassfish:javax.json:1.0.4" level="project" />
   </component>

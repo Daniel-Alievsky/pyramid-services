@@ -1,8 +1,11 @@
 {
   "commonClassPath" : [
-    "../lib/api/pyramid-algart-based.jar",
-    "../lib/api/pyramid-common.jar.jar",
-    "../lib/api/pyramid-http.jar",
+    "../lib/sdk/json-helper.jar",
+    "../lib/sdk/pyramid-algart-based.jar",
+    "../lib/sdk/pyramid-common.jar.jar",
+    "../lib/sdk/pyramid-http-api.jar",
+    "../lib/sdk/pyramid-http-server.jar",
+    "../lib/sdk/pyramid-http-control.jar",
     "../lib/maven/algart/algart-1.2.7.jar",
     "../lib/maven/algart/json-0.1.jar",
     "../lib/maven/algart/simagis-plane-pyramid-sdk-1.2.15.jar",

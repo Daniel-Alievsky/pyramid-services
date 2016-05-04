@@ -24,15 +24,10 @@
 
 package net.algart.pyramid.standard.tests;
 
-import net.algart.pyramid.http.HttpPyramidService;
-import net.algart.pyramid.http.SimpleHttpPyramidServiceLauncher;
-import net.algart.pyramid.http.handlers.InformationHttpPyramidCommand;
-import net.algart.pyramid.http.handlers.ReadRectangleHttpPyramidCommand;
-import net.algart.pyramid.http.handlers.TmsHttpPyramidCommand;
+import net.algart.pyramid.http.server.HttpPyramidService;
+import net.algart.pyramid.http.server.launchers.SimpleHttpPyramidServiceLauncher;
 import net.algart.pyramid.standard.StandardPlanePyramidFactory;
 import net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory;
-
-import java.io.IOException;
 
 public class OpenSourceImageFileAccessTest {
     public static void main(String[] args) throws Exception {

@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="pyramid-http-control:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/pyramid_http_control_jar</output-path>
+    <root id="archive" name="pyramid-http-control.jar">
+      <element id="module-output" name="pyramid-http-control" />
+    </root>
+  </artifact>
+</component>

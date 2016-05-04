@@ -9,8 +9,11 @@
     <packaging>pom</packaging>
     <version>1.0.1</version>
     <modules>
+        <module>json-helper</module>
         <module>pyramid-common</module>
-        <module>pyramid-http</module>
+        <module>pyramid-http-api</module>
+        <module>pyramid-http-server</module>
+        <module>pyramid-http-control</module>
         <module>pyramid-algart-based</module>
     </modules>
 

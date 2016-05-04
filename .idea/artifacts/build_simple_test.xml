@@ -34,10 +34,13 @@
               <element id="library" level="project" name="Maven: net.simagis.ext:json:0.1" />
             </element>
           </element>
-          <element id="directory" name="api">
+          <element id="directory" name="sdk">
             <element id="artifact" artifact-name="pyramid-algart-based-with-test:jar" />
             <element id="artifact" artifact-name="pyramid-common:jar" />
-            <element id="artifact" artifact-name="pyramid-http:jar" />
+            <element id="artifact" artifact-name="pyramid-http-server:jar" />
+            <element id="artifact" artifact-name="json-helper:jar" />
+            <element id="artifact" artifact-name="pyramid-http-api:jar" />
+            <element id="artifact" artifact-name="pyramid-http-control:jar" />
           </element>
         </element>
       </element>

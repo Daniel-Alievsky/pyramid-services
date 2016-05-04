@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>pyramid-common</artifactId>
+    <artifactId>pyramid-http-server</artifactId>
 
     <licenses>
         <license>
@@ -21,8 +21,28 @@
     <dependencies>
         <dependency>
             <groupId>net.algart.pyramid</groupId>
-            <artifactId>json-helper</artifactId>
+            <artifactId>pyramid-common</artifactId>
             <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>net.algart.pyramid</groupId>
+            <artifactId>pyramid-http-api</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.grizzly</groupId>
+            <artifactId>grizzly-framework</artifactId>
+            <version>2.3.22</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.grizzly</groupId>
+            <artifactId>grizzly-http</artifactId>
+            <version>2.3.22</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.grizzly</groupId>
+            <artifactId>grizzly-http-servlet</artifactId>
+            <version>2.3.22</version>
         </dependency>
         <dependency>
             <groupId>javax.json</groupId>
