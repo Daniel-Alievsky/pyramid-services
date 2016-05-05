@@ -12,7 +12,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="pyramid-common" />
-    <orderEntry type="module" module-name="json-helper" />
     <orderEntry type="module" module-name="pyramid-http-api" />
     <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-framework:2.3.22" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-http:2.3.22" level="project" />

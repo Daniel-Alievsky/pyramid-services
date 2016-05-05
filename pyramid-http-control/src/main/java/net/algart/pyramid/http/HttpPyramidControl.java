@@ -71,10 +71,7 @@ public class HttpPyramidControl {
         try (final InputStreamReader reader = new InputStreamReader(connection.getInputStream(),
             StandardCharsets.UTF_8))
         {
-            try (final JsonReader jsonReader = Json.createReader(reader)) {
-                final JsonObject json = jsonReader.readObject();
-                return PlanePyramidInformation.valueOf(json);
-            }
+            return PlanePyramidInformation.valueOf(reader);
         }
     }
 

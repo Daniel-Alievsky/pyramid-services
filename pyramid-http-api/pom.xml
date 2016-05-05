@@ -20,11 +20,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>net.algart.pyramid</groupId>
-            <artifactId>json-helper</artifactId>
-            <version>1.0.1</version>
-        </dependency>
-        <dependency>
             <groupId>javax.json</groupId>
             <artifactId>javax.json-api</artifactId>
             <version>1.0</version>

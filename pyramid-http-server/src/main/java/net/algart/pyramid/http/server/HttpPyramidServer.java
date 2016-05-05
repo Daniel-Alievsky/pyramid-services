@@ -22,10 +22,23 @@
  * SOFTWARE.
  */
 
-package net.algart.json;
+package net.algart.pyramid.http.server;
 
-import javax.json.JsonObject;
+import net.algart.pyramid.http.api.HttpPyramidServiceConfiguration;
 
-public interface ConvertibleToJson {
-    JsonObject toJson();
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+
+public class HttpPyramidServer {
+    private final HttpPyramidServiceConfiguration configuration;
+    private final List<String> formatNames;
+
+    public HttpPyramidServer(HttpPyramidServiceConfiguration configuration, Collection<String> formatNames) {
+        Objects.requireNonNull(configuration);
+        Objects.requireNonNull(formatNames);
+        this.configuration = configuration;
+        this.formatNames = new ArrayList<>(formatNames);
+    }
 }

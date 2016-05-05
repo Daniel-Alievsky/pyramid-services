@@ -52,7 +52,7 @@ public class InformationHttpPyramidCommand extends HttpPyramidCommand {
         // - Allows browser JavaScript to access this via XMLHttpRequest.
         // It does not violate security, because other client can access this information in any case,
         // and Web pages cannot abuse it: it is not more dangerous than simple ability to read images.
-        final String message = pyramid.readInformation().toJson().toString();
+        final String message = pyramid.readInformation().toJsonString();
         response.setStatus(200, "OK");
         response.getWriter().write(message);
         response.finish();

@@ -22,14 +22,13 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.server.launchers;
+package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidFactory;
-import net.algart.pyramid.http.server.HttpPyramidService;
 
 import java.io.IOException;
 
-public class SimpleHttpPyramidServiceLauncher {
+public class SimpleHttpPyramidServer {
     protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
         return new HttpPyramidService(factory, port);
     }
@@ -121,6 +120,6 @@ public class SimpleHttpPyramidServiceLauncher {
     }
 
     public static void main(String[] args) throws Exception {
-        new SimpleHttpPyramidServiceLauncher().doMain(args);
+        new SimpleHttpPyramidServer().doMain(args);
     }
 }

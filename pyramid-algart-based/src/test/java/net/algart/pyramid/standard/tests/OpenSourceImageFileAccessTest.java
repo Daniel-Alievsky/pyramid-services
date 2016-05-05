@@ -25,7 +25,7 @@
 package net.algart.pyramid.standard.tests;
 
 import net.algart.pyramid.http.server.HttpPyramidService;
-import net.algart.pyramid.http.server.launchers.SimpleHttpPyramidServiceLauncher;
+import net.algart.pyramid.http.server.SimpleHttpPyramidServer;
 import net.algart.pyramid.standard.StandardPlanePyramidFactory;
 import net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory;
 
@@ -52,7 +52,7 @@ public class OpenSourceImageFileAccessTest {
             "net.algart.pyramid.http.planePyramidSubFactory",
             ImageIOPlanePyramidSourceFactory.class.getName()
                 + (addGnu ? "|com.simagis.pyramid.loci.server.LociPlanePyramidSourceFactory" : ""));
-        new SimpleHttpPyramidServiceLauncher() {
+        new SimpleHttpPyramidServer() {
             @Override
             protected void addHandlers(HttpPyramidService service) {
                 super.addHandlers(service);

@@ -24,15 +24,12 @@
 
 package net.algart.pyramid.http.api;
 
-import net.algart.json.ConvertibleToJson;
-import net.algart.json.JsonHelper;
-
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import javax.json.*;
+import javax.json.stream.JsonGenerator;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,8 +38,9 @@ import java.util.*;
 public class HttpPyramidServiceConfiguration {
     private static final String GLOBAL_CONFIGURATION_FILE_NAME = ".global-configuration.json";
 
-    public static class Service implements ConvertibleToJson {
+    public static class Service extends ConvertibleToJson {
         private final String formatName;
+        // - must be unique
         private final String groupId;
         private final String planePyramidFactory;
         private final String planePyramidFactoryConfiguration;
@@ -51,15 +49,15 @@ public class HttpPyramidServiceConfiguration {
         private final Long xmx;
         // - classPath and vmOptions of all services of the single processes are joined
         private final int port;
-        private Process parent;
+        private Process parentProcess;
 
         private Service(JsonObject json) {
             Objects.requireNonNull(json);
-            this.formatName = JsonHelper.getRequiredString(json, "formatName");
-            this.groupId = JsonHelper.getRequiredString(json, "groupId");
-            this.planePyramidFactory = JsonHelper.getRequiredString(json, "planePyramidFactory");
+            this.formatName = getRequiredString(json, "formatName");
+            this.groupId = getRequiredString(json, "groupId");
+            this.planePyramidFactory = getRequiredString(json, "planePyramidFactory");
             this.planePyramidFactoryConfiguration = json.getString("planePyramidFactoryConfiguration", null);
-            final JsonArray classPath = JsonHelper.getRequiredJsonArray(json, "classPath");
+            final JsonArray classPath = getRequiredJsonArray(json, "classPath");
             this.classPath = new TreeSet<>();
             for (int k = 0, n = classPath.size(); k < n; k++) {
                 this.classPath.add(classPath.getString(k));
@@ -74,7 +72,7 @@ public class HttpPyramidServiceConfiguration {
 
             final String xmx = json.getString("xmx", null);
             this.xmx = xmx != null ? parseLongWithMetricalSuffixes(xmx) : null;
-            this.port = JsonHelper.getRequiredInt(json, "port");
+            this.port = getRequiredInt(json, "port");
         }
 
         public String getFormatName() {
@@ -109,18 +107,18 @@ public class HttpPyramidServiceConfiguration {
             return port;
         }
 
-        public Process parent() {
-            return parent;
+        public Process parentProcess() {
+            return parentProcess;
         }
 
-        public JsonObject toJson() {
+        JsonObject toJson() {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
             builder.add("formatName", formatName);
             builder.add("groupId", groupId);
             builder.add("planePyramidFactory", planePyramidFactory);
             builder.add("planePyramidFactoryConfiguration", planePyramidFactoryConfiguration);
-            builder.add("classPath", JsonHelper.toJsonArray(classPath));
-            builder.add("vmOptions", JsonHelper.toJsonArray(vmOptions));
+            builder.add("classPath", toJsonArray(classPath));
+            builder.add("vmOptions", toJsonArray(vmOptions));
             if (xmx != null) {
                 builder.add("xmx", xmx);
             }
@@ -129,14 +127,14 @@ public class HttpPyramidServiceConfiguration {
         }
     }
 
-    public static class Process implements ConvertibleToJson {
+    public static class Process extends ConvertibleToJson {
         private final List<Service> services;
-        private HttpPyramidServiceConfiguration parent;
+        private HttpPyramidServiceConfiguration parentConfiguration;
 
         private Process(List<Service> services) {
             this.services = Objects.requireNonNull(services);
             for (Service service : services) {
-                service.parent = this;
+                service.parentProcess = this;
             }
         }
 
@@ -160,13 +158,13 @@ public class HttpPyramidServiceConfiguration {
             return result;
         }
 
-        public HttpPyramidServiceConfiguration parent() {
-            return parent;
+        public HttpPyramidServiceConfiguration parentConfiguration() {
+            return parentConfiguration;
         }
 
-        public JsonObject toJson() {
+        JsonObject toJson() {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
-            builder.add("services", JsonHelper.toJsonArray(services));
+            builder.add("services", toJsonArray(services));
             return builder.build();
         }
     }
@@ -178,13 +176,14 @@ public class HttpPyramidServiceConfiguration {
     // - for example, here we can add -ea -esa to all processes
     private final Long commonXmx;
     // - actual -Xmx for every process is a maximum of this value and xmx for all its services
+    private final Map<String, Service> allFormatServices;
 
     private HttpPyramidServiceConfiguration(JsonObject globalConfiguration, List<Process> processes) {
         Objects.requireNonNull(globalConfiguration);
         Objects.requireNonNull(processes);
         this.processes = processes;
         for (Process process : processes) {
-            process.parent = this;
+            process.parentConfiguration = this;
         }
         final JsonArray commonClassPath = globalConfiguration.getJsonArray("commonClassPath");
         this.commonClassPath = new TreeSet<>();
@@ -202,6 +201,15 @@ public class HttpPyramidServiceConfiguration {
         }
         final String commonXmx = globalConfiguration.getString("commonXmx", null);
         this.commonXmx = commonXmx != null ? parseLongWithMetricalSuffixes(commonXmx) : null;
+        this.allFormatServices = new LinkedHashMap<>();
+        for (Process process : processes) {
+            for (Service service : process.services) {
+                if (allFormatServices.putIfAbsent(service.formatName, service) != null) {
+                    throw new JsonException("Invalid configuration JSON: "
+                        + "two or more services with the single format \"" + service.formatName + "\"");
+                }
+            }
+        }
     }
 
     public List<Process> getProcesses() {
@@ -216,15 +224,18 @@ public class HttpPyramidServiceConfiguration {
         return Collections.unmodifiableSet(commonVmOptions);
     }
 
+    public String toJsonString() {
+        return toJson().toString();
+    }
+
     public String toString() {
-        final JsonObjectBuilder builder = Json.createObjectBuilder();
-        builder.add("processes", JsonHelper.toJsonArray(processes));
-        builder.add("commonClassPath", JsonHelper.toJsonArray(commonClassPath));
-        builder.add("commonVmOptions", JsonHelper.toJsonArray(commonVmOptions));
-        if (commonXmx != null) {
-            builder.add("commonXmx", commonXmx);
+        JsonWriterFactory jsonWriterFactory = Json.createWriterFactory(
+            Collections.singletonMap(JsonGenerator.PRETTY_PRINTING, true));
+        StringWriter stringWriter = new StringWriter();
+        try (JsonWriter jsonWriter = jsonWriterFactory.createWriter(stringWriter)) {
+            jsonWriter.writeObject(toJson());
+            return stringWriter.toString();
         }
-        return builder.build().toString();
     }
 
     public static HttpPyramidServiceConfiguration getConfiguration(Path configurationFolder) throws IOException {
@@ -232,7 +243,7 @@ public class HttpPyramidServiceConfiguration {
         if (!Files.isRegularFile(globalConfigurationFile)) {
             throw new FileNotFoundException(globalConfigurationFile + " not found");
         }
-        final JsonObject globalConfiguration = JsonHelper.readJson(globalConfigurationFile);
+        final JsonObject globalConfiguration = readJson(globalConfigurationFile);
         final LinkedHashMap<String, List<Service>> groups = new LinkedHashMap<>();
         try (final DirectoryStream<Path> files = Files.newDirectoryStream(configurationFolder, ".*.json")) {
             for (Path file : files) {
@@ -240,7 +251,7 @@ public class HttpPyramidServiceConfiguration {
                 if (fileName.equals(GLOBAL_CONFIGURATION_FILE_NAME)) {
                     continue;
                 }
-                final Service service = new Service(JsonHelper.readJson(file));
+                final Service service = new Service(readJson(file));
                 List<Service> group = groups.get(service.groupId);
                 if (group == null) {
                     group = new ArrayList<>();
@@ -254,6 +265,17 @@ public class HttpPyramidServiceConfiguration {
             processes.add(new Process(group));
         }
         return new HttpPyramidServiceConfiguration(globalConfiguration, processes);
+    }
+
+    JsonObject toJson() {
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        builder.add("processes", toJsonArray(processes));
+        builder.add("commonClassPath", toJsonArray(commonClassPath));
+        builder.add("commonVmOptions", toJsonArray(commonVmOptions));
+        if (commonXmx != null) {
+            builder.add("commonXmx", commonXmx);
+        }
+        return builder.build();
     }
 
     private static long parseLongWithMetricalSuffixes(String s) {
@@ -280,5 +302,54 @@ public class HttpPyramidServiceConfiguration {
             throw new NumberFormatException("Too large 64-bit long integer value");
         }
         return result << sh;
+    }
+
+    private  static String getRequiredString(JsonObject json, String name) {
+        final JsonString result = json.getJsonString(name);
+        if (result == null) {
+            throw new JsonException("Invalid pyramid service configuration JSON: \"" + name + "\" value required");
+        }
+        return result.getString();
+    }
+
+    private static int getRequiredInt(JsonObject json, String name) {
+        final JsonNumber result = json.getJsonNumber(name);
+        if (result == null) {
+            throw new JsonException("Invalid pyramid service configuration JSON: \"" + name + "\" value required");
+        }
+        return result.intValueExact();
+    }
+
+    private static JsonArray getRequiredJsonArray(JsonObject json, String name) {
+        final JsonArray result = json.getJsonArray(name);
+        if (result == null) {
+            throw new JsonException("Invalid pyramid service configuration JSON: \"" + name + "\" value required");
+        }
+        return result;
+    }
+
+    private static JsonArray toJsonArray(Collection<?> collection) {
+        final JsonArrayBuilder builder = Json.createArrayBuilder();
+        for (Object o : collection) {
+            if (o instanceof String) {
+                builder.add((String) o);
+            } else if (o instanceof ConvertibleToJson) {
+                builder.add(((ConvertibleToJson) o).toJson());
+            } else {
+                throw new AssertionError();
+            }
+        }
+        return builder.build();
+    }
+
+    private static JsonObject readJson(Path path) throws IOException {
+        try (final JsonReader reader = Json.createReader(Files.newBufferedReader(path, StandardCharsets.UTF_8))) {
+            return reader.readObject();
+        }
+    }
+
+    // Class, not interface: method toJson should be not public
+    private static abstract class ConvertibleToJson {
+        abstract JsonObject toJson();
     }
 }

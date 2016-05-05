@@ -26,10 +26,9 @@ package net.algart.pyramid;
 
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
+import java.io.Reader;
 import java.io.StringWriter;
 import java.util.*;
-
-import static net.algart.json.JsonHelper.*;
 
 public final class PlanePyramidInformation {
     private final int channelCount;
@@ -64,7 +63,11 @@ public final class PlanePyramidInformation {
         this.elementType = elementType;
     }
 
-    public static PlanePyramidInformation valueOf(JsonObject json) {
+    public static PlanePyramidInformation valueOf(Reader reader) {
+        final JsonObject json;
+        try (final JsonReader jsonReader = Json.createReader(reader)) {
+            json = jsonReader.readObject();
+        }
         final String elementTypeName = getRequiredString(json, "elementType");
         Class<?> elementType = elementTypeName.equals("boolean") ? boolean.class
             : elementTypeName.equals("char") ? char.class
@@ -161,7 +164,21 @@ public final class PlanePyramidInformation {
         this.additionalMetadata = additionalMetadata;
     }
 
-    public JsonObject toJson() {
+    public String toJsonString() {
+        return toJson().toString();
+    }
+
+    public String toString() {
+        JsonWriterFactory jsonWriterFactory = Json.createWriterFactory(
+            Collections.singletonMap(JsonGenerator.PRETTY_PRINTING, true));
+        StringWriter stringWriter = new StringWriter();
+        try (JsonWriter jsonWriter = jsonWriterFactory.createWriter(stringWriter)) {
+            jsonWriter.writeObject(toJson());
+            return stringWriter.toString();
+        }
+    }
+
+    private JsonObject toJson() {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("channelCount", channelCount);
         builder.add("zeroLevelDimX", zeroLevelDimX);
@@ -184,15 +201,43 @@ public final class PlanePyramidInformation {
         return builder.build();
     }
 
-    public String toString() {
-        final JsonObject jsonObject = toJson();
-        Map<String, Boolean> config = new HashMap<>();
-        config.put(JsonGenerator.PRETTY_PRINTING, true);
-        JsonWriterFactory jsonWriterFactory = Json.createWriterFactory(config);
-        StringWriter stringWriter = new StringWriter();
-        try (JsonWriter jsonWriter = jsonWriterFactory.createWriter(stringWriter)) {
-            jsonWriter.writeObject(jsonObject);
+    private  static String getRequiredString(JsonObject json, String name) {
+        final JsonString result = json.getJsonString(name);
+        if (result == null) {
+            throw new JsonException("Invalid pyramid information JSON: \"" + name + "\" value required");
         }
-        return stringWriter.toString();
+        return result.getString();
+    }
+
+    private static int getRequiredInt(JsonObject json, String name) {
+        final JsonNumber result = json.getJsonNumber(name);
+        if (result == null) {
+            throw new JsonException("Invalid pyramid information JSON: \"" + name + "\" value required");
+        }
+        return result.intValueExact();
+    }
+
+    private static long getRequiredLong(JsonObject json, String name) {
+        final JsonNumber result = json.getJsonNumber(name);
+        if (result == null) {
+            throw new JsonException("Invalid pyramid information JSON: \"" + name + "\" value required");
+        }
+        return result.longValueExact();
+    }
+
+    private static List<String> toStringList(JsonArray jsonArray) {
+        final List<String> result = new ArrayList<>();
+        for (JsonValue value : jsonArray) {
+            result.add(((JsonString) value).getString());
+        }
+        return result;
+    }
+
+    private static JsonArray getRequiredJsonArray(JsonObject json, String name) {
+        final JsonArray result = json.getJsonArray(name);
+        if (result == null) {
+            throw new JsonException("Invalid pyramid information JSON: \"" + name + "\" value required");
+        }
+        return result;
     }
 }
