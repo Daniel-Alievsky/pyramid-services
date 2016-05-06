@@ -92,8 +92,7 @@ class StandardPlanePyramid implements PlanePyramid {
             opacity != null ? opacity.doubleValue() : 1.0,
             transparencySupported);
         // - opacity is not used in DEFAULT renderer
-        this.specialImageCconverter = new MatrixToBufferedImageConverter.Packed3DToPackedRGB(true);
-            // TODO!! why error? new MatrixToBufferedImageConverter.Packed3DToPackedRGB(transparencySupported);
+        this.specialImageCconverter = new MatrixToBufferedImageConverter.Packed3DToPackedRGB(transparencySupported);
         this.rawBytes = rawBytes;
         this.cacheable = cacheable;
         this.pyramidConfiguration = pyramidConfiguration;
@@ -153,9 +152,6 @@ class StandardPlanePyramid implements PlanePyramid {
             //TODO!! return RGBRGB bytes/short/... froe readImage method
         }
         BufferedImage bufferedImage = source.readBufferedImage(compression, fromX, fromY, toX, toY, converter);
-        if (!transparencySupported(formatName)) {
-            bufferedImage = convertARGBtoBGR(bufferedImage, backgroundColor);
-        }
         this.lastAccessTime = System.currentTimeMillis();
         return bufferedImageToBytes(bufferedImage, formatName);
     }
@@ -183,8 +179,7 @@ class StandardPlanePyramid implements PlanePyramid {
             m = Matrices.asResized(Matrices.ResizingMethod.POLYLINEAR_AVERAGING, m, m.dim(0), width, height);
         }
         final BufferedImage bufferedImage = specialImageCconverter.toBufferedImage(m);
-        return bufferedImageToBytes(bufferedImage, "png");
-        //TODO!! use pyramid format
+        return bufferedImageToBytes(bufferedImage, formatName);
     }
 
     @Override
@@ -212,6 +207,20 @@ class StandardPlanePyramid implements PlanePyramid {
         return "Plane pyramid based on " + source + " (" + formatName + " format)";
     }
 
+    private PlanePyramidData bufferedImageToBytes(BufferedImage bufferedImage, String formatName)
+        throws IOException
+    {
+        if (!transparencySupported(formatName)) {
+            bufferedImage = convertARGBtoBGR(bufferedImage, backgroundColor);
+        }
+        final ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        if (!ImageIO.write(bufferedImage, formatName, stream)) {
+            throw new IIOException(formatName + " image format is not supported for " + bufferedImage);
+        }
+        stream.flush();
+        return new PlanePyramidData(stream.toByteArray());
+    }
+
     private static boolean transparencySupported(String formatName) {
         return formatName.equalsIgnoreCase("png");
     }
@@ -229,16 +238,5 @@ class StandardPlanePyramid implements PlanePyramid {
         } else {
             return bufferedImage;
         }
-    }
-
-    private static PlanePyramidData bufferedImageToBytes(BufferedImage bufferedImage, String formatName)
-        throws IOException
-    {
-        final ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        if (!ImageIO.write(bufferedImage, formatName, stream)) {
-            throw new IIOException(formatName + " image format is not supported for " + bufferedImage);
-        }
-        stream.flush();
-        return new PlanePyramidData(stream.toByteArray());
     }
 }
