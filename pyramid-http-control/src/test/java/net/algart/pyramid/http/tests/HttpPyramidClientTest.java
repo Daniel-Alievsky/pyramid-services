@@ -40,11 +40,25 @@ public class HttpPyramidClientTest {
         final String pyramidId = args.length >= 3 ? args[2] : null;
 
         HttpPyramidControl client = new HttpPyramidControl(host, port);
-        if (client.isServiceAlive()) {
-            System.out.println("Service is alive");
+        final boolean alive;
+        long t1 = System.nanoTime();
+        try {
+            alive = client.isServiceAlive();
+        } finally {
+            long t2 = System.nanoTime();
+            System.out.printf("Status checked in %.5f seconds%n", (t2 - t1) * 1e-9);
+        }
+        if (alive) {
+            System.out.printf("Service is alive; checking pyramid %s...%n", pyramidId);
             if (pyramidId != null) {
-                final PlanePyramidInformation information = client.information(pyramidId);
-                System.out.printf("Pyramid information:%n%s%n", information);
+                t1 = System.nanoTime();
+                try {
+                    final PlanePyramidInformation information = client.information(pyramidId);
+                    System.out.printf("Pyramid information:%n%s%n", information);
+                } finally {
+                    long t2 = System.nanoTime();
+                    System.out.printf("Information request performed in %.5f seconds%n", (t2 - t1) * 1e-9);
+                }
             }
         } else {
             System.out.println("Service is not active");

@@ -26,9 +26,6 @@ package net.algart.pyramid.http;
 
 import net.algart.pyramid.PlanePyramidInformation;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -41,6 +38,10 @@ import java.util.Objects;
 import static net.algart.pyramid.http.api.HttpPyramidConstants.*;
 
 public class HttpPyramidControl {
+    private static final int CONNECTION_TIMEOUT = 30000;
+    private static final int READ_TIMEOUT = 60000;
+    // - read timeout should be greater than timeouts in ReadImageTask class
+
     private final String host;
     private final int port;
 
@@ -78,7 +79,10 @@ public class HttpPyramidControl {
     public final HttpURLConnection openCustomConnection(String pathAndQuery, String requestMethod) throws IOException {
         final URL url = new URL("http", host, port, pathAndQuery);
         final URLConnection connection = url.openConnection();
-        //TODO!! correct timeout http://stackoverflow.com/questions/3163693/java-urlconnection-timeout
+        connection.setConnectTimeout(CONNECTION_TIMEOUT);
+        connection.setReadTimeout(READ_TIMEOUT);
+        // In future, if necessary, we will maybe provide better timeouts:
+        // http://stackoverflow.com/questions/3163693/java-urlconnection-timeout
         if (!(connection instanceof HttpURLConnection)) {
             throw new AssertionError("Invalid type of openCustomConnection (not HttpURLConnection)");
         }
