@@ -22,26 +22,20 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.server;
+package net.algart.pyramid.http.api;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
+/**
+ * Timeouts for working with pyramids via HTTP protocol. All timeouts are specified in milliseconds.
+ */
+public class HttpPyramidTimeouts {
+    public static final int SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT = 60000;
+    public static final int SERVER_SENDING_TIMEOUT = 120000;
 
-final class ReadTaskQueue {
-    private static final int QUEUE_MAX_SIZE = 256;
-    private static final int POLL_TIMEOUT_IN_MILLISECONDS = 1000;
+    public static final int CLIENT_CONNECTION_TIMEOUT = 30000;
+    public static final int CLIENT_READ_TIMEOUT = 90000;
+    // - read timeout should be greater than timeouts in SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT class
 
-    private BlockingQueue<ReadTask> queue = new LinkedBlockingDeque<>(QUEUE_MAX_SIZE);
-
-    void add(ReadTask task) {
-        if (!queue.offer(task)) {
-            throw new IllegalStateException("Task queue is full");
-        }
-    }
-
-    ReadTask pollOrNullAfterTimeout() throws InterruptedException {
-        return queue.poll(POLL_TIMEOUT_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
-        // - timeout is necessary to allow shutdown: this method should never work infinitely
+    private HttpPyramidTimeouts() {
     }
 }
+

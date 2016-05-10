@@ -52,9 +52,12 @@ import static net.algart.simagis.pyramid.PlanePyramidSource.DIM_HEIGHT;
 import static net.algart.simagis.pyramid.PlanePyramidSource.DIM_WIDTH;
 
 class StandardPlanePyramid implements PlanePyramid {
-    private static final long TIMEOUT = Math.max(16, Integer.getInteger(
+    /**
+     * Timeout (in milliseconds), after which the pyramid, if there are no access to it, is automatically
+     * closed and removed from pool.
+     */
+    public static final long PYRAMID_TIMEOUT = Math.max(16, Integer.getInteger(
         "net.algart.pyramid.standard.pyramidTimeout", 30000));
-    // - in milliseconds
 
     private final String pyramidConfiguration;
     private final ScalablePlanePyramidSource source;
@@ -152,7 +155,6 @@ class StandardPlanePyramid implements PlanePyramid {
             //TODO!! return RGBRGB bytes/short/... froe readImage method
         }
         BufferedImage bufferedImage = source.readBufferedImage(compression, fromX, fromY, toX, toY, converter);
-        this.lastAccessTime = System.currentTimeMillis();
         return bufferedImageToBytes(bufferedImage, formatName);
     }
 
@@ -196,7 +198,7 @@ class StandardPlanePyramid implements PlanePyramid {
 
     @Override
     public boolean isTimeout() {
-        return System.currentTimeMillis() - lastAccessTime > TIMEOUT;
+        return System.currentTimeMillis() - lastAccessTime > PYRAMID_TIMEOUT;
     }
 
     @Override
@@ -220,6 +222,7 @@ class StandardPlanePyramid implements PlanePyramid {
             throw new IIOException(formatName + " image format is not supported for " + bufferedImage);
         }
         stream.flush();
+        this.lastAccessTime = System.currentTimeMillis();
         return new PlanePyramidImageData(stream.toByteArray(), this);
     }
 

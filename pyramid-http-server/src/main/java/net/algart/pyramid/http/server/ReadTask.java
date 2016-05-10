@@ -25,8 +25,8 @@
 package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.*;
+import net.algart.pyramid.http.api.HttpPyramidTimeouts;
 import net.algart.pyramid.requests.PlanePyramidRequest;
-import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.WriteHandler;
 import org.glassfish.grizzly.http.io.NIOOutputStream;
 import org.glassfish.grizzly.http.server.Request;
@@ -34,18 +34,10 @@ import org.glassfish.grizzly.http.server.Response;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 final class ReadTask {
-    private static final boolean USE_GRIZZLY_TIMEOUT_FOR_RESPONSE = false;
-    // - I recommend to stay it false for better control over timeouts and possible points of cancelling
-    private static final long GRIZZLY_TIMEOUT = 60000;
-
-    private static final long TIMEOUT_WAITING_IN_QUEUE_AND_READING = 60000;
-    private static final long TIMEOUT_SENDING = 120000;
-    // all timeouts are in milliseconds
     private static final int CHUNK_SIZE = 8192;
     private static final Logger LOG = Logger.getLogger(ReadTask.class.getName());
 
@@ -61,7 +53,6 @@ final class ReadTask {
 
     private volatile boolean sendingDataStarted = false;
     private volatile boolean cancelled = false;
-    private volatile boolean cancelledByGrizzly = false;
     private volatile boolean closed = false;
     private volatile long lastAccessTime;
 
@@ -90,7 +81,7 @@ final class ReadTask {
             response.setStatus(304, "Not modified");
         } else {
             refreshTimeout();
-            suspendResponse();
+            this.response.suspend();
             this.activeTaskSet.addTask(this);
         }
     }
@@ -139,9 +130,6 @@ final class ReadTask {
             cacheable = true;
             // Obviously, if the data appeared in cache, the pyramid was cacheable
         }
-        if (USE_GRIZZLY_TIMEOUT_FOR_RESPONSE && cancelledByGrizzly) {
-            return;
-        }
         if (checkCancellingTask("Task cancelled because of too slow reading pyramid")) {
             return;
         }
@@ -180,7 +168,9 @@ final class ReadTask {
     void cancelIfObsolete() {
 //        System.out.println("Task " + this + " time " + (System.currentTimeMillis() - startTimeInMilliseconds));
         if (System.currentTimeMillis() - lastAccessTime >
-            (sendingDataStarted ? TIMEOUT_SENDING : TIMEOUT_WAITING_IN_QUEUE_AND_READING))
+            (sendingDataStarted ?
+                HttpPyramidTimeouts.SERVER_SENDING_TIMEOUT :
+                HttpPyramidTimeouts.SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT))
         {
             activeTaskSet.removeTask(this);
             // the same action is done while closeTask, but we have no strict guarantees
@@ -208,28 +198,6 @@ final class ReadTask {
             LOG.info("Response is finished: " + this);
         }
         closed = true;
-    }
-
-    private void suspendResponse() {
-        if (USE_GRIZZLY_TIMEOUT_FOR_RESPONSE) {
-            response.suspend(GRIZZLY_TIMEOUT, TimeUnit.MILLISECONDS, new EmptyCompletionHandler<Response>() {
-                @Override
-                public void cancelled() {
-                    cancelledByGrizzly = true;
-                    LOG.log(Level.WARNING, "Response is cancelled");
-                    response.setStatus(500, "Response is cancelled");
-                    closeTask(true);
-                }
-
-                @Override
-                public void failed(Throwable throwable) {
-                    LOG.log(Level.SEVERE, "Response is failed");
-                    closeTask(false);
-                }
-            });
-        } else {
-            response.suspend();
-        }
     }
 
     private void refreshTimeout() {

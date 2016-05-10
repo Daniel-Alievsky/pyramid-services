@@ -25,6 +25,7 @@
 package net.algart.pyramid.http;
 
 import net.algart.pyramid.PlanePyramidInformation;
+import net.algart.pyramid.http.api.HttpPyramidTimeouts;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -34,13 +35,13 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static net.algart.pyramid.http.api.HttpPyramidConstants.*;
 
 public class HttpPyramidControl {
-    private static final int CONNECTION_TIMEOUT = 30000;
-    private static final int READ_TIMEOUT = 90000;
-    // - read timeout should be greater than timeouts in ReadImageTask class
+    private static final Logger LOG = Logger.getLogger(HttpPyramidControl.class.getName());
 
     private final String host;
     private final int port;
@@ -53,10 +54,14 @@ public class HttpPyramidControl {
         this.port = port;
     }
 
-    public final boolean isServiceAlive() throws IOException {
-        //TODO!! timeout
-        final HttpURLConnection connection = openCustomConnection(ALIVE_STATUS_COMMAND_PREFIX, "GET");
-        return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
+    public final boolean isServiceAlive() {
+        try {
+            final HttpURLConnection connection = openCustomConnection(ALIVE_STATUS_COMMAND_PREFIX, "GET");
+            return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
+        } catch (IOException e) {
+            LOG.log(Level.INFO, "Cannot connect to " + host + ":" + port + ": " + e.getMessage());
+            return false;
+        }
     }
 
     public final void finishService() throws IOException {
@@ -79,8 +84,8 @@ public class HttpPyramidControl {
     public final HttpURLConnection openCustomConnection(String pathAndQuery, String requestMethod) throws IOException {
         final URL url = new URL("http", host, port, pathAndQuery);
         final URLConnection connection = url.openConnection();
-        connection.setConnectTimeout(CONNECTION_TIMEOUT);
-        connection.setReadTimeout(READ_TIMEOUT);
+        connection.setConnectTimeout(HttpPyramidTimeouts.CLIENT_CONNECTION_TIMEOUT);
+        connection.setReadTimeout(HttpPyramidTimeouts.CLIENT_READ_TIMEOUT);
         // In future, if necessary, we will maybe provide better timeouts:
         // http://stackoverflow.com/questions/3163693/java-urlconnection-timeout
         if (!(connection instanceof HttpURLConnection)) {
