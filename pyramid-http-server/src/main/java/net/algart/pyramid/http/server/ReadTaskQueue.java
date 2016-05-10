@@ -28,19 +28,19 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
-final class ReadImageTaskQueue {
+final class ReadTaskQueue {
     private static final int QUEUE_MAX_SIZE = 256;
     private static final int POLL_TIMEOUT_IN_MILLISECONDS = 1000;
 
-    private BlockingQueue<ReadImageTask> queue = new LinkedBlockingDeque<>(QUEUE_MAX_SIZE);
+    private BlockingQueue<ReadTask> queue = new LinkedBlockingDeque<>(QUEUE_MAX_SIZE);
 
-    void add(ReadImageTask task) {
+    void add(ReadTask task) {
         if (!queue.offer(task)) {
             throw new IllegalStateException("Task queue is full");
         }
     }
 
-    ReadImageTask pollOrNullAfterTimeout() throws InterruptedException {
+    ReadTask pollOrNullAfterTimeout() throws InterruptedException {
         return queue.poll(POLL_TIMEOUT_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
 }

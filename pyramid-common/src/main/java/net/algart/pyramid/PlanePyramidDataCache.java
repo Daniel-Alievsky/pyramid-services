@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public final class PlanePyramidImageCache {
+public final class PlanePyramidDataCache {
     //In future: maybe it makes sense to use https://cloud.google.com/appengine/docs/java/memcache/
 
     private final long maxMemory;
@@ -38,7 +38,7 @@ public final class PlanePyramidImageCache {
     private final Map<PlanePyramidRequest, PlanePyramidData> map = new LinkedHashMap<>(16, 0.75f, true);
     // - accessOrder = true
 
-    public PlanePyramidImageCache(long maxMemory) {
+    public PlanePyramidDataCache(long maxMemory) {
         if (maxMemory < 0) {
             throw new IllegalArgumentException("Negative maxMemory");
         }
@@ -61,11 +61,11 @@ public final class PlanePyramidImageCache {
     }
 
     private void increaseMemory(PlanePyramidData data) {
-        memory += data.bytes.length;
+        memory += data.estimatedMemoryInBytes();
     }
 
     private void decreaseMemory(PlanePyramidData removed) {
-        memory -= removed.bytes.length;
+        memory -= removed.estimatedMemoryInBytes();
         if (memory < 0) {
             throw new AssertionError("Non-balanced adding and removing: " + memory);
         }

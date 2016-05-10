@@ -39,7 +39,7 @@ import static net.algart.pyramid.http.api.HttpPyramidConstants.*;
 
 public class HttpPyramidControl {
     private static final int CONNECTION_TIMEOUT = 30000;
-    private static final int READ_TIMEOUT = 60000;
+    private static final int READ_TIMEOUT = 90000;
     // - read timeout should be greater than timeouts in ReadImageTask class
 
     private final String host;

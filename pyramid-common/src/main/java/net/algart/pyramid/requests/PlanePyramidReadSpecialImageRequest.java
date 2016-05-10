@@ -25,12 +25,12 @@
 package net.algart.pyramid.requests;
 
 import net.algart.pyramid.PlanePyramid;
-import net.algart.pyramid.PlanePyramidData;
+import net.algart.pyramid.PlanePyramidImageData;
 
 import java.io.IOException;
 import java.util.Objects;
 
-public class PlanePyramidSpecialImageRequest extends PlanePyramidRequest {
+public final class PlanePyramidReadSpecialImageRequest extends PlanePyramidAnyImageRequest {
     // See constants in PlanePyramidSource.SpecialImageKind:
     public static final String WHOLE_SLIDE = "WHOLE_SLIDE";
     public static final String MAP_IMAGE = "MAP_IMAGE";
@@ -41,7 +41,7 @@ public class PlanePyramidSpecialImageRequest extends PlanePyramidRequest {
     private final Integer desiredWidth;
     private final Integer desiredHeight;
 
-    public PlanePyramidSpecialImageRequest(
+    public PlanePyramidReadSpecialImageRequest(
         String pyramidUniqueId,
         String specialImageName,
         Integer desiredWidth,
@@ -60,7 +60,7 @@ public class PlanePyramidSpecialImageRequest extends PlanePyramidRequest {
     }
 
     @Override
-    public PlanePyramidData read(PlanePyramid pyramid) throws IOException {
+    public PlanePyramidImageData readData(PlanePyramid pyramid) throws IOException {
         return pyramid.readSpecialImage(this);
     }
 
@@ -78,26 +78,17 @@ public class PlanePyramidSpecialImageRequest extends PlanePyramidRequest {
 
     @Override
     public String toString() {
-        return "PlanePyramidSpecialImageRequest for " + specialImageName
+        return getClass().getSimpleName() + " for " + specialImageName
             + (desiredWidth == null && desiredHeight == null ?
             "" :
             ", restricted by area " + (desiredWidth == null ? "???" : desiredWidth)
                 + "x" + (desiredHeight == null ? "???" : desiredHeight))
-            + " (pyramid " + pyramidUniqueId + ")";
+            + " (pyramid " + getPyramidUniqueId() + ")";
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        PlanePyramidSpecialImageRequest that = (PlanePyramidSpecialImageRequest) o;
-        if (!pyramidUniqueId.equals(that.pyramidUniqueId)) {
-            return false;
-        }
+    protected boolean equalsIgnoringPyramidUniqueId(PlanePyramidRequest o) {
+        PlanePyramidReadSpecialImageRequest that = (PlanePyramidReadSpecialImageRequest) o;
         if (!specialImageName.equals(that.specialImageName)) {
             return false;
         }
@@ -105,13 +96,11 @@ public class PlanePyramidSpecialImageRequest extends PlanePyramidRequest {
             return false;
         }
         return desiredHeight != null ? desiredHeight.equals(that.desiredHeight) : that.desiredHeight == null;
-
     }
 
     @Override
-    public int hashCode() {
-        int result = pyramidUniqueId.hashCode();
-        result = 31 * result + specialImageName.hashCode();
+    protected int hashCodeIgnoringPyramidUniqueId() {
+        int result = specialImageName.hashCode();
         result = 31 * result + (desiredWidth != null ? desiredWidth.hashCode() : 0);
         result = 31 * result + (desiredHeight != null ? desiredHeight.hashCode() : 0);
         return result;

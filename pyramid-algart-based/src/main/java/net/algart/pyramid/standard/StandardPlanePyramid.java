@@ -29,10 +29,10 @@ import net.algart.arrays.Matrix;
 import net.algart.arrays.PArray;
 import net.algart.external.MatrixToBufferedImageConverter;
 import net.algart.pyramid.PlanePyramid;
-import net.algart.pyramid.PlanePyramidData;
+import net.algart.pyramid.PlanePyramidImageData;
 import net.algart.pyramid.PlanePyramidInformation;
-import net.algart.pyramid.requests.PlanePyramidImageRequest;
-import net.algart.pyramid.requests.PlanePyramidSpecialImageRequest;
+import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
+import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
 import net.algart.simagis.pyramid.PlanePyramidSource;
 import net.algart.simagis.pyramid.sources.ScalablePlanePyramidSource;
 
@@ -53,7 +53,7 @@ import static net.algart.simagis.pyramid.PlanePyramidSource.DIM_WIDTH;
 
 class StandardPlanePyramid implements PlanePyramid {
     private static final long TIMEOUT = Math.max(16, Integer.getInteger(
-        "net.algart.pyramid.standard.pyramidTimeout", 120000));
+        "net.algart.pyramid.standard.pyramidTimeout", 30000));
     // - in milliseconds
 
     private final String pyramidConfiguration;
@@ -141,7 +141,7 @@ class StandardPlanePyramid implements PlanePyramid {
     }
 
     @Override
-    public PlanePyramidData readImage(PlanePyramidImageRequest imageRequest) throws IOException {
+    public PlanePyramidImageData readImage(PlanePyramidReadImageRequest imageRequest) throws IOException {
         Objects.requireNonNull(imageRequest);
         final double compression = imageRequest.getCompression();
         final long fromX = imageRequest.getZeroLevelFromX();
@@ -157,7 +157,9 @@ class StandardPlanePyramid implements PlanePyramid {
     }
 
     @Override
-    public PlanePyramidData readSpecialImage(PlanePyramidSpecialImageRequest specialImageRequest) throws IOException {
+    public PlanePyramidImageData readSpecialImage(PlanePyramidReadSpecialImageRequest specialImageRequest)
+        throws IOException
+    {
         Objects.requireNonNull(specialImageRequest);
         final String name = specialImageRequest.getSpecialImageName();
         Integer width = specialImageRequest.getDesiredWidth();
@@ -207,7 +209,7 @@ class StandardPlanePyramid implements PlanePyramid {
         return "Plane pyramid based on " + source + " (" + formatName + " format)";
     }
 
-    private PlanePyramidData bufferedImageToBytes(BufferedImage bufferedImage, String formatName)
+    private PlanePyramidImageData bufferedImageToBytes(BufferedImage bufferedImage, String formatName)
         throws IOException
     {
         if (!transparencySupported(formatName)) {
@@ -218,7 +220,7 @@ class StandardPlanePyramid implements PlanePyramid {
             throw new IIOException(formatName + " image format is not supported for " + bufferedImage);
         }
         stream.flush();
-        return new PlanePyramidData(stream.toByteArray());
+        return new PlanePyramidImageData(stream.toByteArray(), this);
     }
 
     private static boolean transparencySupported(String formatName) {

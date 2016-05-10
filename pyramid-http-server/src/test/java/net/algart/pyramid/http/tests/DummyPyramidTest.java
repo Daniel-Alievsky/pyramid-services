@@ -27,8 +27,8 @@ package net.algart.pyramid.http.tests;
 import net.algart.pyramid.*;
 import net.algart.pyramid.http.server.HttpPyramidService;
 import net.algart.pyramid.http.server.SimpleHttpPyramidServer;
-import net.algart.pyramid.requests.PlanePyramidImageRequest;
-import net.algart.pyramid.requests.PlanePyramidSpecialImageRequest;
+import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
+import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
 
 import javax.imageio.ImageIO;
 import javax.json.Json;
@@ -118,16 +118,16 @@ public class DummyPyramidTest {
         }
 
         @Override
-        public PlanePyramidData readImage(PlanePyramidImageRequest imageRequest) throws IOException {
+        public PlanePyramidImageData readImage(PlanePyramidReadImageRequest imageRequest) throws IOException {
             final long fromX = imageRequest.getZeroLevelFromX();
             final long fromY = imageRequest.getZeroLevelFromY();
             final long toX = imageRequest.getZeroLevelToX();
             final long toY = imageRequest.getZeroLevelToY();
-            return new PlanePyramidData(makePngBytes((int) (toX - fromX), (int) (toY - fromY)));
+            return new PlanePyramidImageData(makePngBytes((int) (toX - fromX), (int) (toY - fromY)), this);
         }
 
         @Override
-        public PlanePyramidData readSpecialImage(PlanePyramidSpecialImageRequest specialImageRequest)
+        public PlanePyramidImageData readSpecialImage(PlanePyramidReadSpecialImageRequest specialImageRequest)
             throws IOException
         {
             throw new UnsupportedOperationException();

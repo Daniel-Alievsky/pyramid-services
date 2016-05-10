@@ -25,18 +25,18 @@
 package net.algart.pyramid.requests;
 
 import net.algart.pyramid.PlanePyramid;
-import net.algart.pyramid.PlanePyramidData;
+import net.algart.pyramid.PlanePyramidImageData;
 
 import java.io.IOException;
 
-public final class PlanePyramidImageRequest extends PlanePyramidRequest {
+public final class PlanePyramidReadImageRequest extends PlanePyramidAnyImageRequest {
     private final double compression;
     private final long zeroLevelFromX;
     private final long zeroLevelFromY;
     private final long zeroLevelToX;
     private final long zeroLevelToY;
 
-    public PlanePyramidImageRequest(
+    public PlanePyramidReadImageRequest(
         String pyramidUniqueId,
         double compression,
         long zeroLevelFromX,
@@ -64,7 +64,7 @@ public final class PlanePyramidImageRequest extends PlanePyramidRequest {
     }
 
     @Override
-    public PlanePyramidData read(PlanePyramid pyramid) throws IOException {
+    public PlanePyramidImageData readData(PlanePyramid pyramid) throws IOException {
         return pyramid.readImage(this);
     }
 
@@ -90,20 +90,15 @@ public final class PlanePyramidImageRequest extends PlanePyramidRequest {
 
     @Override
     public String toString() {
-        return "PlanePyramidImageRequest: " +
-            "compression " + compression +
-            ", zero ךevel " + zeroLevelFromX + ".." + zeroLevelToX + "x" + zeroLevelFromY + ".." + zeroLevelToY;
+        return getClass().getSimpleName() + ": " +
+            "compression " + compression
+            + ", zero level " + zeroLevelFromX + ".." + zeroLevelToX + "x" + zeroLevelFromY + ".." + zeroLevelToY;
+            // Don't include pyramid unique id: it is a very frequent request, and we need to make logs more compact.
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        PlanePyramidImageRequest that = (PlanePyramidImageRequest) o;
+    protected boolean equalsIgnoringPyramidUniqueId(PlanePyramidRequest o) {
+        PlanePyramidReadImageRequest that = (PlanePyramidReadImageRequest) o;
         if (Double.compare(that.compression, compression) != 0) {
             return false;
         }
@@ -119,21 +114,20 @@ public final class PlanePyramidImageRequest extends PlanePyramidRequest {
         if (zeroLevelToY != that.zeroLevelToY) {
             return false;
         }
-        return pyramidUniqueId.equals(that.pyramidUniqueId);
-
+        return true;
     }
 
     @Override
-    public int hashCode() {
+    protected int hashCodeIgnoringPyramidUniqueId() {
         int result;
         long temp;
-        result = pyramidUniqueId.hashCode();
         temp = Double.doubleToLongBits(compression);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = (int) (temp ^ (temp >>> 32));
         result = 31 * result + (int) (zeroLevelFromX ^ (zeroLevelFromX >>> 32));
         result = 31 * result + (int) (zeroLevelFromY ^ (zeroLevelFromY >>> 32));
         result = 31 * result + (int) (zeroLevelToX ^ (zeroLevelToX >>> 32));
         result = 31 * result + (int) (zeroLevelToY ^ (zeroLevelToY >>> 32));
         return result;
     }
+
 }

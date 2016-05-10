@@ -25,10 +25,11 @@
 package net.algart.pyramid.http.server.handlers;
 
 import net.algart.pyramid.PlanePyramid;
+import net.algart.pyramid.PlanePyramidData;
 import net.algart.pyramid.PlanePyramidInformation;
 import net.algart.pyramid.http.server.HttpPyramidCommand;
 import net.algart.pyramid.http.server.HttpPyramidService;
-import net.algart.pyramid.requests.PlanePyramidImageRequest;
+import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
@@ -71,10 +72,8 @@ public class TmsHttpPyramidCommand extends HttpPyramidCommand {
         final int y = Integer.parseInt(removeExtension(components[4]));
         final String configuration = pyramidIdToConfiguration(pyramidId);
 //        System.out.println("tms-Configuration: " + configuration);
-        final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
-        final PlanePyramidRequest pyramidRequest =
-            tmsToImageRequest(x, y, z, configuration, pyramid.readInformation());
-        httpPyramidService.createReadImageTask(request, response, pyramid, pyramidRequest);
+        final PlanePyramidRequest pyramidRequest = new TmsPlanePyramidRequest(configuration, x, y, z);
+        httpPyramidService.createReadTask(request, response, pyramidRequest);
     }
 
     @Override
@@ -110,30 +109,6 @@ public class TmsHttpPyramidCommand extends HttpPyramidCommand {
         return httpPyramidService.pyramidIdToConfiguration(pyramidId);
     }
 
-    private PlanePyramidRequest tmsToImageRequest(
-        int x,
-        int y,
-        int z,
-        String pyramidConfiguration,
-        PlanePyramidInformation info)
-    {
-        int maxZ = 0;
-        for (long dim = Math.max(info.getZeroLevelDimX(), info.getZeroLevelDimY()); dim > tileDim; dim /= 2) {
-            maxZ++;
-        }
-        double compression = 1;
-        for (int i = maxZ; i > z; i--) {
-            compression *= 2;
-        }
-        final long tileDim = Math.round(this.tileDim * compression);
-        final long zeroLevelFromX = x * tileDim;
-        final long zeroLevelFromY = inverseYDirection ? info.getZeroLevelDimY() - (y + 1) * tileDim : y * tileDim;
-        final long zeroLevelToX = zeroLevelFromX + tileDim;
-        final long zeroLevelToY = zeroLevelFromY + tileDim;
-        return new PlanePyramidImageRequest(
-            pyramidConfiguration, compression, zeroLevelFromX, zeroLevelFromY, zeroLevelToX, zeroLevelToY);
-    }
-
     static String removeExtension(String fileName) {
         int p = fileName.lastIndexOf('.');
         if (p == -1) {
@@ -147,6 +122,78 @@ public class TmsHttpPyramidCommand extends HttpPyramidCommand {
             return !"false".equalsIgnoreCase(System.getProperty(propertyName));
         } else {
             return Boolean.getBoolean(propertyName);
+        }
+    }
+
+    private class TmsPlanePyramidRequest extends PlanePyramidRequest {
+        private final int x;
+        private final int y;
+        private final int z;
+
+        TmsPlanePyramidRequest(String pyramidUniqueId, int x, int y, int z) {
+            super(pyramidUniqueId);
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + ": "
+                + "x=" + x + ", y=" + y + ", z=" + z;
+        }
+
+        @Override
+        public PlanePyramidData readData(PlanePyramid pyramid) throws IOException {
+            final PlanePyramidInformation info = pyramid.readInformation();
+            int maxZ = 0;
+            for (long dim = Math.max(info.getZeroLevelDimX(), info.getZeroLevelDimY()); dim > tileDim; dim /= 2) {
+                maxZ++;
+            }
+            double compression = 1;
+            for (int i = maxZ; i > z; i--) {
+                compression *= 2;
+            }
+            final long zltDim = Math.round(tileDim * compression);
+            final long zeroLevelFromX = x * zltDim;
+            final long zeroLevelFromY = inverseYDirection ? info.getZeroLevelDimY() - (y + 1) * zltDim : y * zltDim;
+            final long zeroLevelToX = zeroLevelFromX + zltDim;
+            final long zeroLevelToY = zeroLevelFromY + zltDim;
+            return pyramid.readImage(new PlanePyramidReadImageRequest(
+                getPyramidUniqueId(), compression, zeroLevelFromX, zeroLevelFromY, zeroLevelToX, zeroLevelToY));
+        }
+
+        @Override
+        protected boolean equalsIgnoringPyramidUniqueId(PlanePyramidRequest o) {
+            TmsPlanePyramidRequest that = (TmsPlanePyramidRequest) o;
+            if (x != that.x) {
+                return false;
+            }
+            if (y != that.y) {
+                return false;
+            }
+            if (z != that.z) {
+                return false;
+            }
+            return tileDim() == that.tileDim() && inverseYDirection() == that.inverseYDirection();
+        }
+
+        @Override
+        protected int hashCodeIgnoringPyramidUniqueId() {
+            int result = x;
+            result = 31 * result + y;
+            result = 31 * result + z;
+            result = 31 * result + tileDim();
+            result = 31 * result + (inverseYDirection() ? 1 : 0);
+            return result;
+        }
+
+        private int tileDim() {
+            return tileDim;
+        }
+
+        private boolean inverseYDirection() {
+            return inverseYDirection;
         }
     }
 }

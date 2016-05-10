@@ -24,12 +24,11 @@
 
 package net.algart.pyramid.http.server.handlers;
 
-import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.http.server.HttpPyramidCommand;
 import net.algart.pyramid.http.server.HttpPyramidService;
 import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.requests.PlanePyramidRequest;
-import net.algart.pyramid.requests.PlanePyramidSpecialImageRequest;
+import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
@@ -52,10 +51,9 @@ public class ReadSpecialImagePyramidCommand extends HttpPyramidCommand {
         final String specialImageName = getParameter(request, "specialImageName");
         final Integer width = request.getParameter("width") == null ? null : getIntParameter(request, "width");
         final Integer height = request.getParameter("height") == null ? null : getIntParameter(request, "height");
-        final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
-        final PlanePyramidRequest imageRequest = new PlanePyramidSpecialImageRequest(
+        final PlanePyramidRequest imageRequest = new PlanePyramidReadSpecialImageRequest(
             configuration, specialImageName, width, height);
-        httpPyramidService.createReadImageTask(request, response, pyramid, imageRequest);
+        httpPyramidService.createReadTask(request, response, imageRequest);
     }
 
     protected String pyramidIdToConfiguration(String pyramidId) throws IOException {

@@ -28,9 +28,10 @@ import javax.json.*;
 import javax.json.stream.JsonGenerator;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public final class PlanePyramidInformation {
+public final class PlanePyramidInformation extends PlanePyramidData {
     private final int channelCount;
     private final long zeroLevelDimX;
     private final long zeroLevelDimY;
@@ -176,6 +177,33 @@ public final class PlanePyramidInformation {
             jsonWriter.writeObject(toJson());
             return stringWriter.toString();
         }
+    }
+
+    @Override
+    public boolean isShortString() {
+        return true;
+    }
+
+    @Override
+    public String getShortString() {
+        return toJsonString();
+    }
+
+    @Override
+    public byte[] getBytes() {
+        return toJsonString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public String getContentMIMEType() {
+        return "application/json; charset=utf-8";
+        // - note that charset must be compatible with the charset used in getBytes method
+    }
+
+    @Override
+    long estimatedMemoryInBytes() {
+        return 256;
+        // - some estimation for memory in Java heap, occupied by this object
     }
 
     private JsonObject toJson() {

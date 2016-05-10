@@ -24,10 +24,10 @@
 
 package net.algart.pyramid.http.server.handlers;
 
-import net.algart.pyramid.PlanePyramid;
+import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.http.server.HttpPyramidCommand;
 import net.algart.pyramid.http.server.HttpPyramidService;
-import net.algart.pyramid.http.api.HttpPyramidConstants;
+import net.algart.pyramid.requests.PlanePyramidReadInformationRequest;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
@@ -46,16 +46,14 @@ public class InformationHttpPyramidCommand extends HttpPyramidCommand {
     {
         final String configuration = pyramidIdToConfiguration(
             HttpPyramidCommand.getParameter(request, HttpPyramidConstants.PYRAMID_ID_ARGUMENT_NAME));
-        final PlanePyramid pyramid = httpPyramidService.getPyramidPool().getHttpPlanePyramid(configuration);
         response.setContentType("application/json; charset=utf-8");
         response.addHeader("Access-Control-Allow-Origin", "*");
         // - Allows browser JavaScript to access this via XMLHttpRequest.
         // It does not violate security, because other client can access this information in any case,
         // and Web pages cannot abuse it: it is not more dangerous than simple ability to read images.
-        final String message = pyramid.readInformation().toJsonString();
-        response.setStatus(200, "OK");
-        response.getWriter().write(message);
-        response.finish();
+        final PlanePyramidReadInformationRequest informationRequest =
+            new PlanePyramidReadInformationRequest(configuration);
+        httpPyramidService.createReadTask(request, response, informationRequest);
     }
 
     protected String pyramidIdToConfiguration(String pyramidId) throws IOException {

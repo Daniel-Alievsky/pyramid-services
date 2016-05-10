@@ -8,7 +8,7 @@
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * furnished to do so, subject to the following conditions:‏
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
@@ -22,36 +22,35 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.server;
+package net.algart.pyramid.requests;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import net.algart.pyramid.PlanePyramid;
+import net.algart.pyramid.PlanePyramidInformation;
 
-final class ReadImageActiveTaskSet {
-    private final Set<ReadImageTask> activeTasks = new LinkedHashSet<>();
+import java.io.IOException;
 
-    void addTask(ReadImageTask task) {
-        synchronized (activeTasks) {
-            activeTasks.add(task);
-        }
+public final class PlanePyramidReadInformationRequest extends PlanePyramidRequest {
+    public PlanePyramidReadInformationRequest(String pyramidUniqueId) {
+        super(pyramidUniqueId);
     }
 
-    void removeTask(ReadImageTask task) {
-        synchronized (activeTasks) {
-            activeTasks.remove(task);
-        }
+    @Override
+    public PlanePyramidInformation readData(PlanePyramid pyramid) throws IOException {
+        return pyramid.readInformation();
     }
 
-    void cleanObsoleteTasks() {
-        final Collection<ReadImageTask> tasks;
-        synchronized (activeTasks) {
-            tasks = new ArrayList<>(activeTasks);
-        }
-//        System.out.printf("Checking %d tasks to cancel...%n", tasks.size());
-        for (ReadImageTask task : tasks) {
-            task.cancelIfObsolete();
-        }
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + " (pyramid " + getPyramidUniqueId() + ")";
+    }
+
+    @Override
+    protected boolean equalsIgnoringPyramidUniqueId(PlanePyramidRequest o) {
+        return true;
+    }
+
+    @Override
+    protected int hashCodeIgnoringPyramidUniqueId() {
+        return PlanePyramidReadInformationRequest.class.getName().hashCode();
     }
 }

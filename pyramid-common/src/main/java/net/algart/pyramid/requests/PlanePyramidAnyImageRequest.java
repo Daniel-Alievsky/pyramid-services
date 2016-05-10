@@ -25,47 +25,15 @@
 package net.algart.pyramid.requests;
 
 import net.algart.pyramid.PlanePyramid;
-import net.algart.pyramid.PlanePyramidData;
+import net.algart.pyramid.PlanePyramidImageData;
 
 import java.io.IOException;
-import java.util.Objects;
 
-public abstract class PlanePyramidRequest {
-    private final String pyramidUniqueId;
-
-    protected PlanePyramidRequest(String pyramidUniqueId) {
-        this.pyramidUniqueId = Objects.requireNonNull(pyramidUniqueId, "Null pyramidUniqueId");
-    }
-
-    public final String getPyramidUniqueId() {
-        return pyramidUniqueId;
-    }
-
-    public abstract PlanePyramidData readData(PlanePyramid pyramid) throws IOException;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        PlanePyramidRequest that = (PlanePyramidRequest) o;
-        return pyramidUniqueId.equals(that.pyramidUniqueId)
-            && equalsIgnoringPyramidUniqueId(that);
-
+public abstract class PlanePyramidAnyImageRequest extends PlanePyramidRequest {
+    public PlanePyramidAnyImageRequest(String pyramidUniqueId) {
+        super(pyramidUniqueId);
     }
 
     @Override
-    public int hashCode() {
-        return 31 * pyramidUniqueId.hashCode() + hashCodeIgnoringPyramidUniqueId();
-    }
-
-    // The following two methods MUST be implemented to provide correct caching requests:
-    protected abstract boolean equalsIgnoringPyramidUniqueId(PlanePyramidRequest o);
-
-    protected abstract int hashCodeIgnoringPyramidUniqueId();
-
+    public abstract PlanePyramidImageData readData(PlanePyramid pyramid) throws IOException;
 }
-

@@ -24,7 +24,6 @@
 
 package net.algart.pyramid.http.server;
 
-import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.http.server.handlers.*;
@@ -56,14 +55,14 @@ public class HttpPyramidService {
 
     private final HttpServer server;
     private final int port;
-    private final ReadImageThreadPool threadPool;
+    private final ReadThreadPool threadPool;
     private final ServerConfiguration serverConfiguration;
     private final PlanePyramidPool pyramidPool;
     private volatile boolean shutdown = false;
 
     public HttpPyramidService(PlanePyramidFactory factory, int port) {
         this.pyramidPool = new PlanePyramidPool(factory, MAX_NUMBER_OF_PYRAMIDS_IN_POOL);
-        this.threadPool = new ReadImageThreadPool(Runtime.getRuntime().availableProcessors());
+        this.threadPool = new ReadThreadPool(Runtime.getRuntime().availableProcessors());
         this.server = new HttpServer();
         this.port = port;
         server.addListener(new NetworkListener(HttpPyramidService.class.getName(), "localhost", port));
@@ -115,13 +114,12 @@ public class HttpPyramidService {
         return pyramidPool;
     }
 
-    public final boolean createReadImageTask(
+    public final boolean createReadTask(
         Request request,
         Response response,
-        PlanePyramid pyramid,
         PlanePyramidRequest pyramidRequest)
     {
-        return threadPool.createReadImageTask(request, response, pyramid, pyramidRequest);
+        return threadPool.createReadTask(request, response, pyramidRequest, pyramidPool);
     }
 
     public String pyramidIdToConfiguration(String pyramidId) throws IOException {

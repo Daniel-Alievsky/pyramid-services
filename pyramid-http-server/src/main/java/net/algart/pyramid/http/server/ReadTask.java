@@ -24,9 +24,7 @@
 
 package net.algart.pyramid.http.server;
 
-import net.algart.pyramid.PlanePyramid;
-import net.algart.pyramid.PlanePyramidImageCache;
-import net.algart.pyramid.PlanePyramidData;
+import net.algart.pyramid.*;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.EmptyCompletionHandler;
 import org.glassfish.grizzly.WriteHandler;
@@ -40,22 +38,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-final class ReadImageTask {
+final class ReadTask {
     private static final boolean USE_GRIZZLY_TIMEOUT_FOR_RESPONSE = false;
     // - I recommend to stay it false for better control over timeouts and possible points of cancelling
-    private static final long GRIZZLY_TIMEOUT = 30000;
+    private static final long GRIZZLY_TIMEOUT = 60000;
 
-    private static final long TIMEOUT_WAITING_IN_QUEUE_AND_READING = 30000;
+    private static final long TIMEOUT_WAITING_IN_QUEUE_AND_READING = 60000;
     private static final long TIMEOUT_SENDING = 120000;
     // all timeouts are in milliseconds
     private static final int CHUNK_SIZE = 8192;
-    private static final Logger LOG = Logger.getLogger(ReadImageTask.class.getName());
+    private static final Logger LOG = Logger.getLogger(ReadTask.class.getName());
 
     private final Response response;
-    private volatile PlanePyramid pyramid;
     private final PlanePyramidRequest pyramidRequest;
-    private final ReadImageActiveTaskSet activeTaskSet;
-    private final PlanePyramidImageCache cache;
+    private final PlanePyramidPool pyramidPool;
+    private final ReadActiveTaskSet activeTaskSet;
+    private final PlanePyramidDataCache cache;
     private final PlanePyramidData previousCachedData;
     private final boolean alreadyInClientCache;
     private byte[] responseBytes;
@@ -67,20 +65,20 @@ final class ReadImageTask {
     private volatile boolean closed = false;
     private volatile long lastAccessTime;
 
-    ReadImageTask(
+    ReadTask(
         Request request,
         Response response,
-        PlanePyramid pyramid,
         PlanePyramidRequest pyramidRequest,
-        ReadImageActiveTaskSet activeTaskSet,
-        PlanePyramidImageCache cache)
+        PlanePyramidPool pyramidPool,
+        ReadActiveTaskSet activeTaskSet,
+        PlanePyramidDataCache cache)
     {
         this.response = Objects.requireNonNull(response);
-        this.pyramid = Objects.requireNonNull(pyramid);
         this.pyramidRequest = Objects.requireNonNull(pyramidRequest);
+        this.pyramidPool = Objects.requireNonNull(pyramidPool);
         this.activeTaskSet = Objects.requireNonNull(activeTaskSet);
         this.cache = Objects.requireNonNull(cache);
-        this.previousCachedData = pyramid.isCacheable() ? cache.get(pyramidRequest) : null;
+        this.previousCachedData = cache.get(pyramidRequest);
         final long ifModifiedSince = request.getDateHeader("If-Modified-Since");
         this.alreadyInClientCache =
             previousCachedData != null
@@ -91,8 +89,6 @@ final class ReadImageTask {
             LOG.info("Not modified (304): " + this);
             response.setStatus(304, "Not modified");
         } else {
-            response.setContentType(
-                pyramid.isRawBytes() ? "application/octet-stream" : "image/" + pyramid.format());
             refreshTimeout();
             suspendResponse();
             this.activeTaskSet.addTask(this);
@@ -105,7 +101,7 @@ final class ReadImageTask {
 
     @Override
     public String toString() {
-        return "ReadImageTask for request " + pyramidRequest
+        return "ReadTask for request " + pyramidRequest
             + ", elapsed time=" + (System.currentTimeMillis() - lastAccessTime) + "ms";
     }
 
@@ -120,7 +116,7 @@ final class ReadImageTask {
         return super.hashCode();
     }
 
-    void perform() throws IOException {
+    void perform() throws Exception {
         if (closed) {
             throw new IllegalStateException("Perform method must not be called after closing task");
         }
@@ -128,103 +124,47 @@ final class ReadImageTask {
             return;
         }
 //        try {Thread.sleep(5000);} catch (InterruptedException e) {}
-        final boolean cacheable = pyramid.isCacheable();
         PlanePyramidData data = previousCachedData;
+        final boolean cacheable;
         if (data == null) {
+            final PlanePyramid pyramid = pyramidPool.getHttpPlanePyramid(pyramidRequest.getPyramidUniqueId());
+            cacheable = pyramid.isCacheable();
             data = pyramid.read(pyramidRequest);
             if (cacheable) {
                 cache.put(pyramidRequest, data);
             }
         } else {
-            LOG.info("Image loaded from cache: " + this);
-            assert cacheable;
-            // - checked in the constructor
+            // Note: we don't access pyramid at all if the data are already in cache
+            LOG.info("Data loaded from cache: " + this);
+            cacheable = true;
+            // Obviously, if the data appeared in cache, the pyramid was cacheable
         }
-        this.responseBytes = data.getBytes();
-        this.pyramid = null;
-        // - since this moment the garbage collector can remove this pyramid, if other tasks do not use it
         if (USE_GRIZZLY_TIMEOUT_FOR_RESPONSE && cancelledByGrizzly) {
             return;
         }
         if (checkCancellingTask("Task cancelled because of too slow reading pyramid")) {
             return;
         }
-        this.sendingDataStarted = true;
-        this.refreshTimeout();
-        LOG.fine("Sending " + responseBytes.length + " bytes...");
-        this.responseBytesCurrentOffset = 0;
-        response.setContentLength(responseBytes.length);
+        response.setContentType(data.getContentMIMEType());
         if (cacheable) {
             response.setDateHeader("Last-Modified", data.getCreationTime());
         } else {
             response.setHeader("Cache-Control", "no-cache");
         }
-        final NIOOutputStream outputStream = response.getNIOOutputStream();
-        outputStream.notifyCanWrite(
-            new WriteHandler() {
-                @Override
-                public void onWritePossible() throws IOException {
-                    if (checkCancellingDueToTimeout() || checkCancellingDueToResponseState()) {
-                        return;
-                    }
-                    refreshTimeout();
-//                    try {Thread.sleep(1000);} catch (InterruptedException e) {}
-                    final int len = Math.min(responseBytes.length - responseBytesCurrentOffset, CHUNK_SIZE);
-//                    System.out.printf("%d/%d bytes sending...%n", responseBytesCurrentOffset, responseBytes.length);
-                    if (len > 0) {
-                        outputStream.write(responseBytes, responseBytesCurrentOffset, len);
-                        responseBytesCurrentOffset += len;
-                    }
-                    if (responseBytesCurrentOffset >= responseBytes.length) {
-                        closeHandler(false);
-                    } else {
-                        outputStream.notifyCanWrite(this);
-                    }
-                }
-
-                @Override
-                public void onError(Throwable e) {
-                    LOG.log(Level.FINE, "Some problems occur while writing output stream", e);
-                    // - it is not too serious problem: maybe connection was lost or terminated by browser
-                    response.setStatus(500, "Error while writing output stream");
-                    try {
-                        outputStream.close();
-                    } catch (IOException ex) {
-                        LOG.log(Level.FINE, "Error while closing output stream", ex);
-                        // only FINE: this exception can occur if the browser terminates connection;
-                        // no sense to duplicate messages - an attempt to write will also lead to an exception
-                    }
-                    closeTask(false);
-                }
-
-                private boolean checkCancellingDueToTimeout() throws IOException {
-                    if (cancelled) {
-                        LOG.info("Timeout: response is cancelled while sending data");
-                        response.setStatus(500, "Task cancelled while sending data");
-                        closeHandler(true);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-
-                private boolean checkCancellingDueToResponseState() throws IOException {
-                    if (!response.isSuspended()) {
-                        // to be on the safe side: should not occur
-                        LOG.warning("Timeout: response is resumed/cancelled while sending data");
-                        response.setStatus(500, "Task cancelled while sending data");
-                        closeHandler(true);
-                        return true;
-                    }
-                    return false;
-                }
-
-                private void closeHandler(boolean cancelled) throws IOException {
-                    outputStream.close();
-                    // - stream must be closed before closeTask to avoid exceptions
-                    closeTask(cancelled);
-                }
-            });
+        if (data.isShortString()) {
+            response.setStatus(200, "OK");
+            response.getWriter().write(data.getShortString());
+            // - note that the correct charset here is specified by data.getContentMIMEType()
+            closeTask(false);
+            return;
+        }
+        this.responseBytes = data.getBytes();
+        this.sendingDataStarted = true;
+        this.refreshTimeout();
+        LOG.fine("Sending " + responseBytes.length + " bytes...");
+        this.responseBytesCurrentOffset = 0;
+        response.setContentLength(responseBytes.length);
+        response.getNIOOutputStream().notifyCanWrite(new ReadTaskWriteHandler(response.getNIOOutputStream()));
     }
 
     private boolean checkCancellingTask(String msg) {
@@ -294,5 +234,76 @@ final class ReadImageTask {
 
     private void refreshTimeout() {
         this.lastAccessTime = System.currentTimeMillis();
+    }
+
+    private class ReadTaskWriteHandler implements WriteHandler {
+        private final NIOOutputStream outputStream;
+
+        public ReadTaskWriteHandler(NIOOutputStream outputStream) {
+            this.outputStream = Objects.requireNonNull(outputStream);
+        }
+
+        @Override
+        public void onWritePossible() throws IOException {
+            if (checkCancellingDueToTimeout() || checkCancellingDueToResponseState()) {
+                return;
+            }
+            refreshTimeout();
+//                    try {Thread.sleep(1000);} catch (InterruptedException e) {}
+            final int len = Math.min(responseBytes.length - responseBytesCurrentOffset, CHUNK_SIZE);
+//                    System.out.printf("%d/%d bytes sending...%n", responseBytesCurrentOffset, responseBytes.length);
+            if (len > 0) {
+                outputStream.write(responseBytes, responseBytesCurrentOffset, len);
+                responseBytesCurrentOffset += len;
+            }
+            if (responseBytesCurrentOffset >= responseBytes.length) {
+                closeHandler(false);
+            } else {
+                outputStream.notifyCanWrite(this);
+            }
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            LOG.log(Level.FINE, "Some problems occur while writing output stream", e);
+            // - it is not too serious problem: maybe connection was lost or terminated by browser
+            response.setStatus(500, "Error while writing output stream");
+            try {
+                outputStream.close();
+            } catch (IOException ex) {
+                LOG.log(Level.FINE, "Error while closing output stream", ex);
+                // only FINE: this exception can occur if the browser terminates connection;
+                // no sense to duplicate messages - an attempt to write will also lead to an exception
+            }
+            closeTask(false);
+        }
+
+        private boolean checkCancellingDueToTimeout() throws IOException {
+            if (cancelled) {
+                LOG.info("Timeout: response is cancelled while sending data");
+                response.setStatus(500, "Task cancelled while sending data");
+                closeHandler(true);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        private boolean checkCancellingDueToResponseState() throws IOException {
+            if (!response.isSuspended()) {
+                // to be on the safe side: should not occur
+                LOG.warning("Timeout: response is resumed/cancelled while sending data");
+                response.setStatus(500, "Task cancelled while sending data");
+                closeHandler(true);
+                return true;
+            }
+            return false;
+        }
+
+        private void closeHandler(boolean cancelled) throws IOException {
+            outputStream.close();
+            // - stream must be closed before closeTask to avoid exceptions
+            closeTask(cancelled);
+        }
     }
 }

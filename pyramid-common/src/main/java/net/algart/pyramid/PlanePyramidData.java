@@ -24,22 +24,47 @@
 
 package net.algart.pyramid;
 
-import java.util.Objects;
-
-public final class PlanePyramidData {
-    byte[] bytes;
+public abstract class PlanePyramidData {
     long creationTime;
 
-    public PlanePyramidData(byte[] bytes) {
-        this.bytes = Objects.requireNonNull(bytes);
+    // Disable subclassing outside this package:
+    PlanePyramidData() {
         this.creationTime = System.currentTimeMillis();
-    }
-
-    public byte[] getBytes() {
-        return bytes;
     }
 
     public long getCreationTime() {
         return creationTime;
     }
+
+    /**
+     * Returns <tt>true</tt>, if this data is really a short string (maximum kilobytes, not megabytes).
+     * If this method returns <tt>null</tt>, {@link #getShortString()} method returns non-<tt>null</tt> value;
+     * if it returns <tt>false</tt>, {@link #getShortString()} method returns <tt>null</tt>.
+     *
+     * @return whether this data is a short string.
+     */
+    public boolean isShortString() {
+        return false;
+    }
+
+    /**
+     * Returns all this data, if this data is really a short string, or <tt>null</tt> in other case.
+     *
+     * @return this data, if it is really a short string, or <tt>null</tt> in other case.
+     */
+    public String getShortString() {
+        return null;
+    }
+
+    /**
+     * Returns this data in a form of byte sequence, suitable for sending as HTTP or other response.
+     * For example, for image it can be a sequence of byte of png-file.
+     *
+     * @return this data in a form of byte sequence; never <tt>null</tt>.
+     */
+    public abstract byte[] getBytes();
+
+    public abstract String getContentMIMEType();
+
+    abstract long estimatedMemoryInBytes();
 }

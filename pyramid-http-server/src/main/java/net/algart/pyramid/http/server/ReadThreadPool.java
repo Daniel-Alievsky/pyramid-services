@@ -25,7 +25,8 @@
 package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramid;
-import net.algart.pyramid.PlanePyramidImageCache;
+import net.algart.pyramid.PlanePyramidDataCache;
+import net.algart.pyramid.PlanePyramidPool;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
@@ -33,21 +34,21 @@ import org.glassfish.grizzly.http.server.Response;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-final class ReadImageThreadPool {
-    private static final Logger LOG = Logger.getLogger(ReadImageThreadPool.class.getName());
-    static final PlanePyramidImageCache PLANE_PYRAMID_IMAGE_CACHE =
-        new PlanePyramidImageCache(HttpPyramidService.IMAGE_CACHING_MEMORY);
+final class ReadThreadPool {
+    private static final Logger LOG = Logger.getLogger(ReadThreadPool.class.getName());
+    static final PlanePyramidDataCache PLANE_PYRAMID_IMAGE_CACHE =
+        new PlanePyramidDataCache(HttpPyramidService.IMAGE_CACHING_MEMORY);
 
-    private final ReadImageTaskQueue queue;
-    private final ReadImageActiveTaskSet activeTaskSet;
-    private final PlanePyramidImageCache imageCache;
+    private final ReadTaskQueue queue;
+    private final ReadActiveTaskSet activeTaskSet;
+    private final PlanePyramidDataCache imageCache;
     private final Thread[] threads;
     private final Thread cleaningThread;
     private volatile boolean shutdown = false;
 
-    ReadImageThreadPool(int poolSize) {
-        this.queue = new ReadImageTaskQueue();
-        this.activeTaskSet = new ReadImageActiveTaskSet();
+    ReadThreadPool(int poolSize) {
+        this.queue = new ReadTaskQueue();
+        this.activeTaskSet = new ReadActiveTaskSet();
         this.imageCache = PLANE_PYRAMID_IMAGE_CACHE;
         // - using global cache for the process
         this.threads = new Thread[poolSize];
@@ -60,15 +61,14 @@ final class ReadImageThreadPool {
         this.cleaningThread.start();
     }
 
-    boolean createReadImageTask(
+    boolean createReadTask(
         Request request,
         Response response,
-        PlanePyramid pyramid,
-        PlanePyramidRequest pyramidRequest
-
+        PlanePyramidRequest pyramidRequest,
+        PlanePyramidPool pyramidPool
     ) {
-        final ReadImageTask task = new ReadImageTask(
-            request, response, pyramid, pyramidRequest, activeTaskSet, imageCache);
+        final ReadTask task = new ReadTask(
+            request, response, pyramidRequest, pyramidPool, activeTaskSet, imageCache);
         final boolean result = !task.is304();
         if (result) {
             queue.add(task);
@@ -84,7 +84,7 @@ final class ReadImageThreadPool {
         @Override
         public void run() {
             while (!shutdown) {
-                final ReadImageTask task;
+                final ReadTask task;
                 try {
                     LOG.fine("Waiting for new task...");
                     task = queue.pollOrNullAfterTimeout();

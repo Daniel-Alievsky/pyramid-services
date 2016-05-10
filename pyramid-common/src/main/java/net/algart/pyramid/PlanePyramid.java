@@ -24,9 +24,9 @@
 
 package net.algart.pyramid;
 
-import net.algart.pyramid.requests.PlanePyramidImageRequest;
+import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
 import net.algart.pyramid.requests.PlanePyramidRequest;
-import net.algart.pyramid.requests.PlanePyramidSpecialImageRequest;
+import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
 
 import java.io.IOException;
 
@@ -34,7 +34,7 @@ public interface PlanePyramid {
 
     /**
      * We recommend to use this key in JSON string {@link #pyramidConfiguration()} to specify the visual behaviour
-     * of this pyramid (the method {@link #readImage(PlanePyramidImageRequest)}.
+     * of this pyramid (the method {@link #readImage(PlanePyramidReadImageRequest)}.
      * See an example of JSON in {@link PlanePyramidFactory#newPyramid(String)} method.
      */
     String RENDERER_KEY = "renderer";
@@ -56,15 +56,15 @@ public interface PlanePyramid {
 
     void freeResources();
 
-    PlanePyramidInformation readInformation();
-
     default PlanePyramidData read(PlanePyramidRequest pyramidRequest) throws IOException {
-        return pyramidRequest.read(this);
+        return pyramidRequest.readData(this);
     }
 
-    PlanePyramidData readImage(PlanePyramidImageRequest imageRequest) throws IOException;
+    PlanePyramidInformation readInformation();
 
-    PlanePyramidData readSpecialImage(PlanePyramidSpecialImageRequest specialImageRequest) throws IOException;
+    PlanePyramidImageData readImage(PlanePyramidReadImageRequest imageRequest) throws IOException;
+
+    PlanePyramidImageData readSpecialImage(PlanePyramidReadSpecialImageRequest specialImageRequest) throws IOException;
 
     boolean isRawBytes();
 
