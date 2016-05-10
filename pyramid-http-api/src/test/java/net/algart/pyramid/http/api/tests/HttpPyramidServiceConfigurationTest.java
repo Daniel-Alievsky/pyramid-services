@@ -37,7 +37,8 @@ public class HttpPyramidServiceConfigurationTest {
             return;
         }
         Path file = Paths.get(args[0]);
-        final HttpPyramidServiceConfiguration configuration = HttpPyramidServiceConfiguration.getConfiguration(file);
+        final HttpPyramidServiceConfiguration configuration =
+            HttpPyramidServiceConfiguration.readConfigurationFromFolder(file);
         System.out.println(configuration);
     }
 }

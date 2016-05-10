@@ -26,19 +26,44 @@ package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.http.api.HttpPyramidServiceConfiguration;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class HttpPyramidServer {
     private final HttpPyramidServiceConfiguration configuration;
-    private final List<String> formatNames;
 
-    public HttpPyramidServer(HttpPyramidServiceConfiguration configuration, Collection<String> formatNames) {
-        Objects.requireNonNull(configuration);
-        Objects.requireNonNull(formatNames);
-        this.configuration = configuration;
-        this.formatNames = new ArrayList<>(formatNames);
+    public HttpPyramidServer(HttpPyramidServiceConfiguration configuration) {
+        this.configuration = Objects.requireNonNull(configuration);
+    }
+    //TODO!!
+
+    public static void main(String[] args) throws IOException {
+        if (args.length < 2) {
+            System.out.printf("Usage:%n");
+            System.out.printf("    %s groupId configurationFolder%n", HttpPyramidServer.class.getName());
+            System.out.printf("or%n");
+            System.out.printf("    %s groupId somePath/.global-configuration.json somePath/.format1.json "
+                + "somePath/.format2.json ...%n", HttpPyramidServer.class.getName());
+            return;
+        }
+        final String groupId = args[0];
+        final Path folderOrFile = Paths.get(args[1]);
+        final HttpPyramidServiceConfiguration configuration;
+        if (Files.isRegularFile(folderOrFile)) {
+            final List<Path> files = new ArrayList<>();
+            for (int index = 2; index < args.length; index++) {
+                files.add(Paths.get(args[index]));
+            }
+            configuration = HttpPyramidServiceConfiguration.readConfigurationFromFiles(folderOrFile, files);
+        } else {
+            configuration = HttpPyramidServiceConfiguration.readConfigurationFromFolder(folderOrFile);
+        }
+        final HttpPyramidServer server = new HttpPyramidServer(configuration);
+        //TODO!! start services
+        System.out.println(configuration);
+
     }
 }

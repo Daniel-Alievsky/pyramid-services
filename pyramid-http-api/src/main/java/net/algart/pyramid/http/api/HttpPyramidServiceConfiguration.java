@@ -36,7 +36,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class HttpPyramidServiceConfiguration {
-    private static final String GLOBAL_CONFIGURATION_FILE_NAME = ".global-configuration.json";
+    public static final String GLOBAL_CONFIGURATION_FILE_NAME = ".global-configuration.json";
 
     public static class Service extends ConvertibleToJson {
         private final String formatName;
@@ -169,7 +169,7 @@ public class HttpPyramidServiceConfiguration {
         }
     }
 
-    private final List<Process> processes;
+    private final Map<String, Process> processes;
     private final Set<String> commonClassPath;
     // - some common JARs used by all processes: common open-source API
     private final Set<String> commonVmOptions;
@@ -178,11 +178,12 @@ public class HttpPyramidServiceConfiguration {
     // - actual -Xmx for every process is a maximum of this value and xmx for all its services
     private final Map<String, Service> allFormatServices;
 
-    private HttpPyramidServiceConfiguration(JsonObject globalConfiguration, List<Process> processes) {
+    private HttpPyramidServiceConfiguration(JsonObject globalConfiguration, Map<String, Process> processes) {
         Objects.requireNonNull(globalConfiguration);
         Objects.requireNonNull(processes);
         this.processes = processes;
-        for (Process process : processes) {
+        final List<Process> processList = new ArrayList<>(processes.values());
+        for (Process process : processList) {
             process.parentConfiguration = this;
         }
         final JsonArray commonClassPath = globalConfiguration.getJsonArray("commonClassPath");
@@ -202,7 +203,7 @@ public class HttpPyramidServiceConfiguration {
         final String commonXmx = globalConfiguration.getString("commonXmx", null);
         this.commonXmx = commonXmx != null ? parseLongWithMetricalSuffixes(commonXmx) : null;
         this.allFormatServices = new LinkedHashMap<>();
-        for (Process process : processes) {
+        for (Process process : processList) {
             for (Service service : process.services) {
                 if (allFormatServices.putIfAbsent(service.formatName, service) != null) {
                     throw new JsonException("Invalid configuration JSON: "
@@ -212,8 +213,8 @@ public class HttpPyramidServiceConfiguration {
         }
     }
 
-    public List<Process> getProcesses() {
-        return Collections.unmodifiableList(processes);
+    public Map<String, Process> getProcesses() {
+        return Collections.unmodifiableMap(processes);
     }
 
     public Collection<String> getCommonClassPath() {
@@ -238,38 +239,49 @@ public class HttpPyramidServiceConfiguration {
         }
     }
 
-    public static HttpPyramidServiceConfiguration getConfiguration(Path configurationFolder) throws IOException {
+    public static HttpPyramidServiceConfiguration readConfigurationFromFolder(Path configurationFolder)
+        throws IOException
+    {
         final Path globalConfigurationFile = configurationFolder.resolve(GLOBAL_CONFIGURATION_FILE_NAME);
+        try (final DirectoryStream<Path> files = Files.newDirectoryStream(configurationFolder, ".*.json")) {
+            return readConfigurationFromFiles(globalConfigurationFile, files);
+        }
+    }
+
+    public static HttpPyramidServiceConfiguration readConfigurationFromFiles(
+        Path globalConfigurationFile,
+        Iterable<Path> configurationFiles)
+        throws IOException
+    {
         if (!Files.isRegularFile(globalConfigurationFile)) {
             throw new FileNotFoundException(globalConfigurationFile + " not found");
         }
         final JsonObject globalConfiguration = readJson(globalConfigurationFile);
+        final String globalConfigurationFileName = globalConfigurationFile.getFileName().toString();
         final LinkedHashMap<String, List<Service>> groups = new LinkedHashMap<>();
-        try (final DirectoryStream<Path> files = Files.newDirectoryStream(configurationFolder, ".*.json")) {
-            for (Path file : files) {
-                final String fileName = file.getFileName().toString();
-                if (fileName.equals(GLOBAL_CONFIGURATION_FILE_NAME)) {
-                    continue;
-                }
-                final Service service = new Service(readJson(file));
-                List<Service> group = groups.get(service.groupId);
-                if (group == null) {
-                    group = new ArrayList<>();
-                    groups.put(service.groupId, group);
-                }
-                group.add(service);
+        for (Path file : configurationFiles) {
+            final String fileName = file.getFileName().toString();
+            if (fileName.equals(globalConfigurationFileName)) {
+                continue;
             }
+            final Service service = new Service(readJson(file));
+            List<Service> group = groups.get(service.groupId);
+            if (group == null) {
+                group = new ArrayList<>();
+                groups.put(service.groupId, group);
+            }
+            group.add(service);
         }
-        final List<Process> processes = new ArrayList<>();
-        for (List<Service> group : groups.values()) {
-            processes.add(new Process(group));
+        final Map<String, Process> processes = new LinkedHashMap<>();
+        for (Map.Entry<String, List<Service>> entry : groups.entrySet()) {
+            processes.put(entry.getKey(), new Process(entry.getValue()));
         }
         return new HttpPyramidServiceConfiguration(globalConfiguration, processes);
     }
 
     JsonObject toJson() {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
-        builder.add("processes", toJsonArray(processes));
+        builder.add("processes", toJsonArray(processes.values()));
         builder.add("commonClassPath", toJsonArray(commonClassPath));
         builder.add("commonVmOptions", toJsonArray(commonVmOptions));
         if (commonXmx != null) {
