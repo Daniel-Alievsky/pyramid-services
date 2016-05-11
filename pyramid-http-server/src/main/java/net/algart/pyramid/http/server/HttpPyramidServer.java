@@ -24,23 +24,71 @@
 
 package net.algart.pyramid.http.server;
 
+import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.http.api.HttpPyramidServiceConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class HttpPyramidServer {
     private final HttpPyramidServiceConfiguration.Process processConfiguration;
+    private volatile List<HttpPyramidService> services = null;
 
     public HttpPyramidServer(HttpPyramidServiceConfiguration.Process processConfiguration) {
         this.processConfiguration = Objects.requireNonNull(processConfiguration);
     }
-    //TODO!!
 
-    public static void main(String[] args) throws IOException {
+    public void start() throws Exception {
+        final List<HttpPyramidService> services = new ArrayList<>();
+        try {
+            for (HttpPyramidServiceConfiguration.Service serviceConfiguration : processConfiguration.getServices()) {
+                final String planePyramidFactory = serviceConfiguration.getPlanePyramidFactory();
+                final String planePyramidFactoryConfiguration = serviceConfiguration.getPlanePyramidFactoryConfiguration();
+                final int port = serviceConfiguration.getPort();
+                final Class<?> factoryClass = Class.forName(planePyramidFactory);
+                final PlanePyramidFactory factory = (PlanePyramidFactory) factoryClass.newInstance();
+                if (planePyramidFactoryConfiguration != null) {
+                    factory.initializeConfiguration(planePyramidFactoryConfiguration);
+                }
+                final HttpPyramidService service = newService(factory, port);
+                addHandlers(service);
+                services.add(service);
+                service.start();
+            }
+        } catch (Exception | Error e) {
+            for (final HttpPyramidService service : services) {
+                service.finish();
+            }
+            throw e;
+        }
+        this.services = services;
+    }
+
+    public void waitForFinish() {
+        for (final HttpPyramidService service : services) {
+            new Thread() {
+                @Override
+                public void run() {
+                    service.waitForFinish();
+                }
+            }.start();
+        }
+    }
+
+    protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
+        return new HttpPyramidService(factory, port);
+    }
+
+    protected void addHandlers(HttpPyramidService service) {
+        service.addStandardHandlers();
+    }
+
+    public static void main(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.printf("Usage:%n");
             System.out.printf("    %s groupId configurationFolder%n", HttpPyramidServer.class.getName());
@@ -61,9 +109,13 @@ public class HttpPyramidServer {
         } else {
             configuration = HttpPyramidServiceConfiguration.readConfigurationFromFolder(folderOrFile);
         }
-        final HttpPyramidServer server = new HttpPyramidServer(configuration.getProcesses().get(groupId));
-        //TODO!! start services
-        System.out.println(configuration);
-
+        final HttpPyramidServiceConfiguration.Process process = configuration.getProcess(groupId);
+        if (process == null) {
+            throw new IllegalArgumentException("Process with groupId \"" + groupId + "\" is not found");
+        }
+        final HttpPyramidServer server = new HttpPyramidServer(process);
+//        System.out.println(configuration);
+        server.start();
+        server.waitForFinish();
     }
 }

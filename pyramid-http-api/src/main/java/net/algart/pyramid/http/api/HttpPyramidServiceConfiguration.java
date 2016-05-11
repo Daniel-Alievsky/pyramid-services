@@ -217,6 +217,10 @@ public class HttpPyramidServiceConfiguration {
         return Collections.unmodifiableMap(processes);
     }
 
+    public Process getProcess(String groupId) {
+        return processes.get(groupId);
+    }
+
     public Collection<String> getCommonClassPath() {
         return Collections.unmodifiableSet(commonClassPath);
     }

@@ -29,14 +29,6 @@ import net.algart.pyramid.PlanePyramidFactory;
 import java.io.IOException;
 
 public class SimpleHttpPyramidServer {
-    protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
-        return new HttpPyramidService(factory, port);
-    }
-
-    protected void addHandlers(HttpPyramidService service) {
-        service.addStandardHandlers();
-    }
-
     public final void doMain(String[] args) throws Exception {
         final Class<?>[] planePyramidFactoryClasses =
             splitClassNames("net.algart.pyramid.http.planePyramidFactory");
@@ -81,6 +73,14 @@ public class SimpleHttpPyramidServer {
                 }
             }.start();
         }
+    }
+
+    protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
+        return new HttpPyramidService(factory, port);
+    }
+
+    protected void addHandlers(HttpPyramidService service) {
+        service.addStandardHandlers();
     }
 
     private static int[] splitIntegers(String propertyName) {

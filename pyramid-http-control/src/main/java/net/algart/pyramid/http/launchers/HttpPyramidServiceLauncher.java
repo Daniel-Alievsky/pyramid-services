@@ -35,18 +35,31 @@ public class HttpPyramidServiceLauncher {
         this.configuration = Objects.requireNonNull(configuration);
     }
 
-    public void restartServices() {
-        restartServices(false);
+    public void startServices() {
+        //TODO!! don't check that processes are alive; good for starting Windows service
     }
 
     public void restartServices(boolean restartAliveServices) {
-        //TODO!! if a service is alive, finish it and wait for finishing
+        //TODO!! check if a service is alive (if not, repeat 3 times)
+        //TODO!! if alive and restartAliveServices, call restartProcess, else startProcess
         //TODO!! start each service by a separate thread (don't delay others due to one bad services)
     }
 
     public void finishServices() {
-        //TODO!!
+        //TODO!! try to finish normally; if we have references to processes, also kill processes
     }
 
+    public void restartProcess(String groupId) {
+        finishProcess(groupId);
+        startProcess(groupId);
+    }
 
+    public void finishProcess(String groupId) {
+        //TODO!! finish it via HTTP command, litle wait
+        //TODO!! if we have reference to the process in Map<String groupId, java.lang.Process), kill it and little wait
+    }
+
+    public void startProcess(String groupId) {
+        //TODO!! try to start process 3 times (in a case of non-zero exit code) with delays
+    }
 }
