@@ -24,7 +24,7 @@
 
 package net.algart.pyramid.http.server.handlers;
 
-import net.algart.pyramid.http.api.HttpPyramidConstants;
+import net.algart.pyramid.http.api.HttpPyramidKeywords;
 import net.algart.pyramid.http.server.HttpPyramidCommand;
 import net.algart.pyramid.http.server.HttpPyramidService;
 import net.algart.pyramid.requests.PlanePyramidReadInformationRequest;
@@ -45,7 +45,7 @@ public class InformationHttpPyramidCommand extends HttpPyramidCommand {
         throws Exception
     {
         final String configuration = pyramidIdToConfiguration(
-            HttpPyramidCommand.getParameter(request, HttpPyramidConstants.PYRAMID_ID_ARGUMENT_NAME));
+            HttpPyramidCommand.getParameter(request, HttpPyramidKeywords.PYRAMID_ID_ARGUMENT_NAME));
         response.setContentType("application/json; charset=utf-8");
         response.addHeader("Access-Control-Allow-Origin", "*");
         // - Allows browser JavaScript to access this via XMLHttpRequest.

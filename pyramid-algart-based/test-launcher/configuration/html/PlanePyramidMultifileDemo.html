@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multifile demo for pyramid service</title>
+    <style>
+        #page {
+            width: 90%;
+            margin: 0 auto;
+        }
+
+        #imageListContainer {
+            float: left;
+            width: 30%;
+            height: 500px;
+            overflow: scroll;
+        }
+
+        #currentImageContainer {
+            float: right;
+            width: 70%;
+        }
+
+        #currentImageContainer > div {
+            margin-left: 30px;
+        }
+
+        #controlContainer {
+            width: 100%;
+            border: 1px solid gray;
+            padding: 5px;
+        }
+
+        #mapContainer {
+            width: 100%;
+            border: 1px solid gray;
+        }
+
+        #map {
+            width: 100%;
+            height: 500px;
+        }
+
+        #imageListContainer dt {
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #E0E0E0;
+            padding: 10px;
+            margin: 0 10px 10px 0;
+        }
+
+        #imageListContainer dd {
+            margin: 0 10px 15px 30px;
+        }
+
+        #imageListContainer dd img {
+            border: 1px solid gray;
+            cursor: pointer;
+        }
+
+        .clearer {
+            clear: both;
+        }
+    </style>
+    <script src="http://openlayers.org/api/OpenLayers.js"></script>
+    <script src="PlanePyramidService.js"></script>
+    <script>
+        // Setting the used server and IDs of used DIVs:
+        inititialize("localhost", "map", null, null, "control");
+    </script>
+</head>
+<body>
+<div id="page">
+    <div id="imageListContainer">
+        <dl>
+            <!-- In end-user version, the string 'some-unique-folder-18572' (argument of setPyramid and
+            of the request in img src=...) must be loaded by the server-side script (ASP, JSP, ...)
+            from /pp-links folder; we recommend to show only images of the given user (detected by
+            pyramidPath subfolder in config.json).
+            The port should be detected automatically by pyramidId in the server-side script
+            by analysis of /pp-control folder and formatName from .pp.json. -->
+            <dt onclick="setPyramid('some-unique-folder-18572', 9001)">Image 1</dt>
+            <dd><img onclick="setPyramid('some-unique-folder-18572', 9001)"
+                     src="http://localhost:9001/pp-read-special-image?pyramidId=some-unique-folder-18572&specialImageName=WHOLE_SLIDE&height=70">
+            </dd>
+            <dt onclick="setPyramid('some-unique-folder-A', 9001)">Image 2</dt>
+            <dd><img onclick="setPyramid('some-unique-folder-A', 9001)"
+                     src="http://localhost:9001/pp-read-special-image?pyramidId=some-unique-folder-A&specialImageName=WHOLE_SLIDE&height=70">
+            </dd>
+            <dt onclick="setPyramid('some-unique-folder-B', 9001)">Image 3</dt>
+            <dd><img onclick="setPyramid('some-unique-folder-B', 9001)"
+                     src="http://localhost:9001/pp-read-special-image?pyramidId=some-unique-folder-B&specialImageName=WHOLE_SLIDE&height=70">
+            </dd>
+            <dt onclick="setPyramid('some-unique-folder-C', 9001)">Image 4</dt>
+            <dd><img onclick="setPyramid('some-unique-folder-C', 9001)"
+                     src="http://localhost:9001/pp-read-special-image?pyramidId=some-unique-folder-C&specialImageName=WHOLE_SLIDE&height=70">
+            </dd>
+            <!-- Examples below can be changed manually by your images in /pp-link and /pp-images -->
+            <dt onclick="setPyramid('ai11469', 9100)">SVS example</dt>
+            <dd><img onclick="setPyramid('ai11469', 9100)"
+                     src="http://localhost:9100/pp-read-special-image?pyramidId=ai11469&specialImageName=WHOLE_SLIDE&height=70">
+            </dd>
+            <dt onclick="setPyramid('ai8855', 9100)">SCN example</dt>
+            <dd><img onclick="setPyramid('ai8855', 9100)"
+                     src="http://localhost:9100/pp-read-special-image?pyramidId=ai8855&specialImageName=WHOLE_SLIDE&height=70">
+            </dd>
+            <dt onclick="setPyramid('ai23033', 9100)">NDPI example</dt>
+            <dd><img onclick="setPyramid('ai23033', 9100)"
+                     src="http://localhost:9100/pp-read-special-image?pyramidId=ai23033&specialImageName=WHOLE_SLIDE&height=70">
+            </dd>
+            <dt onclick="setPyramid('ai2651', 9001)">TIFF example</dt>
+            <dd><img onclick="setPyramid('ai2651', 9001)"
+                     src="http://localhost:9001/pp-read-special-image?pyramidId=ai2651&specialImageName=WHOLE_SLIDE&height=70">
+            </dd>
+        </dl>
+    </div>
+    <div id="currentImageContainer">
+        <div id="controlContainer">
+            <div id="control" style="visibility:hidden">
+                <button onclick="changeObjective(2.5)">2.5x</button>
+                <button onclick="changeObjective(5)">5x</button>
+                <button onclick="changeObjective(10)">10x</button>
+                <button onclick="changeObjective(20)">20x</button>
+                &nbsp;&nbsp;<span id="currentZoom"></span>
+            </div>
+        </div>
+        <div>Current image:</div>
+        <div id="mapContainer">
+            <div id="map"></div>
+        </div>
+    </div>
+    <div class="clearer"></div>
+</div>
+
+</body>
+</html>

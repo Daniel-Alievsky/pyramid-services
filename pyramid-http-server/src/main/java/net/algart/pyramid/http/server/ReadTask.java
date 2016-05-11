@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.*;
-import net.algart.pyramid.http.api.HttpPyramidTimeouts;
+import net.algart.pyramid.http.api.HttpPyramidLimits;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.WriteHandler;
 import org.glassfish.grizzly.http.io.NIOOutputStream;
@@ -169,8 +169,8 @@ final class ReadTask {
 //        System.out.println("Task " + this + " time " + (System.currentTimeMillis() - startTimeInMilliseconds));
         if (System.currentTimeMillis() - lastAccessTime >
             (sendingDataStarted ?
-                HttpPyramidTimeouts.SERVER_SENDING_TIMEOUT :
-                HttpPyramidTimeouts.SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT))
+                HttpPyramidLimits.SERVER_SENDING_TIMEOUT :
+                HttpPyramidLimits.SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT))
         {
             activeTaskSet.removeTask(this);
             // the same action is done while closeTask, but we have no strict guarantees

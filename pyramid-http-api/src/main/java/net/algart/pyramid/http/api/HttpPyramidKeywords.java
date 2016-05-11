@@ -24,18 +24,17 @@
 
 package net.algart.pyramid.http.api;
 
-/**
- * Timeouts for working with pyramids via HTTP protocol. All timeouts are specified in milliseconds.
- */
-public class HttpPyramidTimeouts {
-    public static final int SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT = 60000;
-    public static final int SERVER_SENDING_TIMEOUT = 120000;
+public class HttpPyramidKeywords {
+    public static final String ALIVE_STATUS_COMMAND_PREFIX = "/pp-alive-status";
+    public static final String FINISH_COMMAND_PREFIX = "/pp-finish";
+    public static final String INFORMATION_COMMAND_PREFIX = "/pp-information";
+    public static final String READ_RECTANGLE_COMMAND_PREFIX = "/pp-read-rectangle";
+    public static final String TMS_COMMAND_PREFIX = "/pp-tms";
+    public static final String ZOOMIFY_COMMAND_PREFIX = "/pp-zoomify";
+    public static final String READ_SPECIAL_IMAGE_COMMAND_PREFIX = "/pp-read-special-image";
+    public static final String PYRAMID_ID_ARGUMENT_NAME = "pyramidId";
+    public static final String ALIVE_RESPONSE = "Alive";
 
-    public static final int CLIENT_CONNECTION_TIMEOUT = 30000;
-    public static final int CLIENT_READ_TIMEOUT = 90000;
-    // - read timeout should be greater than timeouts in SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT class
-
-    private HttpPyramidTimeouts() {
+    private HttpPyramidKeywords() {
     }
 }
-

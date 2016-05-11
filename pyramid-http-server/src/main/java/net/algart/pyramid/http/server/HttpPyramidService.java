@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidFactory;
-import net.algart.pyramid.http.api.HttpPyramidConstants;
+import net.algart.pyramid.http.api.HttpPyramidKeywords;
 import net.algart.pyramid.http.server.handlers.*;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import net.algart.pyramid.PlanePyramidPool;
@@ -42,9 +42,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HttpPyramidService {
-    static final long IMAGE_CACHING_MEMORY = Math.max(16, Long.getLong(
-        "net.algart.pyramid.http.imageCachingMemory", 256L * 1024L * 1024L));
-    static final Logger LOG = Logger.getLogger(HttpPyramidService.class.getName());
+    private static final Logger LOG = Logger.getLogger(HttpPyramidService.class.getName());
 
     private static final String CONFIG_ROOT_DIR = System.getProperty(
         "net.algart.pyramid.http.configRoot", "/pp-links");
@@ -78,11 +76,11 @@ public class HttpPyramidService {
     }
 
     public final void addStandardHandlers() {
-        addHandler(HttpPyramidConstants.INFORMATION_COMMAND_PREFIX, new InformationHttpPyramidCommand(this));
-        addHandler(HttpPyramidConstants.READ_RECTANGLE_COMMAND_PREFIX, new ReadRectangleHttpPyramidCommand(this));
-        addHandler(HttpPyramidConstants.TMS_COMMAND_PREFIX, new TmsHttpPyramidCommand(this));
-        addHandler(HttpPyramidConstants.ZOOMIFY_COMMAND_PREFIX, new ZoomifyHttpPyramidCommand(this));
-        addHandler(HttpPyramidConstants.READ_SPECIAL_IMAGE_COMMAND_PREFIX, new ReadSpecialImagePyramidCommand(this));
+        addHandler(HttpPyramidKeywords.INFORMATION_COMMAND_PREFIX, new InformationHttpPyramidCommand(this));
+        addHandler(HttpPyramidKeywords.READ_RECTANGLE_COMMAND_PREFIX, new ReadRectangleHttpPyramidCommand(this));
+        addHandler(HttpPyramidKeywords.TMS_COMMAND_PREFIX, new TmsHttpPyramidCommand(this));
+        addHandler(HttpPyramidKeywords.ZOOMIFY_COMMAND_PREFIX, new ZoomifyHttpPyramidCommand(this));
+        addHandler(HttpPyramidKeywords.READ_SPECIAL_IMAGE_COMMAND_PREFIX, new ReadSpecialImagePyramidCommand(this));
     }
 
     public final void start() throws IOException {
@@ -136,8 +134,8 @@ public class HttpPyramidService {
     }
 
     private void addBuiltInHandlers() {
-        addHandler(HttpPyramidConstants.ALIVE_STATUS_COMMAND_PREFIX, new AliveStatusCommand(this));
-        addHandler(HttpPyramidConstants.FINISH_COMMAND_PREFIX, new FinishCommand(this));
+        addHandler(HttpPyramidKeywords.ALIVE_STATUS_COMMAND_PREFIX, new AliveStatusCommand(this));
+        addHandler(HttpPyramidKeywords.FINISH_COMMAND_PREFIX, new FinishCommand(this));
     }
 
     private class FinishCommand extends HttpPyramidCommand {
@@ -172,7 +170,7 @@ public class HttpPyramidService {
         {
             response.setContentType("text/plain");
             response.setStatus(200, "OK");
-            response.getWriter().write(HttpPyramidConstants.ALIVE_RESPONSE);
+            response.getWriter().write(HttpPyramidKeywords.ALIVE_RESPONSE);
             response.finish();
         }
     }

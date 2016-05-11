@@ -33,10 +33,10 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class HttpPyramidServer {
-    private final HttpPyramidServiceConfiguration configuration;
+    private final HttpPyramidServiceConfiguration.Process processConfiguration;
 
-    public HttpPyramidServer(HttpPyramidServiceConfiguration configuration) {
-        this.configuration = Objects.requireNonNull(configuration);
+    public HttpPyramidServer(HttpPyramidServiceConfiguration.Process processConfiguration) {
+        this.processConfiguration = Objects.requireNonNull(processConfiguration);
     }
     //TODO!!
 
@@ -61,7 +61,7 @@ public class HttpPyramidServer {
         } else {
             configuration = HttpPyramidServiceConfiguration.readConfigurationFromFolder(folderOrFile);
         }
-        final HttpPyramidServer server = new HttpPyramidServer(configuration);
+        final HttpPyramidServer server = new HttpPyramidServer(configuration.getProcesses().get(groupId));
         //TODO!! start services
         System.out.println(configuration);
 
