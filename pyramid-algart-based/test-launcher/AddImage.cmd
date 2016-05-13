@@ -9,7 +9,8 @@ if not exist %1 (
     goto end
 )
 set CALLING_DIRECTORY=%~dp0
-set SOURCE_FILE=%~f1
+set SOURCE_FILE=%1
+set SOURCE_FILE_NAME=%~nx1
 set RESULT_FILE_NAME=data%~x1
 set USER_NAME=%2
 
@@ -33,10 +34,10 @@ if %GNU%==TRUE (
 )
 set MY_FOLDER=\pp-images\%USER_NAME%
 call :rand
-mkdir %MY_SUBFOLDER%
-set PYRAMID_FOLDER=%MY_SUBFOLDER%
+set PYRAMID_FOLDER=%MY_SUBFOLDER%\layer-1
+mkdir %PYRAMID_FOLDER%
 echo Copying %1 into %PYRAMID_FOLDER%\%RESULT_FILE_NAME%
-copy %1 %PYRAMID_FOLDER%\%RESULT_FILE_NAME%
+copy %SOURCE_FILE% %PYRAMID_FOLDER%\%RESULT_FILE_NAME%
 echo Creating %PYRAMID_FOLDER%\.pp.json
 echo {>%PYRAMID_FOLDER%\.pp.json
 echo     "fileName": "%RESULT_FILE_NAME%",>>%PYRAMID_FOLDER%\.pp.json
@@ -44,6 +45,9 @@ if %FORMAT_NAME%==loci echo     "format": {"loci": {"flattenedResolutions": fals
 rem flattenedResolutions works bad in Loci system
 echo     "formatName": "%FORMAT_NAME%">>%PYRAMID_FOLDER%\.pp.json
 echo }>>%PYRAMID_FOLDER%\.pp.json
+echo {>%PYRAMID_FOLDER%\..\.layers.json
+echo     "title": "%SOURCE_FILE_NAME%">>%PYRAMID_FOLDER%\..\.layers.json
+echo }>>%PYRAMID_FOLDER%\..\.layers.json
 
 set MY_FOLDER=\pp-links
 call :rand
@@ -57,9 +61,10 @@ echo     "renderer": {>>%LINK_FOLDER%\config.json
 echo        "format": "jpeg">>%LINK_FOLDER%\config.json
 echo     }>>%LINK_FOLDER%\config.json
 echo }>>%LINK_FOLDER%\config.json
+echo %LINK_NAME%>%PYRAMID_FOLDER%\.link
 
 echo Adding HTML link to %CALLING_DIRECTORY%%HTML_FILE%
-echo ^<a href="html/PlanePyramidServiceTest.html?%LINK_NAME%:%PORT%"^>New test %LINK_NAME%: pyramid at %PYRAMID_FOLDER%, source file %SOURCE_FILE%^</a^>^<br^> >>%CALLING_DIRECTORY%%HTML_FILE%
+echo ^<a href="html/PlanePyramidServiceTest.html?%LINK_NAME%:%PORT%"^>New test %LINK_NAME%: pyramid at %PYRAMID_FOLDER%, source file "%SOURCE_FILE_NAME%"^</a^>^<br^> >>%CALLING_DIRECTORY%%HTML_FILE%
 goto :end
 
 :rand

@@ -16,7 +16,7 @@
         #imageListContainer {
             float: left;
             width: 30%;
-            height: 600px;
+            height: 700px;
             overflow: scroll;
         }
 
@@ -97,47 +97,40 @@
 <body>
 <div id="page">
     <div id="imageListContainer">
-        <dl>
-            <!-- In end-user version, the string 'some-unique-folder-18572' (argument of setPyramid and
-            of the request in img src=...) must be loaded by the server-side script (ASP, JSP, ...)
-            from /pp-links folder; we recommend to show only images of the given user (detected by
-            pyramidPath subfolder in config.json).
-            The port should be detected automatically by pyramidId in the server-side script
-            by analysis of /pp-control folder and formatName from .pp.json. -->
-            <dt onclick="setPyramid('some-unique-folder-18572', 9001)">Image 1</dt>
-            <dd><img onclick="setPyramid('some-unique-folder-18572', 9001)"
-                     src="http://localhost:9001/pp-read-special-image?pyramidId=some-unique-folder-18572&specialImageName=WHOLE_SLIDE&height=70">
-            </dd>
-            <dt onclick="setPyramid('some-unique-folder-A', 9001)">Image 2</dt>
-            <dd><img onclick="setPyramid('some-unique-folder-A', 9001)"
-                     src="http://localhost:9001/pp-read-special-image?pyramidId=some-unique-folder-A&specialImageName=WHOLE_SLIDE&height=70">
-            </dd>
-            <dt onclick="setPyramid('some-unique-folder-B', 9001)">Image 3</dt>
-            <dd><img onclick="setPyramid('some-unique-folder-B', 9001)"
-                     src="http://localhost:9001/pp-read-special-image?pyramidId=some-unique-folder-B&specialImageName=WHOLE_SLIDE&height=70">
-            </dd>
-            <dt onclick="setPyramid('some-unique-folder-C', 9001)">Image 4</dt>
-            <dd><img onclick="setPyramid('some-unique-folder-C', 9001)"
-                     src="http://localhost:9001/pp-read-special-image?pyramidId=some-unique-folder-C&specialImageName=WHOLE_SLIDE&height=70">
-            </dd>
-            <!-- Examples below can be changed manually by your images in /pp-link and /pp-images -->
-            <dt onclick="setPyramid('ai11469', 9100)">SVS example</dt>
-            <dd><img onclick="setPyramid('ai11469', 9100)"
-                     src="http://localhost:9100/pp-read-special-image?pyramidId=ai11469&specialImageName=WHOLE_SLIDE&height=70">
-            </dd>
-            <dt onclick="setPyramid('ai8855', 9100)">SCN example</dt>
-            <dd><img onclick="setPyramid('ai8855', 9100)"
-                     src="http://localhost:9100/pp-read-special-image?pyramidId=ai8855&specialImageName=WHOLE_SLIDE&height=70">
-            </dd>
-            <dt onclick="setPyramid('ai23033', 9100)">NDPI example</dt>
-            <dd><img onclick="setPyramid('ai23033', 9100)"
-                     src="http://localhost:9100/pp-read-special-image?pyramidId=ai23033&specialImageName=WHOLE_SLIDE&height=70">
-            </dd>
-            <dt onclick="setPyramid('ai2651', 9001)">TIFF example</dt>
-            <dd><img onclick="setPyramid('ai2651', 9001)"
-                     src="http://localhost:9001/pp-read-special-image?pyramidId=ai2651&specialImageName=WHOLE_SLIDE&height=70">
-            </dd>
-        </dl>
+        <script>
+            /*
+             In end-user version, function "addImage" must be implemented in the server-side script
+             (ASP, JSP, ...).
+             We recommend to show only images of the given user:
+             1) read the folder of this user from /pp-images (for example, /pp-images/Daniel);
+             2) read layer-1/.link file in every project of this user: linkId is an exact content
+             of the correponding .link file;
+             3) read .layer.json file in every project of this user: imageName is the property
+             "title" in this JSON;
+             4) the port, in professional version, should be detected automatically by "formatName"
+             property from layer-1/.pp.json, according the configuration in /pp-control folder.
+             */
+            function addImage(linkId, port, imageName) {
+                document.writeln(
+                        '<dt onclick="setPyramid(\'' + linkId + '\', ' + port + ')">' + imageName + '</dt>\n'
+                        + '<dd><img onclick="setPyramid(\'' + linkId + '\', ' + port + ')"'
+                        + ' src="http://localhost:' + port + '/pp-read-special-image?pyramidId='
+                        + linkId + '&specialImageName=WHOLE_SLIDE&height=70">\n'
+                        + '</dd>\n');
+            }
+            document.writeln('<dl>');
+            addImage('some-unique-folder-18572', 9001, 'Image 1');
+            addImage('some-unique-folder-A7412', 9001, 'Image 2');
+            addImage('some-unique-folder-B8592', 9001, 'Image 3');
+            addImage('some-unique-folder-C5253', 9001, 'Image 4');
+            // Examples below can be replaced manually to your images in /pp-link and /pp-images
+            addImage('ai11353', 9100, 'Liver 4.svs');
+            addImage('ai19488', 9100, 'Interesting Case 1.2.svs');
+            addImage('ai16351', 9100, 'CMU-1.ndpi');
+            addImage('ai3512', 9100, 'Some_example.scn');
+            addImage('ai10078', 9001, 'LargeStripped.tif');
+            document.writeln('</dl>');
+        </script>
     </div>
     <div id="currentImageContainer">
         <div id="controlContainer">

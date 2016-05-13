@@ -8,5 +8,5 @@
     "../lib/maven/loci/loci_tools-5.0.6.jar",
     "../lib/maven/loci/PlanePyramidSourceBioFormats.jar"
   ],
-  "memory": "1g"
+  "memory": "2g"
 }

@@ -149,7 +149,7 @@ function initOpenLayers() {
 //        OpenLayers.Layer.Zoomify.prototype.getURL = getMyTmsUrl;
 
     var imSize = new OpenLayers.Size(currentPyramidInfo.zeroLevelDimX, currentPyramidInfo.zeroLevelDimY);
-    var zoomify = new OpenLayers.Layer.Zoomify("Zoomify",
+    var zoomify = new OpenLayers.Layer.Zoomify("Layer 1",
         "http://localhost:" + currentPort + "/pp-zoomify/" + currentPyramidId + "/", imSize);
     /* Map with raster coordinates (pixels) from Zoomify image */
     var options = {
