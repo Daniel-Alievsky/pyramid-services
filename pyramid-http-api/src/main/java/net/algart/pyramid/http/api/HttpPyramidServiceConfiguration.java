@@ -46,7 +46,7 @@ public class HttpPyramidServiceConfiguration {
         private final String planePyramidFactoryConfiguration;
         private final Set<String> classPath;
         private final Set<String> vmOptions;
-        private final Long xmx;
+        private final Long memory;
         // - classPath and vmOptions of all services of the single processes are joined
         private final int port;
         private Process parentProcess;
@@ -70,8 +70,8 @@ public class HttpPyramidServiceConfiguration {
                 }
             }
 
-            final String xmx = json.getString("xmx", null);
-            this.xmx = xmx != null ? parseLongWithMetricalSuffixes(xmx) : null;
+            final String memory = json.getString("memory", null);
+            this.memory = memory != null ? parseLongWithMetricalSuffixes(memory) : null;
             this.port = getRequiredInt(json, "port");
         }
 
@@ -99,8 +99,8 @@ public class HttpPyramidServiceConfiguration {
             return Collections.unmodifiableSet(vmOptions);
         }
 
-        public Long getXmx() {
-            return xmx;
+        public Long getMemory() {
+            return memory;
         }
 
         public int getPort() {
@@ -119,8 +119,8 @@ public class HttpPyramidServiceConfiguration {
             builder.add("planePyramidFactoryConfiguration", planePyramidFactoryConfiguration);
             builder.add("classPath", toJsonArray(classPath));
             builder.add("vmOptions", toJsonArray(vmOptions));
-            if (xmx != null) {
-                builder.add("xmx", xmx);
+            if (memory != null) {
+                builder.add("memory", memory);
             }
             builder.add("port", port);
             return builder.build();

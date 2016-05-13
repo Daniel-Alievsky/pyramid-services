@@ -33,6 +33,9 @@
               <element id="library" level="project" name="Maven: net.algart:algart:1.2.7" />
               <element id="library" level="project" name="Maven: net.simagis.ext:json:0.1" />
             </element>
+            <element id="directory" name="loci">
+              <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/readme.loci.txt" output-file-name="readme.txt" />
+            </element>
           </element>
           <element id="directory" name="sdk">
             <element id="artifact" artifact-name="pyramid-algart-based-with-test:jar" />

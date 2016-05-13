@@ -1,11 +1,11 @@
 {
-  "formatName" : "imageIO",
-  "groupId" : "net.algart.simagis.pyramid.sources.imageio",
-  "planePyramidFactory" : "net.algart.pyramid.standard.StandardPlanePyramidFactory",
-  "planePyramidFactoryConfiguration" : "net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory",
-  "port" : 9001,
-  "classPath" : [
+  "formatName": "imageIO",
+  "groupId": "net.algart.simagis.pyramid.sources.imageio",
+  "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
+  "planePyramidFactoryConfiguration": "net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory",
+  "port": 9001,
+  "classPath": [
     "../lib/maven/jai/jai-imageio-core-1.3.1.jar"
-   ],
-  "xmx" : "8g"
+  ],
+  "memory": "8g"
 }

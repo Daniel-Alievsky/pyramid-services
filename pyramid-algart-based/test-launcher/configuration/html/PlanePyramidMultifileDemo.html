@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <title>Multifile demo for pyramid service</title>
     <style>
+        body {
+            font-family: sans-serif;
+        }
+
         #page {
             width: 90%;
             margin: 0 auto;
@@ -12,7 +16,7 @@
         #imageListContainer {
             float: left;
             width: 30%;
-            height: 500px;
+            height: 600px;
             overflow: scroll;
         }
 
@@ -29,6 +33,10 @@
             width: 100%;
             border: 1px solid gray;
             padding: 5px;
+        }
+
+        #imageHeader {
+            margin: 10px 0 5px;
         }
 
         #mapContainer {
@@ -67,6 +75,23 @@
     <script>
         // Setting the used server and IDs of used DIVs:
         inititialize("localhost", "map", null, null, "control");
+
+        // The function showCurrentZoom() is called every 1 sec and shows some information about current zoom, etc.
+        function showInfo() {
+            if (currentPyramidInfo != null && openLayersMap != null) {
+                document.getElementById("imageInfo").innerHTML =
+                        currentPyramidInfo.zeroLevelDimX + "x" + currentPyramidInfo.zeroLevelDimY
+                        + (currentPyramidInfo.channelCount == 1 ? " (grayscale)"
+                                : currentPyramidInfo.channelCount == 3 ? " (color)"
+                                : currentPyramidInfo.channelCount == 4 ? " (color with transparency)"
+                                : "(???)")
+                        + ", level " + (openLayersMap.getZoom() + 1)
+                        + " / " + openLayersMap.getNumZoomLevels();
+            } else {
+                document.getElementById("imageInfo").innerHTML = "";
+            }
+        }
+        setInterval(showInfo, 500);
     </script>
 </head>
 <body>
@@ -124,7 +149,7 @@
                 &nbsp;&nbsp;<span id="currentZoom"></span>
             </div>
         </div>
-        <div>Current image:</div>
+        <div id="imageHeader">Current image <span id="imageInfo"></span></div>
         <div id="mapContainer">
             <div id="map"></div>
         </div>

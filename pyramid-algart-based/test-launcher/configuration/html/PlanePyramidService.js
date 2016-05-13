@@ -27,7 +27,19 @@ var mapTagName = null;
 var macroTagName = null;
 var informationTagName = null;
 var controlTagName = null;
+var zeroLevelObjective = null;
+
+/**
+ * The variable openLayersMap contains current OpenLayers.Map, if we have some active pyramid,
+ * or null in other case.
+ */
 var openLayersMap = null;
+
+/**
+ * The variable currentPyramidInfo contains current PlanePyramidInformation as JSON, if we have some active pyramid,
+ * or null in other case.
+ */
+var currentPyramidInfo = null;
 
 /**
  * Specifies the server and the names (id attribute) of HTML tags (usually <div...>)
@@ -63,6 +75,7 @@ function setPyramid(newPyramidId, newPort) {
     if (openLayersMap != null) {
         // it is not the 1st call
         openLayersMap = null;
+        currentPyramidInfo = null;
         document.getElementById(mapTagName).innerHTML = "";
         if (controlTagName != null) {
             document.getElementById(controlTagName).style.visibility = "hidden";
@@ -113,14 +126,15 @@ function requestPyramid(newPyramidId, newPort) {
         var result = "";
         if (xhr.status != 200) {
             result = "Error: cannot read pyramid information!</br>";
+            currentPyramidInfo = null; // stays null
         } else {
-            var info = JSON.parse(xhr.responseText);
+            currentPyramidInfo = JSON.parse(xhr.responseText);
             result = "<p>Detected pyramid information:</p>";
-            result += "<pre>" + JSON.stringify(info, null, "  ") + "</pre>";
-            zeroLevelObjective = info.magnification == null ? 20 : info.magnification;
+            result += "<pre>" + JSON.stringify(currentPyramidInfo, null, "  ") + "</pre>";
+            zeroLevelObjective = currentPyramidInfo.magnification == null ? 20 : currentPyramidInfo.magnification;
             // - current versions of server, based on LOCI and other free libraries,
-            // does not support info.magnification, so we will use default value 20
-            initOpenLayers(info);
+            // does not support currentPyramidInfo.magnification, so we will use default value 20
+            initOpenLayers();
         }
         if (informationTagName != null) {
             document.getElementById(informationTagName).innerHTML = result;
@@ -130,16 +144,16 @@ function requestPyramid(newPyramidId, newPort) {
 
 // This function is private; it is called when the server replies to XMLHttpRequest
 // and returns the parameters of loaded pyramid.
-function initOpenLayers(info) {
+function initOpenLayers() {
 // The following line allows to emulate TMS intead of Zoomify, but not correct for boundary tiles:
 //        OpenLayers.Layer.Zoomify.prototype.getURL = getMyTmsUrl;
 
-    var imSize = new OpenLayers.Size(info.zeroLevelDimX, info.zeroLevelDimY);
+    var imSize = new OpenLayers.Size(currentPyramidInfo.zeroLevelDimX, currentPyramidInfo.zeroLevelDimY);
     var zoomify = new OpenLayers.Layer.Zoomify("Zoomify",
         "http://localhost:" + currentPort + "/pp-zoomify/" + currentPyramidId + "/", imSize);
     /* Map with raster coordinates (pixels) from Zoomify image */
     var options = {
-        maxExtent: new OpenLayers.Bounds(0, 0, info.zeroLevelDimX, info.zeroLevelDimY),
+        maxExtent: new OpenLayers.Bounds(0, 0, currentPyramidInfo.zeroLevelDimX, currentPyramidInfo.zeroLevelDimY),
         maxResolution: Math.pow(2, zoomify.numberOfTiers - 1),
         numZoomLevels: zoomify.numberOfTiers,
         units: 'pixels'
