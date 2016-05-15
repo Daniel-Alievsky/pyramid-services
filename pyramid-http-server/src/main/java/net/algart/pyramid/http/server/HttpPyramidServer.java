@@ -107,8 +107,8 @@ public class HttpPyramidServer {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(2000);
-                    // little pause to allow services to show their logging messages
+                    Thread.sleep(200);
+                    // - to be on the side: little pause to allow services to show their logging messages
                     System.out.printf("%nThe server successfully started on ports %s%n", getUsedPorts());
                     System.out.printf("Press \"Ctrl+C\" or \"ENTER\" to kill the server, "
                         + "or wait when it will be finished normally by HTTP command...%n%n");

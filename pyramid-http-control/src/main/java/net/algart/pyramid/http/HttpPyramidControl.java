@@ -25,7 +25,7 @@
 package net.algart.pyramid.http;
 
 import net.algart.pyramid.PlanePyramidInformation;
-import net.algart.pyramid.http.api.HttpPyramidLimits;
+import net.algart.pyramid.http.api.HttpPyramidConstants;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -38,7 +38,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static net.algart.pyramid.http.api.HttpPyramidKeywords.*;
+import static net.algart.pyramid.http.api.HttpPyramidConstants.*;
 
 public class HttpPyramidControl {
     private static final Logger LOG = Logger.getLogger(HttpPyramidControl.class.getName());
@@ -84,8 +84,8 @@ public class HttpPyramidControl {
     public final HttpURLConnection openCustomConnection(String pathAndQuery, String requestMethod) throws IOException {
         final URL url = new URL("http", host, port, pathAndQuery);
         final URLConnection connection = url.openConnection();
-        connection.setConnectTimeout(HttpPyramidLimits.CLIENT_CONNECTION_TIMEOUT);
-        connection.setReadTimeout(HttpPyramidLimits.CLIENT_READ_TIMEOUT);
+        connection.setConnectTimeout(HttpPyramidConstants.CLIENT_CONNECTION_TIMEOUT);
+        connection.setReadTimeout(HttpPyramidConstants.CLIENT_READ_TIMEOUT);
         // In future, if necessary, we will maybe provide better timeouts:
         // http://stackoverflow.com/questions/3163693/java-urlconnection-timeout
         if (!(connection instanceof HttpURLConnection)) {

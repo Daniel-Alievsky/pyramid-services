@@ -24,10 +24,21 @@
 
 package net.algart.pyramid.http.api;
 
-/**
- * Timeouts for working with pyramids via HTTP protocol. All timeouts are specified in milliseconds.
- */
-public class HttpPyramidLimits {
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+public class HttpPyramidConstants {
+    public static final String CONFIG_ROOT_DIR = System.getProperty(
+        "net.algart.pyramid.http.configRoot", "/pp-links");
+    public static final String CONFIG_FILE_NAME = System.getProperty(
+        "net.algart.pyramid.http.configFile", "config.json");
+    public static final int MAX_NUMBER_OF_PYRAMIDS_IN_POOL = Math.max(16, Integer.getInteger(
+        "net.algart.pyramid.http.imageCachingMemory", 256));
+
     public static final long IMAGE_CACHING_MEMORY = Math.max(16, Long.getLong(
         "net.algart.pyramid.http.imageCachingMemory", 256L * 1024L * 1024L));
 
@@ -38,7 +49,24 @@ public class HttpPyramidLimits {
     public static final int CLIENT_READ_TIMEOUT = 90000;
     // - read timeout should be greater than timeouts in SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT class
 
-    private HttpPyramidLimits() {
+    public static final String ALIVE_STATUS_COMMAND_PREFIX = "/pp-alive-status";
+    public static final String FINISH_COMMAND_PREFIX = "/pp-finish";
+    public static final String INFORMATION_COMMAND_PREFIX = "/pp-information";
+    public static final String READ_RECTANGLE_COMMAND_PREFIX = "/pp-read-rectangle";
+    public static final String TMS_COMMAND_PREFIX = "/pp-tms";
+    public static final String ZOOMIFY_COMMAND_PREFIX = "/pp-zoomify";
+    public static final String READ_SPECIAL_IMAGE_COMMAND_PREFIX = "/pp-read-special-image";
+    public static final String PYRAMID_ID_ARGUMENT_NAME = "pyramidId";
+    public static final String ALIVE_RESPONSE = "Alive";
+
+    public static String pyramidIdToConfiguration(String pyramidId) throws IOException {
+        final Path path = Paths.get(CONFIG_ROOT_DIR, pyramidId, CONFIG_FILE_NAME);
+        if (!Files.isRegularFile(path)) {
+            throw new FileNotFoundException("File " + path.toAbsolutePath() + " does not exists");
+        }
+        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    }
+
+    private HttpPyramidConstants() {
     }
 }
-

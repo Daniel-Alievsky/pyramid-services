@@ -26,7 +26,7 @@ package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidDataCache;
 import net.algart.pyramid.PlanePyramidPool;
-import net.algart.pyramid.http.api.HttpPyramidLimits;
+import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
@@ -37,7 +37,7 @@ import java.util.logging.Logger;
 final class ReadThreadPool {
     private static final Logger LOG = Logger.getLogger(ReadThreadPool.class.getName());
     private static final PlanePyramidDataCache PLANE_PYRAMID_IMAGE_CACHE =
-        new PlanePyramidDataCache(HttpPyramidLimits.IMAGE_CACHING_MEMORY);
+        new PlanePyramidDataCache(HttpPyramidConstants.IMAGE_CACHING_MEMORY);
 
     private final ReadTaskQueue queue;
     private final ReadActiveTaskSet activeTaskSet;

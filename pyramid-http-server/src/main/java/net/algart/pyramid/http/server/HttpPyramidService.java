@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidFactory;
-import net.algart.pyramid.http.api.HttpPyramidKeywords;
+import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.http.server.handlers.*;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import net.algart.pyramid.PlanePyramidPool;
@@ -44,13 +44,6 @@ import java.util.logging.Logger;
 public class HttpPyramidService {
     private static final Logger LOG = Logger.getLogger(HttpPyramidService.class.getName());
 
-    private static final String CONFIG_ROOT_DIR = System.getProperty(
-        "net.algart.pyramid.http.configRoot", "/pp-links");
-    private static final String CONFIG_FILE_NAME = System.getProperty(
-        "net.algart.pyramid.http.configFile", "config.json");
-    private static final int MAX_NUMBER_OF_PYRAMIDS_IN_POOL = Math.max(16, Integer.getInteger(
-        "net.algart.pyramid.http.imageCachingMemory", 256));
-
     private final HttpServer server;
     private final int port;
     private final ReadThreadPool threadPool;
@@ -59,7 +52,7 @@ public class HttpPyramidService {
     private volatile boolean shutdown = false;
 
     public HttpPyramidService(PlanePyramidFactory factory, int port) {
-        this.pyramidPool = new PlanePyramidPool(factory, MAX_NUMBER_OF_PYRAMIDS_IN_POOL);
+        this.pyramidPool = new PlanePyramidPool(factory, HttpPyramidConstants.MAX_NUMBER_OF_PYRAMIDS_IN_POOL);
         this.threadPool = new ReadThreadPool(Runtime.getRuntime().availableProcessors());
         this.server = new HttpServer();
         this.port = port;
@@ -76,11 +69,11 @@ public class HttpPyramidService {
     }
 
     public final void addStandardHandlers() {
-        addHandler(HttpPyramidKeywords.INFORMATION_COMMAND_PREFIX, new InformationHttpPyramidCommand(this));
-        addHandler(HttpPyramidKeywords.READ_RECTANGLE_COMMAND_PREFIX, new ReadRectangleHttpPyramidCommand(this));
-        addHandler(HttpPyramidKeywords.TMS_COMMAND_PREFIX, new TmsHttpPyramidCommand(this));
-        addHandler(HttpPyramidKeywords.ZOOMIFY_COMMAND_PREFIX, new ZoomifyHttpPyramidCommand(this));
-        addHandler(HttpPyramidKeywords.READ_SPECIAL_IMAGE_COMMAND_PREFIX, new ReadSpecialImagePyramidCommand(this));
+        addHandler(HttpPyramidConstants.INFORMATION_COMMAND_PREFIX, new InformationHttpPyramidCommand(this));
+        addHandler(HttpPyramidConstants.READ_RECTANGLE_COMMAND_PREFIX, new ReadRectangleHttpPyramidCommand(this));
+        addHandler(HttpPyramidConstants.TMS_COMMAND_PREFIX, new TmsHttpPyramidCommand(this));
+        addHandler(HttpPyramidConstants.ZOOMIFY_COMMAND_PREFIX, new ZoomifyHttpPyramidCommand(this));
+        addHandler(HttpPyramidConstants.READ_SPECIAL_IMAGE_COMMAND_PREFIX, new ReadSpecialImagePyramidCommand(this));
     }
 
     public final void start() throws IOException {
@@ -125,11 +118,7 @@ public class HttpPyramidService {
     }
 
     public String pyramidIdToConfiguration(String pyramidId) throws IOException {
-        final Path path = Paths.get(CONFIG_ROOT_DIR, pyramidId, CONFIG_FILE_NAME);
-        if (!Files.isRegularFile(path)) {
-            throw new FileNotFoundException("File " + path.toAbsolutePath() + " does not exists");
-        }
-        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+        return HttpPyramidConstants.pyramidIdToConfiguration(pyramidId);
     }
 
     @Override
@@ -138,8 +127,8 @@ public class HttpPyramidService {
     }
 
     private void addBuiltInHandlers() {
-        addHandler(HttpPyramidKeywords.ALIVE_STATUS_COMMAND_PREFIX, new AliveStatusCommand(this));
-        addHandler(HttpPyramidKeywords.FINISH_COMMAND_PREFIX, new FinishCommand(this));
+        addHandler(HttpPyramidConstants.ALIVE_STATUS_COMMAND_PREFIX, new AliveStatusCommand(this));
+        addHandler(HttpPyramidConstants.FINISH_COMMAND_PREFIX, new FinishCommand(this));
     }
 
     private class FinishCommand extends HttpPyramidCommand {
@@ -174,7 +163,7 @@ public class HttpPyramidService {
         {
             response.setContentType("text/plain");
             response.setStatus(200, "OK");
-            response.getWriter().write(HttpPyramidKeywords.ALIVE_RESPONSE);
+            response.getWriter().write(HttpPyramidConstants.ALIVE_RESPONSE);
             response.finish();
         }
     }
