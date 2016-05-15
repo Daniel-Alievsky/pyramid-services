@@ -25,7 +25,6 @@
 package net.algart.pyramid.standard.tests;
 
 import net.algart.pyramid.http.server.HttpPyramidService;
-import net.algart.pyramid.http.server.SimpleHttpPyramidServer;
 import net.algart.pyramid.standard.StandardPlanePyramidFactory;
 import net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory;
 

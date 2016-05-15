@@ -4,7 +4,7 @@
     <root id="root">
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/welcome.html" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/AddImage.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/LaunchJavaTestGnu.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/LaunchJavaServer.cmd" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/pyramids.html" />
       <element id="directory" name="html">
         <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/html" />

@@ -1,14 +1,14 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="OpenSourceImageFileAccessTest" type="Application" factoryName="Application" nameIsGenerated="true">
+  <configuration default="false" name="StandardHttpPyramidServer" type="Application" factoryName="Application" nameIsGenerated="true">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
       <pattern>
         <option name="PATTERN" value="net.algart.pyramid.standard.tests.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>
-    <option name="MAIN_CLASS_NAME" value="net.algart.pyramid.standard.tests.OpenSourceImageFileAccessTest" />
-    <option name="VM_PARAMETERS" value="-Dnet.algart.pyramid.http.configRoot_=\LiveTms -Dnet.algart.pyramid.http.configFile_=liveTms.json" />
-    <option name="PROGRAM_PARAMETERS" value="" />
+    <option name="MAIN_CLASS_NAME" value="net.algart.pyramid.standard.tests.StandardHttpPyramidServer" />
+    <option name="VM_PARAMETERS" value="" />
+    <option name="PROGRAM_PARAMETERS" value="net.algart.simagis.pyramid.sources.imageio C:\simagis\opensource\pyramid-services\pyramid-algart-based\test-launcher\configuration\pp-config\services " />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" />

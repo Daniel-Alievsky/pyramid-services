@@ -69,15 +69,73 @@ public class HttpPyramidServer {
         this.services = services;
     }
 
-    public void waitForFinish() {
+    public void waitForFinish() throws InterruptedException {
+        final List<Thread> waitingThreads = new ArrayList<>();
         for (final HttpPyramidService service : services) {
-            new Thread() {
+            final Thread thread = new Thread() {
                 @Override
                 public void run() {
                     service.waitForFinish();
                 }
-            }.start();
+            };
+            thread.start();
+            waitingThreads.add(thread);
         }
+        for (final Thread thread : waitingThreads) {
+            thread.join();
+        }
+    }
+
+    public HttpPyramidServiceConfiguration.Process getProcessConfiguration() {
+        return processConfiguration;
+    }
+
+    public List<HttpPyramidService> getServices() {
+        return services;
+    }
+
+    public List<Integer> getUsedPorts() {
+        final List<Integer> result = new ArrayList<>();
+        for (HttpPyramidService service : services) {
+            result.add(service.getPort());
+        }
+        return result;
+    }
+
+    public void printWelcomeAndKillOnEnterKey() {
+        final Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(2000);
+                    // little pause to allow services to show their logging messages
+                    System.out.printf("%nThe server successfully started on ports %s%n", getUsedPorts());
+                    System.out.printf("Press \"Ctrl+C\" or \"ENTER\" to kill the server, "
+                        + "or wait when it will be finished normally by HTTP command...%n%n");
+                    System.in.read();
+                } catch (Exception e) {
+                    // should not occur
+                }
+                System.exit(2);
+            }
+        };
+        thread.setDaemon(true);
+        // - this thred must not prevent normal exiting
+        thread.start();
+    }
+
+    public static void printExceptionWaitForEnterKeyAndExit(Throwable exception) {
+        System.err.printf("%nSome problems occured while starting services! Error message:%n%s%n%nStack trace:%n",
+            exception.getMessage());
+        exception.printStackTrace();
+        System.err.printf("%nPress \"ENTER\" to exit...%n");
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            // should not occur
+            e.printStackTrace();
+        }
+        System.exit(1);
     }
 
     protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
@@ -88,7 +146,7 @@ public class HttpPyramidServer {
         service.addStandardHandlers();
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws InterruptedException {
         if (args.length < 2) {
             System.out.printf("Usage:%n");
             System.out.printf("    %s groupId configurationFolder%n", HttpPyramidServer.class.getName());
@@ -100,22 +158,29 @@ public class HttpPyramidServer {
         final String groupId = args[0];
         final Path folderOrFile = Paths.get(args[1]);
         final HttpPyramidServiceConfiguration configuration;
-        if (Files.isRegularFile(folderOrFile)) {
-            final List<Path> files = new ArrayList<>();
-            for (int index = 2; index < args.length; index++) {
-                files.add(Paths.get(args[index]));
+        final HttpPyramidServer server;
+        try {
+            if (Files.isRegularFile(folderOrFile)) {
+                final List<Path> files = new ArrayList<>();
+                for (int index = 2; index < args.length; index++) {
+                    files.add(Paths.get(args[index]));
+                }
+                configuration = HttpPyramidServiceConfiguration.readConfigurationFromFiles(folderOrFile, files);
+            } else {
+                configuration = HttpPyramidServiceConfiguration.readConfigurationFromFolder(folderOrFile);
             }
-            configuration = HttpPyramidServiceConfiguration.readConfigurationFromFiles(folderOrFile, files);
-        } else {
-            configuration = HttpPyramidServiceConfiguration.readConfigurationFromFolder(folderOrFile);
+            final HttpPyramidServiceConfiguration.Process process = configuration.getProcess(groupId);
+            if (process == null) {
+                throw new IllegalArgumentException("Process with groupId \"" + groupId + "\" is not found");
+            }
+            server = new HttpPyramidServer(process);
+            server.start();
+        } catch (Exception e) {
+            printExceptionWaitForEnterKeyAndExit(e);
+            return;
+            // - this operator will never executed
         }
-        final HttpPyramidServiceConfiguration.Process process = configuration.getProcess(groupId);
-        if (process == null) {
-            throw new IllegalArgumentException("Process with groupId \"" + groupId + "\" is not found");
-        }
-        final HttpPyramidServer server = new HttpPyramidServer(process);
-//        System.out.println(configuration);
-        server.start();
+        server.printWelcomeAndKillOnEnterKey();
         server.waitForFinish();
     }
 }

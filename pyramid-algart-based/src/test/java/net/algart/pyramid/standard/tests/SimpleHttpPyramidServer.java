@@ -22,13 +22,14 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.server;
+package net.algart.pyramid.standard.tests;
 
 import net.algart.pyramid.PlanePyramidFactory;
+import net.algart.pyramid.http.server.HttpPyramidService;
 
 import java.io.IOException;
 
-public class SimpleHttpPyramidServer {
+class SimpleHttpPyramidServer {
     public final void doMain(String[] args) throws Exception {
         final Class<?>[] planePyramidFactoryClasses =
             splitClassNames("net.algart.pyramid.http.planePyramidFactory");

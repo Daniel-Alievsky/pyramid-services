@@ -108,6 +108,10 @@ public class HttpPyramidService {
         shutdown = true;
     }
 
+    public int getPort() {
+        return port;
+    }
+
     public final PlanePyramidPool getPyramidPool() {
         return pyramidPool;
     }

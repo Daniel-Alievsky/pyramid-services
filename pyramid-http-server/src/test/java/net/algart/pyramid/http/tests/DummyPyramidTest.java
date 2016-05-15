@@ -26,7 +26,6 @@ package net.algart.pyramid.http.tests;
 
 import net.algart.pyramid.*;
 import net.algart.pyramid.http.server.HttpPyramidService;
-import net.algart.pyramid.http.server.SimpleHttpPyramidServer;
 import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
 import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
 
@@ -55,26 +54,30 @@ public class DummyPyramidTest {
     private static final int DIM_Y = 10000;
     private static final int USED_CPU_COUNT = Math.min(4, Runtime.getRuntime().availableProcessors());
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         System.setProperty(
             "net.algart.pyramid.http.port",
             "81");
         System.setProperty(
             "net.algart.pyramid.http.planePyramidFactory",
             MyPyramidFactory.class.getName());
-        new SimpleHttpPyramidServer() {
+        final HttpPyramidService service = new HttpPyramidService(new MyPyramidFactory(), 81) {
             @Override
-            protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
-                return new HttpPyramidService(factory, port) {
-                    @Override
-                    public String pyramidIdToConfiguration(String pyramidId) throws IOException {
-                        return pyramidId;
-                        // So, pyramidId shoild contain JSON with path to the pyramid;
-                        // VERY UNSAFE for end-user server, but convenient for testing
-                    }
-                };
+            public String pyramidIdToConfiguration(String pyramidId) throws IOException {
+                return pyramidId;
+                // So, pyramidId shoild contain JSON with path to the pyramid;
+                // VERY UNSAFE for end-user server, but convenient for testing
             }
-        }.doMain(args);
+        };
+        service.addStandardHandlers();
+        try {
+            service.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+            service.finish();
+            return;
+        }
+        service.waitForFinish();
     }
 
     public static class MyPyramidFactory implements PlanePyramidFactory {
