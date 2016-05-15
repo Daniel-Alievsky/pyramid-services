@@ -73,6 +73,18 @@ public final class PlanePyramidPool {
         }
     }
 
+    public boolean removeHttpPlanePyramid(String pyramidConfiguration) {
+        if (!POOL_ENABLED) {
+            return false;
+        }
+        synchronized (pool) {
+            final PlanePyramid pyramid = pool.remove(pyramidConfiguration);
+            pyramid.freeResources();
+            LOG.info("Saving memory: freeing and removing " + pyramid);
+            return pyramid != null;
+        }
+    }
+
     private void cleanOldPyramids() {
         synchronized (pool) {
 //            System.out.printf("%d active pyramids%n", pool.size());

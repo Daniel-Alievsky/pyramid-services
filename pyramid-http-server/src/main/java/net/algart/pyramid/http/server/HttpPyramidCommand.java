@@ -75,4 +75,9 @@ public abstract class HttpPyramidCommand {
             throw new NumberFormatException("Parameter " + name + " is not a correct integer: " + result);
         }
     }
+
+    public static boolean getBooleanParameter(Request request, String name) {
+        final String result = getParameter(request, name);
+        return "true".equalsIgnoreCase(result);
+    }
 }

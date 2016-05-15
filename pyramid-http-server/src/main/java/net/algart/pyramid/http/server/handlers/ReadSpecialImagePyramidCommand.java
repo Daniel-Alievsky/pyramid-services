@@ -51,8 +51,10 @@ public class ReadSpecialImagePyramidCommand extends HttpPyramidCommand {
         final String specialImageName = getParameter(request, "specialImageName");
         final Integer width = request.getParameter("width") == null ? null : getIntParameter(request, "width");
         final Integer height = request.getParameter("height") == null ? null : getIntParameter(request, "height");
+        final boolean savingMemory = request.getParameter("savigMemory") != null
+            && getBooleanParameter(request, "savigMemory");
         final PlanePyramidRequest imageRequest = new PlanePyramidReadSpecialImageRequest(
-            configuration, specialImageName, width, height);
+            configuration, specialImageName, width, height, savingMemory);
         httpPyramidService.createReadTask(request, response, imageRequest);
     }
 

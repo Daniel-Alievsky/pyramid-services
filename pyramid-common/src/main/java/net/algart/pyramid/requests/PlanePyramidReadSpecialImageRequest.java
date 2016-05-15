@@ -40,12 +40,14 @@ public final class PlanePyramidReadSpecialImageRequest extends PlanePyramidAnyIm
     private final String specialImageName;
     private final Integer desiredWidth;
     private final Integer desiredHeight;
+    private final boolean savingMemory;
 
     public PlanePyramidReadSpecialImageRequest(
         String pyramidUniqueId,
         String specialImageName,
         Integer desiredWidth,
-        Integer desiredHeight)
+        Integer desiredHeight,
+        boolean savingMemory)
     {
         super(pyramidUniqueId);
         this.specialImageName = Objects.requireNonNull(specialImageName, "Null specialImageName");
@@ -57,6 +59,7 @@ public final class PlanePyramidReadSpecialImageRequest extends PlanePyramidAnyIm
         }
         this.desiredWidth = desiredWidth;
         this.desiredHeight = desiredHeight;
+        this.savingMemory = savingMemory;
     }
 
     @Override
@@ -74,6 +77,11 @@ public final class PlanePyramidReadSpecialImageRequest extends PlanePyramidAnyIm
 
     public Integer getDesiredHeight() {
         return desiredHeight;
+    }
+
+    @Override
+    public boolean isSavingMemoryMode() {
+        return savingMemory;
     }
 
     @Override

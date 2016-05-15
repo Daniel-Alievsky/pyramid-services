@@ -43,6 +43,10 @@ public abstract class PlanePyramidRequest {
 
     public abstract PlanePyramidData readData(PlanePyramid pyramid) throws IOException;
 
+    public boolean isSavingMemoryMode() {
+        return false;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

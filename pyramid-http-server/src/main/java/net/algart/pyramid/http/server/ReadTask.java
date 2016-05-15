@@ -34,12 +34,16 @@ import org.glassfish.grizzly.http.server.Response;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 final class ReadTask {
     private static final int CHUNK_SIZE = 8192;
     private static final Logger LOG = Logger.getLogger(ReadTask.class.getName());
+
+    private static final Lock GLOBAL_LOCK = new ReentrantLock();
 
     private final Response response;
     private final PlanePyramidRequest pyramidRequest;
@@ -118,11 +122,26 @@ final class ReadTask {
         PlanePyramidData data = previousCachedData;
         final boolean cacheable;
         if (data == null) {
-            final PlanePyramid pyramid = pyramidPool.getHttpPlanePyramid(pyramidRequest.getPyramidUniqueId());
-            cacheable = pyramid.isCacheable();
-            data = pyramid.read(pyramidRequest);
-            if (cacheable) {
-                cache.put(pyramidRequest, data);
+            final boolean savingMemoryMode = pyramidRequest.isSavingMemoryMode();
+            if (savingMemoryMode) {
+                GLOBAL_LOCK.lock();
+            }
+            try {
+                final String pyramidUniqueId = pyramidRequest.getPyramidUniqueId();
+                final PlanePyramid pyramid = pyramidPool.getHttpPlanePyramid(pyramidUniqueId);
+                cacheable = pyramid.isCacheable();
+                data = pyramid.read(pyramidRequest);
+                if (cacheable) {
+                    cache.put(pyramidRequest, data);
+                }
+                if (savingMemoryMode) {
+                    pyramidPool.removeHttpPlanePyramid(pyramidUniqueId);
+//                    System.gc(); // - may be uncommented for debugging only
+                }
+            } finally {
+                if (savingMemoryMode) {
+                    GLOBAL_LOCK.unlock();
+                }
             }
         } else {
             // Note: we don't access pyramid at all if the data are already in cache
