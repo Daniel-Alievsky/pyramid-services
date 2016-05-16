@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -57,13 +58,25 @@ public final class PlanePyramidPool {
     }
 
     public PlanePyramid getHttpPlanePyramid(String pyramidConfiguration) throws Exception {
+        return getHttpPlanePyramid(pyramidConfiguration, null);
+    }
+
+    public PlanePyramid getHttpPlanePyramid(String pyramidConfiguration, AtomicBoolean wasPresentInPool)
+        throws Exception
+    {
         Objects.requireNonNull(pyramidConfiguration, "Null pyramidConfiguration argument");
+        if (wasPresentInPool != null) {
+            wasPresentInPool.set(false);
+        }
         if (!POOL_ENABLED) {
             return factory.newPyramid(pyramidConfiguration);
         }
         synchronized (pool) {
             PlanePyramid pyramid = pool.get(pyramidConfiguration);
             if (pyramid != null) {
+                if (wasPresentInPool != null) {
+                    wasPresentInPool.set(true);
+                }
                 return pyramid;
             }
             pyramid = factory.newPyramid(pyramidConfiguration);

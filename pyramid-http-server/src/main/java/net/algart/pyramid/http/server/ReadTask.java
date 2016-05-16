@@ -34,6 +34,7 @@ import org.glassfish.grizzly.http.server.Response;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -128,15 +129,15 @@ final class ReadTask {
             }
             try {
                 final String pyramidUniqueId = pyramidRequest.getPyramidUniqueId();
-                final PlanePyramid pyramid = pyramidPool.getHttpPlanePyramid(pyramidUniqueId);
+                AtomicBoolean wasPresentInPool = new AtomicBoolean();
+                final PlanePyramid pyramid = pyramidPool.getHttpPlanePyramid(pyramidUniqueId, wasPresentInPool);
                 cacheable = pyramid.isCacheable();
                 data = pyramid.read(pyramidRequest);
                 if (cacheable) {
                     cache.put(pyramidRequest, data);
                 }
-                if (savingMemoryMode) {
+                if (savingMemoryMode && !wasPresentInPool.get()) {
                     pyramidPool.removeHttpPlanePyramid(pyramidUniqueId);
-//                    System.gc(); // - may be uncommented for debugging only
                 }
             } finally {
                 if (savingMemoryMode) {

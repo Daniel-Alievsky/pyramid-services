@@ -25,18 +25,14 @@
 package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidFactory;
+import net.algart.pyramid.PlanePyramidPool;
 import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.http.server.handlers.*;
 import net.algart.pyramid.requests.PlanePyramidRequest;
-import net.algart.pyramid.PlanePyramidPool;
 import org.glassfish.grizzly.http.server.*;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -129,6 +125,7 @@ public class HttpPyramidService {
     private void addBuiltInHandlers() {
         addHandler(HttpPyramidConstants.ALIVE_STATUS_COMMAND_PREFIX, new AliveStatusCommand(this));
         addHandler(HttpPyramidConstants.FINISH_COMMAND_PREFIX, new FinishCommand(this));
+        addHandler(HttpPyramidConstants.GC_COMMAND_PREFIX, new GcCommand(this));
     }
 
     private class FinishCommand extends HttpPyramidCommand {
@@ -164,6 +161,31 @@ public class HttpPyramidService {
             response.setContentType("text/plain");
             response.setStatus(200, "OK");
             response.getWriter().write(HttpPyramidConstants.ALIVE_RESPONSE);
+            response.finish();
+        }
+    }
+
+    private class GcCommand extends HttpPyramidCommand {
+        public GcCommand(HttpPyramidService httpPyramidService) {
+            super(httpPyramidService);
+        }
+
+        @Override
+        public void service(
+            Request request,
+            Response response)
+            throws Exception
+        {
+            final Runtime rt = Runtime.getRuntime();
+            LOG.info(String.format(Locale.US, "GC report before: used memory %.5f MB / %.5f MB",
+                (rt.totalMemory() - rt.freeMemory()) / 1048576.0, rt.maxMemory() / 1048576.0));
+            System.runFinalization();
+            System.gc();
+            LOG.info(String.format(Locale.US, "GC report after: used memory %.5f MB / %.5f MB",
+                (rt.totalMemory() - rt.freeMemory()) / 1048576.0, rt.maxMemory() / 1048576.0));
+            response.setContentType("text/plain");
+            response.setStatus(200, "OK");
+            response.getWriter().write("Ok");
             response.finish();
         }
     }
