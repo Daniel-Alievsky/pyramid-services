@@ -24,42 +24,69 @@
 
 package net.algart.pyramid.http.launchers;
 
-import net.algart.pyramid.http.api.HttpPyramidServiceConfiguration;
+import net.algart.pyramid.http.api.HttpPyramidConfiguration;
 
-import java.util.Objects;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.nio.file.Path;
+import java.util.*;
 
 public class HttpPyramidServiceLauncher {
-    private final HttpPyramidServiceConfiguration configuration;
+    private final HttpPyramidConfiguration configuration;
+    private final Map<String, Process> runningProcesses;
 
-    public HttpPyramidServiceLauncher(HttpPyramidServiceConfiguration configuration) {
+    public HttpPyramidServiceLauncher(HttpPyramidConfiguration configuration) {
         this.configuration = Objects.requireNonNull(configuration);
+        this.runningProcesses = new LinkedHashMap<>();
+        for (String groupId : configuration.getProcesses().keySet()) {
+            runningProcesses.put(groupId, null);
+        }
     }
 
-    public void startServices() {
+    public synchronized void startServices() {
+
         //TODO!! don't check that processes are alive; good for starting Windows service
     }
 
-    public void restartServices(boolean restartAliveServices) {
+    public synchronized void restartServices(boolean restartAliveServices) {
         //TODO!! check if a service is alive (if not, repeat 3 times)
         //TODO!! if alive and restartAliveServices, call restartProcess, else startProcess
         //TODO!! start each service by a separate thread (don't delay others due to one bad services)
     }
 
-    public void finishServices() {
+    public synchronized void finishServices() {
         //TODO!! try to finish normally; if we have references to processes, also kill processes
     }
 
-    public void restartProcess(String groupId) {
+    public synchronized void restartProcess(String groupId) {
         finishProcess(groupId);
         startProcess(groupId);
     }
 
-    public void finishProcess(String groupId) {
+    public synchronized void finishProcess(String groupId) {
         //TODO!! finish it via HTTP command, litle wait
         //TODO!! if we have reference to the process in Map<String groupId, java.lang.Process), kill it and little wait
     }
 
-    public void startProcess(String groupId) {
+    public synchronized void startProcess(String groupId) {
         //TODO!! try to start process 3 times (in a case of non-zero exit code) with delays
+    }
+
+    public synchronized void startProcess(HttpPyramidConfiguration.Process process) throws FileNotFoundException {
+        if (runningProcesses.containsKey(process.getGroupId())) {
+            throw new IllegalStateException("The process with groupId="
+                + process.getGroupId() + " is already registered");
+        }
+        final Path javaPath = HttpPyramidConfiguration.getJavaExecutable(HttpPyramidConfiguration.getCurrentJREHome());
+        List<String> command = new ArrayList<>();
+        command.add(javaPath.toAbsolutePath().toString());
+        StringBuilder cp = new StringBuilder();
+        for (String p : process.classPath(process.hasWorkingDirectory())) {
+            if (cp.length() > 0) {
+                cp.append(File.pathSeparatorChar);
+            }
+            cp.append(p);
+        }
+        //TODO!! use process.xmx etc.
     }
 }

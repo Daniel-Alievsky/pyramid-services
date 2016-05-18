@@ -17,5 +17,6 @@
   ],
   "commonVmOptions" : [
     "-ea"
-  ]
+  ],
+  "commonXmx" : "1g"
 }

@@ -33,9 +33,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
-public class HttpPyramidServiceConfiguration {
+public class HttpPyramidConfiguration {
     public static final String GLOBAL_CONFIGURATION_FILE_NAME = ".global-configuration.json";
 
     public static class Service extends ConvertibleToJson {
@@ -46,9 +47,11 @@ public class HttpPyramidServiceConfiguration {
         private final String planePyramidFactoryConfiguration;
         private final Set<String> classPath;
         private final Set<String> vmOptions;
-        private final Long memory;
         // - classPath and vmOptions of all services of the single processes are joined
+        private final String workingDirectory;
+        // - workingDirectory of all services of the single processes MUST be null or an identical string
         private final int port;
+        private final Long memory;
         private Process parentProcess;
 
         private Service(JsonObject json) {
@@ -69,7 +72,7 @@ public class HttpPyramidServiceConfiguration {
                     this.vmOptions.add(vmOptions.getString(k));
                 }
             }
-
+            this.workingDirectory = json.getString("workingDirectory", null);
             final String memory = json.getString("memory", null);
             this.memory = memory != null ? parseLongWithMetricalSuffixes(memory) : null;
             this.port = getRequiredInt(json, "port");
@@ -97,6 +100,10 @@ public class HttpPyramidServiceConfiguration {
 
         public Collection<String> getVmOptions() {
             return Collections.unmodifiableSet(vmOptions);
+        }
+
+        public String getWorkingDirectory() {
+            return workingDirectory;
         }
 
         public Long getMemory() {
@@ -128,59 +135,135 @@ public class HttpPyramidServiceConfiguration {
     }
 
     public static class Process extends ConvertibleToJson {
+        private final String groupId;
         private final List<Service> services;
-        private HttpPyramidServiceConfiguration parentConfiguration;
+        private final String workingDirectory;
+        private final long requiredMemory;
+        private HttpPyramidConfiguration parentConfiguration;
 
-        private Process(List<Service> services) {
+        private Process(String groupId, List<Service> services) {
+            this.groupId = Objects.requireNonNull(groupId);
             this.services = Objects.requireNonNull(services);
             for (Service service : services) {
                 service.parentProcess = this;
             }
+            String workingDirectory = null;
+            long requiredMemory = 0;
+            for (Service service : services) {
+                if (service.workingDirectory != null) {
+                    if (workingDirectory == null) {
+                        workingDirectory = service.workingDirectory;
+                    } else {
+                        if (!workingDirectory.equals(service.workingDirectory)) {
+                            throw new JsonException("Invalid configuration JSON:"
+                                + " two services of the process with groupId=\"" + groupId
+                                + "\" require different working directories \""
+                                + workingDirectory + "\" and \"" + service.workingDirectory + "\"");
+                        }
+                    }
+                }
+                requiredMemory += service.memory == null ? 0 : service.memory;
+            }
+            this.workingDirectory = workingDirectory;
+            this.requiredMemory = requiredMemory;
+        }
+
+        public String getGroupId() {
+            return groupId;
         }
 
         public List<Service> getServices() {
             return Collections.unmodifiableList(services);
         }
 
-        public Collection<String> getClassPath() {
+        public boolean hasWorkingDirectory() {
+            return workingDirectory != null;
+        }
+
+        public String getWorkingDirectory() {
+            return workingDirectory;
+        }
+
+        public Path workingDirectory() {
+            if (workingDirectory == null) {
+                return parentConfiguration.rootFolder.toAbsolutePath();
+            } else {
+                return parentConfiguration.rootFolder.resolve(workingDirectory).toAbsolutePath();
+            }
+        }
+
+        public Collection<String> classPath(boolean resolve) {
             final Set<String> result = new TreeSet<>();
             for (Service service : services) {
-                result.addAll(service.classPath);
+                for (String p : service.classPath) {
+                    result.add(resolve ? resolveClassPath(p) : p);
+                }
+            }
+            for (String p : parentConfiguration.commonClassPath) {
+                result.add(resolve ? resolveClassPath(p) : p);
             }
             return result;
         }
 
-        public Collection<String> getVmOptions() {
+        public Collection<String> vmOptions() {
             final Set<String> result = new TreeSet<>();
             for (Service service : services) {
                 result.addAll(service.vmOptions);
             }
+            result.addAll(parentConfiguration.commonVmOptions);
             return result;
         }
 
-        public HttpPyramidServiceConfiguration parentConfiguration() {
+        public Long xmx() {
+            final long commonMemory = parentConfiguration.commonXmx == null ? 0 : parentConfiguration.commonXmx;
+            final long requiredMemory = Math.max(this.requiredMemory, commonMemory);
+            return requiredMemory == 0 ? null : requiredMemory;
+        }
+
+        public HttpPyramidConfiguration parentConfiguration() {
             return parentConfiguration;
         }
 
         JsonObject toJson() {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
+            builder.add("groupId", groupId);
             builder.add("services", toJsonArray(services));
+            if (workingDirectory != null) {
+                builder.add("workingDirectory", workingDirectory);
+            }
+            builder.add("resolvedWorkingDirectory", workingDirectory().toString());
+            builder.add("resolvedClassPath", toJsonArray(classPath(true)));
+            builder.add("rawClassPath", toJsonArray(classPath(false)));
+            builder.add("vmOption", toJsonArray(vmOptions()));
+            final Long xmx = xmx();
+            if (xmx != null) {
+                builder.add("xmx", xmx);
+            }
             return builder.build();
+        }
+
+        private String resolveClassPath(String p) {
+            return parentConfiguration.rootFolder.resolve(p).toAbsolutePath().normalize().toString();
         }
     }
 
     private final Map<String, Process> processes;
+    private final Map<String, Service> allFormatServices;
+    private final Path rootFolder;
     private final Set<String> commonClassPath;
     // - some common JARs used by all processes: common open-source API
     private final Set<String> commonVmOptions;
     // - for example, here we can add -ea -esa to all processes
     private final Long commonXmx;
-    // - actual -Xmx for every process is a maximum of this value and xmx for all its services
-    private final Map<String, Service> allFormatServices;
+    // - actual -Xmx for every process is a maximum of this value and its xmx()
 
-    private HttpPyramidServiceConfiguration(JsonObject globalConfiguration, Map<String, Process> processes) {
+    private HttpPyramidConfiguration(
+        Path rootFolder, JsonObject globalConfiguration, Map<String, Process> processes)
+    {
+        Objects.requireNonNull(rootFolder);
         Objects.requireNonNull(globalConfiguration);
         Objects.requireNonNull(processes);
+        this.rootFolder = rootFolder;
         this.processes = processes;
         final List<Process> processList = new ArrayList<>(processes.values());
         for (Process process : processList) {
@@ -221,6 +304,10 @@ public class HttpPyramidServiceConfiguration {
         return processes.get(groupId);
     }
 
+    public Path getRootFolder() {
+        return rootFolder;
+    }
+
     public Collection<String> getCommonClassPath() {
         return Collections.unmodifiableSet(commonClassPath);
     }
@@ -243,20 +330,25 @@ public class HttpPyramidServiceConfiguration {
         }
     }
 
-    public static HttpPyramidServiceConfiguration readConfigurationFromFolder(Path configurationFolder)
+    public static HttpPyramidConfiguration readConfigurationFromFolder(Path configurationFolder)
         throws IOException
     {
+        Objects.requireNonNull(configurationFolder, "Null configurationFolder");
         final Path globalConfigurationFile = configurationFolder.resolve(GLOBAL_CONFIGURATION_FILE_NAME);
         try (final DirectoryStream<Path> files = Files.newDirectoryStream(configurationFolder, ".*.json")) {
-            return readConfigurationFromFiles(globalConfigurationFile, files);
+            return readConfigurationFromFiles(configurationFolder, globalConfigurationFile, files);
         }
     }
 
-    public static HttpPyramidServiceConfiguration readConfigurationFromFiles(
+    public static HttpPyramidConfiguration readConfigurationFromFiles(
+        Path configurationFolder,
         Path globalConfigurationFile,
         Iterable<Path> configurationFiles)
         throws IOException
     {
+        Objects.requireNonNull(configurationFolder, "Null configurationFolder");
+        Objects.requireNonNull(globalConfigurationFile, "Null globalConfigurationFile");
+        Objects.requireNonNull(configurationFiles, "Null configurationFiles");
         if (!Files.isRegularFile(globalConfigurationFile)) {
             throw new FileNotFoundException(globalConfigurationFile + " not found");
         }
@@ -278,9 +370,37 @@ public class HttpPyramidServiceConfiguration {
         }
         final Map<String, Process> processes = new LinkedHashMap<>();
         for (Map.Entry<String, List<Service>> entry : groups.entrySet()) {
-            processes.put(entry.getKey(), new Process(entry.getValue()));
+            final String groupId = entry.getKey();
+            processes.put(groupId, new Process(groupId, entry.getValue()));
         }
-        return new HttpPyramidServiceConfiguration(globalConfiguration, processes);
+        return new HttpPyramidConfiguration(configurationFolder, globalConfiguration, processes);
+    }
+
+    public static Path getCurrentJREHome() {
+        String s = System.getProperty("java.home");
+        if (s == null) {
+            throw new InternalError("Null java.home system property");
+        }
+        return Paths.get(s);
+    }
+
+    public static Path getJavaExecutable(Path jreHome) throws FileNotFoundException {
+        // Finding according http://docs.oracle.com/javase/1.5.0/docs/tooldocs/solaris/jdkfiles.html
+        if (jreHome == null) {
+            throw new NullPointerException("Null jreHome argument");
+        }
+        if (!Files.exists(jreHome)) {
+            throw new FileNotFoundException("JRE home directory " + jreHome + " does not exist");
+        }
+        Path javaBin = jreHome.resolve("bin");
+        Path javaFile = javaBin.resolve("java"); // Unix
+        if (!Files.exists(javaFile)) {
+            javaFile = javaBin.resolve("java.exe"); // Windows
+        }
+        if (!Files.exists(javaFile)) {
+            throw new FileNotFoundException("Cannot find java utility at " + javaFile);
+        }
+        return javaFile;
     }
 
     JsonObject toJson() {
@@ -320,7 +440,7 @@ public class HttpPyramidServiceConfiguration {
         return result << sh;
     }
 
-    private  static String getRequiredString(JsonObject json, String name) {
+    private static String getRequiredString(JsonObject json, String name) {
         final JsonString result = json.getJsonString(name);
         if (result == null) {
             throw new JsonException("Invalid pyramid service configuration JSON: \"" + name + "\" value required");
@@ -347,12 +467,10 @@ public class HttpPyramidServiceConfiguration {
     private static JsonArray toJsonArray(Collection<?> collection) {
         final JsonArrayBuilder builder = Json.createArrayBuilder();
         for (Object o : collection) {
-            if (o instanceof String) {
-                builder.add((String) o);
-            } else if (o instanceof ConvertibleToJson) {
+            if (o instanceof ConvertibleToJson) {
                 builder.add(((ConvertibleToJson) o).toJson());
             } else {
-                throw new AssertionError();
+                builder.add(String.valueOf(o));
             }
         }
         return builder.build();
