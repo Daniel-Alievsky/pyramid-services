@@ -29,17 +29,21 @@
     <title>Simple pyramid service Web launcher</title>
 </head>
 <body style="font-family: sans-serif">
-<p>Please start the service by the following cmd-file:</p>
+<p>Please copy demo files to the correct place on your disk by the following cmd-file:</p>
+<pre>
+    CopyDemoFiles.cmd
+</pre>
+<p>This cmd-file will copy the subfolders pp-links and pp-images into the root of your disk.
+    If it will fail due to insufficient permissions, please copy these folders into the root
+    of the current disk manually.</p>
+
+<p>Then please start the service by the following cmd-file:</p>
 <pre>
     LaunchJavaServer.cmd
 </pre>
 <p>Note:</p>
 <ol>
-    <li>This cmd-file will copy the subfolders pp-links and pp-images into the root of your disk.
-        If it will fail due to insufficient permissions, please copy these folders into the root
-        of the current disk manually.
-    </li>
-    <li><p>Also note: this cmd-file starts Java Machine via call</p>
+    <li><p>This cmd-file starts Java Machine via call</p>
 <pre>
     java -Xmx8g -classpath %CP% net.algart.pyramid.standard.tests.OpenSourceImageFileAccessTest -gnu
 </pre>
