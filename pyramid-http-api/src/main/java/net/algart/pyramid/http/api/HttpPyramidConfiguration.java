@@ -40,6 +40,7 @@ public class HttpPyramidConfiguration {
     public static final String GLOBAL_CONFIGURATION_FILE_NAME = ".global-configuration.json";
 
     public static class Service extends ConvertibleToJson {
+        private final Path configurationFile;
         private final String formatName;
         // - must be unique
         private final String groupId;
@@ -54,8 +55,10 @@ public class HttpPyramidConfiguration {
         private final Long memory;
         private Process parentProcess;
 
-        private Service(JsonObject json) {
+        private Service(Path configurationFile, JsonObject json) {
+            Objects.requireNonNull(configurationFile);
             Objects.requireNonNull(json);
+            this.configurationFile = configurationFile;
             this.formatName = getRequiredString(json, "formatName");
             this.groupId = getRequiredString(json, "groupId");
             this.planePyramidFactory = getRequiredString(json, "planePyramidFactory");
@@ -76,6 +79,10 @@ public class HttpPyramidConfiguration {
             final String memory = json.getString("memory", null);
             this.memory = memory != null ? parseLongWithMetricalSuffixes(memory) : null;
             this.port = getRequiredInt(json, "port");
+        }
+
+        public Path getConfigurationFile() {
+            return configurationFile;
         }
 
         public String getFormatName() {
@@ -220,6 +227,21 @@ public class HttpPyramidConfiguration {
             return requiredMemory == 0 ? null : requiredMemory;
         }
 
+        public String xmxOption() {
+            final Long xmx = xmx();
+            if (xmx == null) {
+                return null;
+            } else if (xmx % (1024 * 1024 * 1024) == 0) {
+                return "-Xmx" + xmx / (1024 * 1024 * 1024) + "g";
+            } else if (xmx % (1024 * 1024) == 0) {
+                return "-Xmx" + xmx / (1024 * 1024) + "m";
+            } else if (xmx % 1024 == 0) {
+                return "-Xmx" + xmx / 1024 + "k";
+            } else {
+                return "-Xmx" + xmx;
+            }
+        }
+
         public HttpPyramidConfiguration parentConfiguration() {
             return parentConfiguration;
         }
@@ -250,6 +272,7 @@ public class HttpPyramidConfiguration {
     private final Map<String, Process> processes;
     private final Map<String, Service> allFormatServices;
     private final Path rootFolder;
+    private final Path globalConfigurationFile;
     private final Set<String> commonClassPath;
     // - some common JARs used by all processes: common open-source API
     private final Set<String> commonVmOptions;
@@ -258,12 +281,14 @@ public class HttpPyramidConfiguration {
     // - actual -Xmx for every process is a maximum of this value and its xmx()
 
     private HttpPyramidConfiguration(
-        Path rootFolder, JsonObject globalConfiguration, Map<String, Process> processes)
+        Path rootFolder, Path globalConfigurationFile, JsonObject globalConfiguration, Map<String, Process> processes)
     {
         Objects.requireNonNull(rootFolder);
+        Objects.requireNonNull(globalConfigurationFile);
         Objects.requireNonNull(globalConfiguration);
         Objects.requireNonNull(processes);
         this.rootFolder = rootFolder;
+        this.globalConfigurationFile = globalConfigurationFile;
         this.processes = processes;
         final List<Process> processList = new ArrayList<>(processes.values());
         for (Process process : processList) {
@@ -306,6 +331,10 @@ public class HttpPyramidConfiguration {
 
     public Path getRootFolder() {
         return rootFolder;
+    }
+
+    public Path getGlobalConfigurationFile() {
+        return globalConfigurationFile;
     }
 
     public Collection<String> getCommonClassPath() {
@@ -360,7 +389,7 @@ public class HttpPyramidConfiguration {
             if (fileName.equals(globalConfigurationFileName)) {
                 continue;
             }
-            final Service service = new Service(readJson(file));
+            final Service service = new Service(file, readJson(file));
             List<Service> group = groups.get(service.groupId);
             if (group == null) {
                 group = new ArrayList<>();
@@ -373,7 +402,11 @@ public class HttpPyramidConfiguration {
             final String groupId = entry.getKey();
             processes.put(groupId, new Process(groupId, entry.getValue()));
         }
-        return new HttpPyramidConfiguration(configurationFolder, globalConfiguration, processes);
+        return new HttpPyramidConfiguration(
+            configurationFolder,
+            globalConfigurationFile,
+            globalConfiguration,
+            processes);
     }
 
     public static Path getCurrentJREHome() {

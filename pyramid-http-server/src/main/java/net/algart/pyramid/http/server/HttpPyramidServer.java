@@ -26,9 +26,9 @@ package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.http.api.HttpPyramidConfiguration;
+import net.algart.pyramid.http.api.HttpPyramidConstants;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -36,6 +36,12 @@ import java.util.List;
 import java.util.Objects;
 
 public class HttpPyramidServer {
+    static {
+        if (!HttpPyramidServer.class.getName().equals(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME)) {
+            throw new AssertionError("Invalid constant DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME");
+        }
+    }
+
     private final HttpPyramidConfiguration.Process processConfiguration;
     private volatile List<HttpPyramidService> services = null;
 
@@ -151,24 +157,26 @@ public class HttpPyramidServer {
             System.out.printf("Usage:%n");
             System.out.printf("    %s groupId configurationFolder%n", HttpPyramidServer.class.getName());
             System.out.printf("or%n");
-            System.out.printf("    %s groupId somePath/.global-configuration.json somePath/.format1.json "
-                + "somePath/.format2.json ...%n", HttpPyramidServer.class.getName());
+            System.out.printf("    %s groupId configurationFolder somePath/.global-configuration.json "
+                + "somePath/.format1.json somePath/.format2.json ...%n",
+                HttpPyramidServer.class.getName());
             return;
         }
         final String groupId = args[0];
-        final Path folderOrFile = Paths.get(args[1]);
+        final Path configurationFolder = Paths.get(args[1]);
         final HttpPyramidConfiguration configuration;
         final HttpPyramidServer server;
         try {
-            if (Files.isRegularFile(folderOrFile)) {
+            if (args.length > 2) {
+                final Path globalConfigurationFile = Paths.get(args[2]);
                 final List<Path> files = new ArrayList<>();
-                for (int index = 2; index < args.length; index++) {
+                for (int index = 3; index < args.length; index++) {
                     files.add(Paths.get(args[index]));
                 }
                 configuration = HttpPyramidConfiguration.readConfigurationFromFiles(
-                    folderOrFile.getParent(), folderOrFile, files);
+                    configurationFolder, globalConfigurationFile, files);
             } else {
-                configuration = HttpPyramidConfiguration.readConfigurationFromFolder(folderOrFile);
+                configuration = HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
             }
             final HttpPyramidConfiguration.Process process = configuration.getProcess(groupId);
             if (process == null) {
