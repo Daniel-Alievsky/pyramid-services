@@ -153,7 +153,13 @@ public class HttpPyramidServer {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        if (args.length < 2) {
+        int startArgIndex = 0;
+        boolean noExitOnEnter = false;
+        if (args.length >= 1 && args[0].equals("--noExitOnEnter")) {
+            noExitOnEnter = true;
+            startArgIndex++;
+        }
+        if (args.length < 2 + startArgIndex) {
             System.out.printf("Usage:%n");
             System.out.printf("    %s groupId configurationFolder%n", HttpPyramidServer.class.getName());
             System.out.printf("or%n");
@@ -162,15 +168,15 @@ public class HttpPyramidServer {
                 HttpPyramidServer.class.getName());
             return;
         }
-        final String groupId = args[0];
-        final Path configurationFolder = Paths.get(args[1]);
+        final String groupId = args[startArgIndex];
+        final Path configurationFolder = Paths.get(args[startArgIndex + 1]);
         final HttpPyramidConfiguration configuration;
         final HttpPyramidServer server;
         try {
-            if (args.length > 2) {
-                final Path globalConfigurationFile = Paths.get(args[2]);
+            if (args.length > startArgIndex + 2) {
+                final Path globalConfigurationFile = Paths.get(args[startArgIndex + 2]);
                 final List<Path> files = new ArrayList<>();
-                for (int index = 3; index < args.length; index++) {
+                for (int index = startArgIndex + 3; index < args.length; index++) {
                     files.add(Paths.get(args[index]));
                 }
                 configuration = HttpPyramidConfiguration.readConfigurationFromFiles(
@@ -185,11 +191,18 @@ public class HttpPyramidServer {
             server = new HttpPyramidServer(process);
             server.start();
         } catch (Exception e) {
-            printExceptionWaitForEnterKeyAndExit(e);
+            if (noExitOnEnter) {
+                e.printStackTrace();
+                System.exit(1);
+            } else {
+                printExceptionWaitForEnterKeyAndExit(e);
+            }
             return;
             // - this operator will never executed
         }
-        server.printWelcomeAndKillOnEnterKey();
+        if (!noExitOnEnter) {
+            server.printWelcomeAndKillOnEnterKey();
+        }
         server.waitForFinish();
     }
 }

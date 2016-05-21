@@ -378,8 +378,11 @@ public class HttpPyramidConfiguration {
         Objects.requireNonNull(configurationFolder, "Null configurationFolder");
         Objects.requireNonNull(globalConfigurationFile, "Null globalConfigurationFile");
         Objects.requireNonNull(configurationFiles, "Null configurationFiles");
+        if (!Files.isDirectory(configurationFolder)) {
+            throw new FileNotFoundException(configurationFolder + " is not an existing folder");
+        }
         if (!Files.isRegularFile(globalConfigurationFile)) {
-            throw new FileNotFoundException(globalConfigurationFile + " not found");
+            throw new FileNotFoundException(globalConfigurationFile + " is not an existing file");
         }
         final JsonObject globalConfiguration = readJson(globalConfigurationFile);
         final String globalConfigurationFileName = globalConfigurationFile.getFileName().toString();
