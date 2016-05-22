@@ -154,9 +154,9 @@ public class HttpPyramidServer {
 
     public static void main(String[] args) throws InterruptedException {
         int startArgIndex = 0;
-        boolean noExitOnEnter = false;
-        if (args.length >= 1 && args[0].equals("--noExitOnEnter")) {
-            noExitOnEnter = true;
+        boolean serviceMode = false;
+        if (args.length >= 1 && args[0].equals(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG)) {
+            serviceMode = true;
             startArgIndex++;
         }
         if (args.length < 2 + startArgIndex) {
@@ -191,7 +191,7 @@ public class HttpPyramidServer {
             server = new HttpPyramidServer(process);
             server.start();
         } catch (Exception e) {
-            if (noExitOnEnter) {
+            if (serviceMode) {
                 e.printStackTrace();
                 System.exit(1);
             } else {
@@ -200,7 +200,7 @@ public class HttpPyramidServer {
             return;
             // - this operator will never executed
         }
-        if (!noExitOnEnter) {
+        if (!serviceMode) {
             server.printWelcomeAndKillOnEnterKey();
         }
         server.waitForFinish();

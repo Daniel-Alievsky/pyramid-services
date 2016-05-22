@@ -34,6 +34,7 @@ import java.nio.file.Paths;
 public class HttpPyramidConstants {
     public static final String DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME =
         "net.algart.pyramid.http.server.HttpPyramidServer";
+    public static final String DEFAULT_HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG = "--serviceMode";
 
     public static final String CONFIG_ROOT_DIR = System.getProperty(
         "net.algart.pyramid.http.configRoot", "/pp-links");

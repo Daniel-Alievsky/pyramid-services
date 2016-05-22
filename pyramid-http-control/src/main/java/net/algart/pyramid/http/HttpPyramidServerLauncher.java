@@ -113,6 +113,7 @@ public class HttpPyramidServerLauncher {
         command.add("-cp");
         command.add(cp.toString());
         command.add(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME);
+        command.add(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG);
         command.add(process.getGroupId());
         command.add(configuration.getRootFolder().toAbsolutePath().toString());
         command.add(configuration.getGlobalConfigurationFile().toAbsolutePath().toString());

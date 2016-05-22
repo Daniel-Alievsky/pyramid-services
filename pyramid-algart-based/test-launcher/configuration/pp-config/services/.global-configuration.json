@@ -1,7 +1,7 @@
 {
   "commonClassPath" : [
     "../lib/sdk/pyramid-algart-based.jar",
-    "../lib/sdk/pyramid-common.jar.jar",
+    "../lib/sdk/pyramid-common.jar",
     "../lib/sdk/pyramid-http-api.jar",
     "../lib/sdk/pyramid-http-server.jar",
     "../lib/sdk/pyramid-http-control.jar",
