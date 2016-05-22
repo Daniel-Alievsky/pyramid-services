@@ -119,7 +119,6 @@ final class ReadTask {
         if (checkCancellingTask("Task cancelled because of too slow waiting in queue")) {
             return;
         }
-//        try {Thread.sleep(5000);} catch (InterruptedException e) {}
         PlanePyramidData data = previousCachedData;
         final boolean cacheable;
         if (data == null) {
@@ -129,15 +128,12 @@ final class ReadTask {
             }
             try {
                 final String pyramidUniqueId = pyramidRequest.getPyramidUniqueId();
-                AtomicBoolean wasPresentInPool = new AtomicBoolean();
-                final PlanePyramid pyramid = pyramidPool.getHttpPlanePyramid(pyramidUniqueId, wasPresentInPool);
+//                try {Thread.sleep(5000);} catch (InterruptedException e) {}
+                final PlanePyramid pyramid = pyramidPool.getHttpPlanePyramid(pyramidUniqueId, savingMemoryMode);
                 cacheable = pyramid.isCacheable();
                 data = pyramid.read(pyramidRequest);
                 if (cacheable) {
                     cache.put(pyramidRequest, data);
-                }
-                if (savingMemoryMode && !wasPresentInPool.get()) {
-                    pyramidPool.removeHttpPlanePyramid(pyramidUniqueId);
                 }
             } finally {
                 if (savingMemoryMode) {

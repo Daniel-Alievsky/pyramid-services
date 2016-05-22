@@ -58,30 +58,31 @@ public final class PlanePyramidPool {
     }
 
     public PlanePyramid getHttpPlanePyramid(String pyramidConfiguration) throws Exception {
-        return getHttpPlanePyramid(pyramidConfiguration, null);
+        return getHttpPlanePyramid(pyramidConfiguration, false);
     }
 
-    public PlanePyramid getHttpPlanePyramid(String pyramidConfiguration, AtomicBoolean wasPresentInPool)
+    public PlanePyramid getHttpPlanePyramid(String pyramidConfiguration, boolean savingMemoryMode)
         throws Exception
     {
         Objects.requireNonNull(pyramidConfiguration, "Null pyramidConfiguration argument");
-        if (wasPresentInPool != null) {
-            wasPresentInPool.set(false);
-        }
         if (!POOL_ENABLED) {
             return factory.newPyramid(pyramidConfiguration);
         }
         synchronized (pool) {
             PlanePyramid pyramid = pool.get(pyramidConfiguration);
             if (pyramid != null) {
-                if (wasPresentInPool != null) {
-                    wasPresentInPool.set(true);
-                }
+                LOG.info("The pyramid has loaded from pool: " + pyramid);
                 return pyramid;
             }
             pyramid = factory.newPyramid(pyramidConfiguration);
-            LOG.info("New pyramid has been created: " + pyramid);
-            pool.put(pyramidConfiguration, pyramid);
+            if (savingMemoryMode) {
+                // So, this request will not lead to allocating memory in pool;
+                // but, maybe, it will do some parallel non-saving-memory request
+                LOG.info("New pyramid has been created, but NOT saved in pool: " + pyramid);
+            } else {
+                LOG.info("New pyramid has been created and saved in pool: " + pyramid);
+                pool.put(pyramidConfiguration, pyramid);
+            }
             return pyramid;
         }
     }

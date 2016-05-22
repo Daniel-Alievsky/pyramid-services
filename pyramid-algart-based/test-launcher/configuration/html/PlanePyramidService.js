@@ -41,6 +41,9 @@ var openLayersMap = null;
  */
 var currentPyramidInfo = null;
 
+var DEFAULT_OBJECTIVE = 80; // really constant
+var changingPyramid = false;
+
 /**
  * Specifies the server and the names (id attribute) of HTML tags (usually <div...>)
  * used for working with OpenLayers pyramid.
@@ -72,6 +75,11 @@ function inititialize(newHost, newMapTagName, newMacroTagName, newInformationTag
  * @param newPort      port for opening this pyramid
  */
 function setPyramid(newPyramidId, newPort) {
+    if (changingPyramid) {
+        // don't try to change the pyramid twice simultaneously
+        return;
+    }
+    changingPyramid = true;
     if (openLayersMap != null) {
         // it is not the 1st call
         openLayersMap = null;
@@ -99,6 +107,10 @@ function setPyramid(newPyramidId, newPort) {
 function changeObjective(newObjective) {
     if (openLayersMap == null) {
         // openLayersMap is not ready yet
+        return;
+    }
+    if (zeroLevelObjective < newObjective) {
+        alert("No magnification " + newObjective + " at this image!")
         return;
     }
     var objective = zeroLevelObjective;
@@ -131,9 +143,9 @@ function requestPyramid(newPyramidId, newPort) {
             currentPyramidInfo = JSON.parse(xhr.responseText);
             result = "<p>Detected pyramid information:</p>";
             result += "<pre>" + JSON.stringify(currentPyramidInfo, null, "  ") + "</pre>";
-            zeroLevelObjective = currentPyramidInfo.magnification == null ? 20 : currentPyramidInfo.magnification;
+            zeroLevelObjective = currentPyramidInfo.magnification == null ? DEFAULT_OBJECTIVE : currentPyramidInfo.magnification;
             // - current versions of server, based on LOCI and other free libraries,
-            // does not support currentPyramidInfo.magnification, so we will use default value 20
+            // does not support currentPyramidInfo.magnification, so we will use default value 80
             initOpenLayers();
         }
         if (informationTagName != null) {
@@ -150,7 +162,7 @@ function initOpenLayers() {
 
     var imSize = new OpenLayers.Size(currentPyramidInfo.zeroLevelDimX, currentPyramidInfo.zeroLevelDimY);
     var zoomify = new OpenLayers.Layer.Zoomify("Layer 1",
-        "http://localhost:" + currentPort + "/pp-zoomify/" + currentPyramidId + "/", imSize);
+        "http://" + host + ":" + currentPort + "/pp-zoomify/" + currentPyramidId + "/", imSize);
     /* Map with raster coordinates (pixels) from Zoomify image */
     var options = {
         maxExtent: new OpenLayers.Bounds(0, 0, currentPyramidInfo.zeroLevelDimX, currentPyramidInfo.zeroLevelDimY),
@@ -160,6 +172,7 @@ function initOpenLayers() {
     };
 
     openLayersMap = new OpenLayers.Map(mapTagName, options);
+    changingPyramid = false;
     openLayersMap.addLayer(zoomify);
     openLayersMap.setBaseLayer(zoomify);
     openLayersMap.addControl(new OpenLayers.Control.LayerSwitcher());
@@ -176,7 +189,7 @@ function initOpenLayers() {
         var macroTag = document.getElementById(macroTagName);
         macroTag.style.visibility = "visible";
         macroTag.innerHTML = '<img src="'
-            + 'http://localhost:' + currentPort + '/pp-read-special-image?pyramidId=' + currentPyramidId
+            + host + ':' + currentPort + '/pp-read-special-image?pyramidId=' + currentPyramidId
             + '&specialImageName=WHOLE_SLIDE&width=' + macroTag.offsetWidth + '"/>';
     }
 }
