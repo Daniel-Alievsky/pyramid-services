@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
-  <artifact name="build-simple-test">
-    <output-path>$PROJECT_DIR$/out/artifacts/build_simple_test</output-path>
+  <artifact name="pyramid-services">
+    <output-path>$PROJECT_DIR$/out/artifacts/pyramid_services</output-path>
     <root id="root">
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/welcome.html" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/AddImage.cmd" />

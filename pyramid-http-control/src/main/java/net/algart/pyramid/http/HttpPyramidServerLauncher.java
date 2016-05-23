@@ -75,6 +75,7 @@ public class HttpPyramidServerLauncher {
     }
 
     public synchronized void finishProcess(String groupId) {
+
         //TODO!! finish it via HTTP command, litle wait
         //TODO!! if we have reference to the process in Map<String groupId, java.lang.Process), kill it and little wait
     }
@@ -114,7 +115,7 @@ public class HttpPyramidServerLauncher {
         command.add(cp.toString());
         command.add(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME);
         command.add(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG);
-        command.add(process.getGroupId());
+        command.add("--groupId=" + process.getGroupId());
         command.add(configuration.getRootFolder().toAbsolutePath().toString());
         command.add(configuration.getGlobalConfigurationFile().toAbsolutePath().toString());
         for (HttpPyramidConfiguration.Service service : process.getServices()) {

@@ -155,28 +155,37 @@ public class HttpPyramidServer {
     public static void main(String[] args) throws InterruptedException {
         int startArgIndex = 0;
         boolean serviceMode = false;
-        if (args.length >= 1 && args[0].equals(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG)) {
+        String groupId = null;
+        if (args.length > startArgIndex && args[startArgIndex].equals(
+            HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG))
+        {
             serviceMode = true;
             startArgIndex++;
         }
-        if (args.length < 2 + startArgIndex) {
+        if (args.length > startArgIndex && args[startArgIndex].startsWith("--groupId=")) {
+            groupId = args[startArgIndex].substring("--groupId=".length());
+            startArgIndex++;
+        }
+        if (args.length < startArgIndex + 1 || groupId == null) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s groupId configurationFolder%n", HttpPyramidServer.class.getName());
+            System.out.printf("    %s --groupId=com.xxxxxxx configurationFolder%n", HttpPyramidServer.class.getName());
             System.out.printf("or%n");
-            System.out.printf("    %s groupId configurationFolder somePath/.global-configuration.json "
+            System.out.printf("    %s --groupId=com.xxxxxxx configurationFolder somePath/.global-configuration.json "
                 + "somePath/.format1.json somePath/.format2.json ...%n",
                 HttpPyramidServer.class.getName());
+            if (groupId == null) {
+                System.out.printf("--groupId is not specified%n");
+            }
             return;
         }
-        final String groupId = args[startArgIndex];
-        final Path configurationFolder = Paths.get(args[startArgIndex + 1]);
+        final Path configurationFolder = Paths.get(args[startArgIndex]);
         final HttpPyramidConfiguration configuration;
         final HttpPyramidServer server;
         try {
-            if (args.length > startArgIndex + 2) {
-                final Path globalConfigurationFile = Paths.get(args[startArgIndex + 2]);
+            if (args.length > startArgIndex + 1) {
+                final Path globalConfigurationFile = Paths.get(args[startArgIndex + 1]);
                 final List<Path> files = new ArrayList<>();
-                for (int index = startArgIndex + 3; index < args.length; index++) {
+                for (int index = startArgIndex + 2; index < args.length; index++) {
                     files.add(Paths.get(args[index]));
                 }
                 configuration = HttpPyramidConfiguration.readConfigurationFromFiles(

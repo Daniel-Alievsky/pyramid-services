@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.tests;
+package net.algart.pyramid.processes.tests;
 
 import java.io.File;
 import java.io.IOException;
