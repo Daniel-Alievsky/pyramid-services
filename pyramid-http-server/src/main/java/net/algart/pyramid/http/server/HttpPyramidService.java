@@ -26,6 +26,7 @@ package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.PlanePyramidPool;
+import net.algart.pyramid.http.api.HttpPyramidApiTools;
 import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.http.server.handlers.*;
 import net.algart.pyramid.requests.PlanePyramidRequest;
@@ -114,7 +115,7 @@ public class HttpPyramidService {
     }
 
     public String pyramidIdToConfiguration(String pyramidId) throws IOException {
-        return HttpPyramidConstants.pyramidIdToConfiguration(pyramidId);
+        return HttpPyramidApiTools.pyramidIdToConfiguration(pyramidId);
     }
 
     @Override

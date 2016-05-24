@@ -24,13 +24,6 @@
 
 package net.algart.pyramid.http.api;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 public class HttpPyramidConstants {
     public static final String DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME =
         "net.algart.pyramid.http.server.HttpPyramidServer";
@@ -63,14 +56,6 @@ public class HttpPyramidConstants {
     public static final String READ_SPECIAL_IMAGE_COMMAND_PREFIX = "/pp-read-special-image";
     public static final String PYRAMID_ID_ARGUMENT_NAME = "pyramidId";
     public static final String ALIVE_RESPONSE = "Alive";
-
-    public static String pyramidIdToConfiguration(String pyramidId) throws IOException {
-        final Path path = Paths.get(CONFIG_ROOT_DIR, pyramidId, CONFIG_FILE_NAME);
-        if (!Files.isRegularFile(path)) {
-            throw new FileNotFoundException("File " + path.toAbsolutePath() + " does not exists");
-        }
-        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-    }
 
     private HttpPyramidConstants() {
     }
