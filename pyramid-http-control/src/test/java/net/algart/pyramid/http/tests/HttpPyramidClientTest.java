@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.tests;
 
 import net.algart.pyramid.PlanePyramidInformation;
-import net.algart.pyramid.http.HttpPyramidControl;
+import net.algart.pyramid.http.HttpPyramidServiceControl;
 
 import java.io.IOException;
 
@@ -39,7 +39,7 @@ public class HttpPyramidClientTest {
         final int port = Integer.parseInt(args[1]);
         final String pyramidId = args.length >= 3 ? args[2] : null;
 
-        HttpPyramidControl client = new HttpPyramidControl(host, port);
+        HttpPyramidServiceControl client = new HttpPyramidServiceControl(host, port);
         final boolean alive;
         long t1 = System.nanoTime();
         try {

@@ -55,6 +55,7 @@ public class HttpPyramidService {
         this.port = port;
         server.addListener(new NetworkListener(HttpPyramidService.class.getName(), "localhost", port));
         this.serverConfiguration = server.getServerConfiguration();
+//        try {Thread.sleep(5000);} catch (InterruptedException e) {}
         addBuiltInHandlers();
     }
 

@@ -191,6 +191,14 @@ public class HttpPyramidConfiguration {
             return workingDirectory;
         }
 
+        public List<Integer> allPorts() {
+            final List<Integer> result = new ArrayList<>();
+            for (Service service : services) {
+                result.add(service.getPort());
+            }
+            return result;
+        }
+
         public Path workingDirectory() {
             if (workingDirectory == null) {
                 return parentConfiguration.rootFolder.toAbsolutePath();
@@ -270,7 +278,7 @@ public class HttpPyramidConfiguration {
     }
 
     private final Map<String, Process> processes;
-    private final Map<String, Service> allFormatServices;
+    private final Map<String, Service> allServices;
     private final Path rootFolder;
     private final Path globalConfigurationFile;
     private final Set<String> commonClassPath;
@@ -310,10 +318,10 @@ public class HttpPyramidConfiguration {
         }
         final String commonXmx = globalConfiguration.getString("commonXmx", null);
         this.commonXmx = commonXmx != null ? parseLongWithMetricalSuffixes(commonXmx) : null;
-        this.allFormatServices = new LinkedHashMap<>();
+        this.allServices = new LinkedHashMap<>();
         for (Process process : processList) {
             for (Service service : process.services) {
-                if (allFormatServices.putIfAbsent(service.formatName, service) != null) {
+                if (allServices.putIfAbsent(service.formatName, service) != null) {
                     throw new JsonException("Invalid configuration JSON: "
                         + "two or more services with the single format \"" + service.formatName + "\"");
                 }
@@ -343,6 +351,18 @@ public class HttpPyramidConfiguration {
 
     public Collection<String> getCommonVmOptions() {
         return Collections.unmodifiableSet(commonVmOptions);
+    }
+
+    public Map<String, Service> allServices() {
+        return Collections.unmodifiableMap(allServices);
+    }
+
+    public int numberOfProcesses() {
+        return processes.size();
+    }
+
+    public int numberOfServices() {
+        return allServices.size();
     }
 
     public String toJsonString() {

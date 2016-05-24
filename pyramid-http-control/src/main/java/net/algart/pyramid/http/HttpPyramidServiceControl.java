@@ -40,13 +40,13 @@ import java.util.logging.Logger;
 
 import static net.algart.pyramid.http.api.HttpPyramidConstants.*;
 
-public class HttpPyramidControl {
-    private static final Logger LOG = Logger.getLogger(HttpPyramidControl.class.getName());
+public class HttpPyramidServiceControl {
+    private static final Logger LOG = Logger.getLogger(HttpPyramidServiceControl.class.getName());
 
     private final String host;
     private final int port;
 
-    public HttpPyramidControl(String host, int port) {
+    public HttpPyramidServiceControl(String host, int port) {
         this.host = Objects.requireNonNull(host, "Null host");
         if (port <= 0) {
             throw new IllegalArgumentException("Zero or negative port");
@@ -64,9 +64,13 @@ public class HttpPyramidControl {
         }
     }
 
-    public final void finishService() throws IOException {
-        final HttpURLConnection connection = openCustomConnection(FINISH_COMMAND_PREFIX, "GET");
-        checkHttpOk(connection);
+    public final void finishService() {
+        try {
+            final HttpURLConnection connection = openCustomConnection(FINISH_COMMAND_PREFIX, "GET");
+            checkHttpOk(connection);
+        } catch (IOException e) {
+            LOG.log(Level.INFO, "Cannot connect to " + host + ":" + port + ": " + e.getMessage());
+        }
     }
 
     public final PlanePyramidInformation information(String pyramidId) throws IOException {

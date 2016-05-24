@@ -100,14 +100,6 @@ public class HttpPyramidServer {
         return services;
     }
 
-    public List<Integer> getUsedPorts() {
-        final List<Integer> result = new ArrayList<>();
-        for (HttpPyramidService service : services) {
-            result.add(service.getPort());
-        }
-        return result;
-    }
-
     public void printWelcomeAndKillOnEnterKey() {
         final Thread thread = new Thread() {
             @Override
@@ -115,7 +107,8 @@ public class HttpPyramidServer {
                 try {
                     Thread.sleep(200);
                     // - to be on the side: little pause to allow services to show their logging messages
-                    System.out.printf("%nThe server successfully started on ports %s%n", getUsedPorts());
+                    System.out.printf("%nThe server successfully started on ports %s%n",
+                        processConfiguration.allPorts());
                     System.out.printf("Press \"Ctrl+C\" or \"ENTER\" to kill the server, "
                         + "or wait when it will be finished normally by HTTP command...%n%n");
                     System.in.read();

@@ -25,21 +25,28 @@
 package net.algart.pyramid.http;
 
 import net.algart.pyramid.http.api.HttpPyramidConfiguration;
-import net.algart.pyramid.http.api.HttpPyramidConstants;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class HttpPyramidServerLauncher {
     private static final Logger LOG = Logger.getLogger(HttpPyramidServerLauncher.class.getName());
 
+    private static final int SUCCESS_DELAY_IN_MS = 1000;
+    private static final int PROBLEM_DELAY_IN_MS = 3000;
+    private static final int PROBLEM_NUMBER_OF_ATTEMPTS = 3;
+    private static final int SLOW_START_NUMBER_OF_ATTEMPTS = 10;
+
     private final HttpPyramidConfiguration configuration;
     private final Map<String, Process> runningProcesses;
+
+    private final Object lock = new Object();
 
     public HttpPyramidServerLauncher(HttpPyramidConfiguration configuration) {
         this.configuration = Objects.requireNonNull(configuration);
@@ -49,99 +56,155 @@ public class HttpPyramidServerLauncher {
         }
     }
 
+    public HttpPyramidConfiguration getConfiguration() {
+        return configuration;
+    }
+
     /**
-     * Starts processes without check whether they are alive.
+     * Starts all processes.
      * Good for starting all service at the very beginning, for example, as OS services.
+     *
+     * @param skipAlreadyAlive if <tt>true</tt>, the processes that are already alive are skipped;
+     *                         if not, alive processes will probably lead to exception  "cannot start process".
      */
-    public synchronized void startServices() throws IOException {
-        for (String groupId : configuration.getProcesses().keySet()) {
-            startProcess(groupId);
+    public void start(boolean skipAlreadyAlive) throws IOException {
+        synchronized (lock) {
+            for (String groupId : configuration.getProcesses().keySet()) {
+                startProcess(groupId, skipAlreadyAlive);
+            }
         }
     }
 
-    public synchronized void restartServices(boolean restartAliveServices) {
+    public synchronized void restart(boolean restartAliveServices) {
         //TODO!! check if a service is alive (if not, repeat 3 times)
         //TODO!! if alive and restartAliveServices, call restartProcess, else startProcess
         //TODO!! start each service by a separate thread (don't delay others due to one bad services)
+        synchronized (lock) {
+
+        }
     }
 
-    public synchronized void finishServices() {
-        //TODO!! try to finish normally; if we have references to processes, also kill processes
+    public synchronized void stop(boolean skipNotAlive) throws IOException {
+        synchronized (lock) {
+            for (String groupId : configuration.getProcesses().keySet()) {
+                stopProcess(groupId, skipNotAlive);
+            }
+        }
     }
 
     public synchronized void restartProcess(String groupId) throws IOException {
-        finishProcess(groupId);
-        startProcess(groupId);
+        synchronized (lock) {
+            stopProcess(groupId, false);
+            startProcess(groupId, false);
+        }
     }
 
-    public synchronized void finishProcess(String groupId) {
-
-        //TODO!! finish it via HTTP command, litle wait
-        //TODO!! if we have reference to the process in Map<String groupId, java.lang.Process), kill it and little wait
-    }
-
-    public synchronized void startProcess(String groupId) throws IOException {
-        final HttpPyramidConfiguration.Process process = configuration.getProcess(groupId);
-        if (process == null) {
-            throw new IllegalArgumentException("Service group " + groupId + " not found");
-        }
-        final Process javaProcess = launchProcess(process);
-        //TODO!! try to start process 3 times (in a case of non-zero exit code) with delays and checking alive
-        runningProcesses.put(groupId, javaProcess);
-    }
-
-    private synchronized Process launchProcess(HttpPyramidConfiguration.Process process) throws IOException {
-        Objects.requireNonNull(process);
-        if (runningProcesses.get(process.getGroupId()) != null) {
-            throw new IllegalStateException("The process with groupId="
-                + process.getGroupId() + " is already registered");
-        }
-        final Path javaPath = HttpPyramidConfiguration.getJavaExecutable(HttpPyramidConfiguration.getCurrentJREHome());
-        List<String> command = new ArrayList<>();
-        command.add(javaPath.toAbsolutePath().toString());
-        command.addAll(process.vmOptions());
-        final String xmxOption = process.xmxOption();
-        if (xmxOption != null) {
-            command.add(xmxOption);
-        }
-        StringBuilder cp = new StringBuilder();
-        for (String p : process.classPath(process.hasWorkingDirectory())) {
-            if (cp.length() > 0) {
-                cp.append(File.pathSeparatorChar);
+    public synchronized void startProcess(String groupId, boolean skipIfAlive) throws IOException {
+        synchronized (lock) {
+            final HttpPyramidConfiguration.Process processConfiguration = configuration.getProcess(groupId);
+            if (processConfiguration == null) {
+                throw new IllegalArgumentException("Service group " + groupId + " not found");
             }
-            cp.append(p);
-        }
-        command.add("-cp");
-        command.add(cp.toString());
-        command.add(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME);
-        command.add(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG);
-        command.add("--groupId=" + process.getGroupId());
-        command.add(configuration.getRootFolder().toAbsolutePath().toString());
-        command.add(configuration.getGlobalConfigurationFile().toAbsolutePath().toString());
-        for (HttpPyramidConfiguration.Service service : process.getServices()) {
-            command.add(service.getConfigurationFile().toAbsolutePath().toString());
-        }
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.directory(process.workingDirectory().toFile());
-        processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
-        processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        LOG.info(commandLineToString(processBuilder));
-        return processBuilder.start();
-    }
-
-    private static String commandLineToString(ProcessBuilder processBuilder) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(processBuilder.directory() + "> ");
-        for (final String command : processBuilder.command()) {
-            if (command.contains(" ") || command.length() == 0) {
-                sb.append("\"" + command + "\" ");
+            final HttpPyramidProcessControl control = new HttpPyramidProcessControl("localhost", processConfiguration);
+            if (skipIfAlive && control.areAllServicesAlive()) {
+                return;
+            }
+            if (runningProcesses.get(processConfiguration.getGroupId()) != null) {
+                throw new IllegalStateException("The process with groupId="
+                    + processConfiguration.getGroupId() + " is already started");
+            }
+            Process javaProcess = null;
+            boolean exited = false;
+            for (int attempt = 0; ; attempt++) {
+                if (attempt == 0 || exited) {
+                    javaProcess = control.startAllServicesOnLocalhost();
+                    // - try to start again if exited; maybe, the port was not released quickly enough
+                    exited = waitFor(javaProcess, SUCCESS_DELAY_IN_MS);
+                    // - waiting to allow the process to really start Web servers
+                }
+                if (exited) {
+                    LOG.warning("Unexpected exit of the process with exit code " + javaProcess.exitValue());
+                    javaProcess.destroy();
+                    if (attempt >= PROBLEM_NUMBER_OF_ATTEMPTS) {
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+                if (attempt >= SLOW_START_NUMBER_OF_ATTEMPTS) {
+                    break;
+                }
+                if (control.areAllServicesAlive()) {
+                    // All O'k
+                    runningProcesses.put(groupId, javaProcess);
+                    return;
+                }
+                exited = waitFor(javaProcess, PROBLEM_DELAY_IN_MS);
+                // waiting, maybe there was not enough time to start all services
+            }
+            final int exitValue = exited ? javaProcess.exitValue() : -1;
+            javaProcess.destroy();
+            if (exited) {
+                throw new IOException("Cannot start process for group " + groupId + ", exit code " + exitValue);
             } else {
-                sb.append(command + " ");
+                throw new IOException("Process for group " + groupId
+                    + " launched, but services were note started");
             }
         }
-        return sb.toString();
     }
 
+    public synchronized void stopProcess(String groupId, boolean skipIfNotAlive) throws IOException {
+        synchronized (lock) {
+            final HttpPyramidConfiguration.Process processConfiguration = configuration.getProcess(groupId);
+            if (processConfiguration == null) {
+                throw new IllegalArgumentException("Service group " + groupId + " not found");
+            }
+            final HttpPyramidProcessControl control = new HttpPyramidProcessControl("localhost", processConfiguration);
+            if (skipIfNotAlive && !control.isAtLeastOneServiceAlive()) {
+                return;
+            }
+            final Process javaProcess = runningProcesses.get(processConfiguration.getGroupId());
+            for (int attempt = 0; attempt < PROBLEM_NUMBER_OF_ATTEMPTS; attempt++) {
+                control.finishAllServices();
+                sleep(SUCCESS_DELAY_IN_MS);
+                if (javaProcess != null ?
+                    !javaProcess.isAlive() :
+                    !control.isAtLeastOneServiceAlive())
+                {
+                    return;
+                }
+                sleep(PROBLEM_DELAY_IN_MS);
+                // waiting, maybe there was not enough time to finish all services
+            }
+            if (javaProcess == null) {
+                throw new IOException("Cannot stop process for group " + groupId + " by HTTP");
+            } else {
+                if (javaProcess.isAlive()) {
+                    LOG.warning("Cannot finish process for group \"" + groupId + "\" by HTTP, killing it forcibly");
+                    javaProcess.destroyForcibly();
+                    sleep(SUCCESS_DELAY_IN_MS);
+                    // - waiting for better guarantee
+                }
+            }
+        }
+    }
+
+    private static boolean waitFor(Process javaProcess, int timeoutInMilliseconds) {
+        try {
+            return javaProcess.waitFor(timeoutInMilliseconds, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
+    private static void sleep(int timeoutInMilliseconds) {
+        try {
+            Thread.sleep(timeoutInMilliseconds);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
 
     private static void printWelcomeAndWaitForEnterKey() {
         try {
@@ -150,7 +213,7 @@ public class HttpPyramidServerLauncher {
             // should not occur
         }
         // - to be on the side: little pause to allow services to show their logging messages
-        System.out.printf("%nThe servers successfully started");
+        System.out.printf("%nThe servers successfully started%n");
         System.out.printf("Press \"Ctrl+C\" or \"ENTER\" to kill the server, "
             + "or wait when it will be finished normally by HTTP command...%n%n");
         try {
@@ -162,7 +225,7 @@ public class HttpPyramidServerLauncher {
     }
 
     private static void printExceptionWaitForEnterKeyAndExit(Throwable exception) {
-        System.err.printf("%nSome problems occured while starting services! Error message:%n%s%n%nStack trace:%n",
+        System.err.printf("%nSome problems occured! Error message:%n%s%n%nStack trace:%n",
             exception.getMessage());
         exception.printStackTrace();
         System.err.printf("%nPress \"ENTER\" to exit...%n");
@@ -177,26 +240,60 @@ public class HttpPyramidServerLauncher {
     }
 
     public static void main(String[] args) throws InterruptedException, IOException {
-        if (args.length < 1) {
+        int startArgIndex = 0;
+        boolean checkAlive = false, serviceMode = false, debuggingWait = false;
+        if (args.length > startArgIndex && args[startArgIndex].equals("--checkAlive")) {
+            checkAlive = true;
+            startArgIndex++;
+        }
+        if (args.length > startArgIndex && args[startArgIndex].equals("--serviceMode")) {
+            serviceMode = true;
+            startArgIndex++;
+        }
+        if (args.length > startArgIndex && args[startArgIndex].equals("--debuggingWait")) {
+            // for debugging needs only
+            debuggingWait = true;
+            startArgIndex++;
+        }
+        if (args.length < startArgIndex + 2) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s [-wait] configurationFolder%n", HttpPyramidServerLauncher.class.getName());
+            System.out.printf("    %s [--checkAlive] [--serviceMode] start|stop configurationFolder%n",
+                HttpPyramidServerLauncher.class.getName());
             return;
         }
-        final boolean wait = args[0].equals("-wait");
-        final Path configurationFolder = Paths.get(args[wait ? 1 : 0]);
-        final HttpPyramidServerLauncher launcher;
+        final String command = args[startArgIndex].toLowerCase();
+        final Path configurationFolder = Paths.get(args[startArgIndex + 1]);
+        final HttpPyramidServerLauncher launcher = new HttpPyramidServerLauncher(
+            HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder));
         try {
-            launcher = new HttpPyramidServerLauncher(
-                HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder));
-            launcher.startServices();
+            switch (command) {
+                case "start":
+                    launcher.start(checkAlive);
+                    System.out.printf("%n%d services in %d processes are running successfully%n",
+                        launcher.configuration.numberOfServices(), launcher.configuration.numberOfServices());
+                    break;
+                case "stop":
+                    launcher.stop(checkAlive);
+                    System.out.printf("%n%d services in %d processes are stopped successfully%n",
+                        launcher.configuration.numberOfServices(), launcher.configuration.numberOfServices());
+                    break;
+                default:
+                    System.err.printf("Unknown command \"%s\"%n", command);
+                    return;
+            }
         } catch (Exception e) {
-            printExceptionWaitForEnterKeyAndExit(e);
+            if (serviceMode) {
+                e.printStackTrace();
+                System.exit(1);
+            } else {
+                printExceptionWaitForEnterKeyAndExit(e);
+            }
             return;
             // - this operator will never executed
         }
-        if (wait) {
+        if (debuggingWait) {
             printWelcomeAndWaitForEnterKey();
-            launcher.finishServices();
+            launcher.stop(false);
         }
     }
 }

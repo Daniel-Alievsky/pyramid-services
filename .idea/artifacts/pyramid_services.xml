@@ -53,6 +53,7 @@
         <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-links" />
       </element>
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/CopyDemoFiles.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/ControlJavaServers.cmd" />
     </root>
   </artifact>
 </component>
