@@ -353,6 +353,10 @@ public class HttpPyramidConfiguration {
         return Collections.unmodifiableSet(commonVmOptions);
     }
 
+    public Collection<String> allGroupId() {
+        return Collections.unmodifiableSet(processes.keySet());
+    }
+
     public Map<String, Service> allServices() {
         return Collections.unmodifiableMap(allServices);
     }
@@ -363,6 +367,10 @@ public class HttpPyramidConfiguration {
 
     public int numberOfServices() {
         return allServices.size();
+    }
+
+    public int numberOfProcessServices(String groupId) {
+        return processes.get(groupId).services.size();
     }
 
     public String toJsonString() {

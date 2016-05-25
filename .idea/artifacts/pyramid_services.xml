@@ -58,6 +58,7 @@
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/FindJava.cmd" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/StartJavaServers.cmd" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/StopJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/RestartJavaServices.cmd" />
     </root>
   </artifact>
 </component>

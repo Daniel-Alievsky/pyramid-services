@@ -56,7 +56,7 @@ public class HttpPyramidServerLauncher {
         }
     }
 
-    public HttpPyramidConfiguration getConfiguration() {
+    public HttpPyramidConfiguration getProcessConfiguration() {
         return configuration;
     }
 
@@ -66,48 +66,54 @@ public class HttpPyramidServerLauncher {
      *
      * @param skipAlreadyAlive if <tt>true</tt>, the processes that are already alive are skipped;
      *                         if not, alive processes will probably lead to exception  "cannot start process".
+     * @return the number of processes that were actually started (can be variable if <tt>skipAlreadyAlive</tt>)
+     * @throws IOException in a case of problems while starting process
      */
     public void start(boolean skipAlreadyAlive) throws IOException {
+        int serviceCount = 0, processCount = 0;
         synchronized (lock) {
-            for (String groupId : configuration.getProcesses().keySet()) {
-                startProcess(groupId, skipAlreadyAlive);
+            for (String groupId : configuration.allGroupId()) {
+                if (startProcess(groupId, skipAlreadyAlive)) {
+                    processCount++;
+                    serviceCount += configuration.numberOfProcessServices(groupId);
+                }
             }
         }
+        LOG.info(String.format("%n%d services in %d processes started", serviceCount, processCount));
     }
 
-    public synchronized void restart(boolean restartAliveServices) {
-        //TODO!! check if a service is alive (if not, repeat 3 times)
-        //TODO!! if alive and restartAliveServices, call restartProcess, else startProcess
-        //TODO!! start each service by a separate thread (don't delay others due to one bad services)
+    public void restart(boolean skipAliveServices) throws IOException {
+        int serviceCount = 0, processCount = 0;
         synchronized (lock) {
-
-        }
-    }
-
-    public synchronized void stop(boolean skipNotAlive) throws IOException {
-        synchronized (lock) {
-            for (String groupId : configuration.getProcesses().keySet()) {
-                stopProcess(groupId, skipNotAlive);
+            for (String groupId : configuration.allGroupId()) {
+                if (restartProcess(groupId, skipAliveServices)) {
+                    processCount++;
+                    serviceCount += configuration.numberOfProcessServices(groupId);
+                }
             }
         }
+        LOG.info(String.format("%n%d services in %d processes restarted", serviceCount, processCount));
     }
 
-    public synchronized void restartProcess(String groupId) throws IOException {
+    public void stop(boolean skipNotAlive) throws IOException {
+        int serviceCount = 0, processCount = 0;
         synchronized (lock) {
-            stopProcess(groupId, false);
-            startProcess(groupId, false);
-        }
-    }
-
-    public synchronized void startProcess(String groupId, boolean skipIfAlive) throws IOException {
-        synchronized (lock) {
-            final HttpPyramidConfiguration.Process processConfiguration = configuration.getProcess(groupId);
-            if (processConfiguration == null) {
-                throw new IllegalArgumentException("Service group " + groupId + " not found");
+            for (String groupId : configuration.allGroupId()) {
+                if (stopProcess(groupId, skipNotAlive)) {
+                    processCount++;
+                    serviceCount += configuration.numberOfProcessServices(groupId);
+                }
             }
+        }
+        LOG.info(String.format("%n%d services in %d processes stopped", serviceCount, processCount));
+    }
+
+    public boolean startProcess(String groupId, boolean skipIfAlive) throws IOException {
+        synchronized (lock) {
+            final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
             final HttpPyramidProcessControl control = new HttpPyramidProcessControl("localhost", processConfiguration);
             if (skipIfAlive && control.areAllServicesAlive()) {
-                return;
+                return false;
             }
             if (runningProcesses.get(processConfiguration.getGroupId()) != null) {
                 throw new IllegalStateException("The process with groupId="
@@ -137,7 +143,7 @@ public class HttpPyramidServerLauncher {
                 if (control.areAllServicesAlive()) {
                     // All O'k
                     runningProcesses.put(groupId, javaProcess);
-                    return;
+                    return true;
                 }
                 exited = waitFor(javaProcess, PROBLEM_DELAY_IN_MS);
                 // waiting, maybe there was not enough time to start all services
@@ -153,15 +159,12 @@ public class HttpPyramidServerLauncher {
         }
     }
 
-    public synchronized void stopProcess(String groupId, boolean skipIfNotAlive) throws IOException {
+    public boolean stopProcess(String groupId, boolean skipIfNotAlive) throws IOException {
         synchronized (lock) {
-            final HttpPyramidConfiguration.Process processConfiguration = configuration.getProcess(groupId);
-            if (processConfiguration == null) {
-                throw new IllegalArgumentException("Service group " + groupId + " not found");
-            }
+            final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
             final HttpPyramidProcessControl control = new HttpPyramidProcessControl("localhost", processConfiguration);
             if (skipIfNotAlive && !control.isAtLeastOneServiceAlive()) {
-                return;
+                return false;
             }
             final Process javaProcess = runningProcesses.get(processConfiguration.getGroupId());
             for (int attempt = 0; attempt < PROBLEM_NUMBER_OF_ATTEMPTS; attempt++) {
@@ -171,7 +174,7 @@ public class HttpPyramidServerLauncher {
                     !javaProcess.isAlive() :
                     !control.isAtLeastOneServiceAlive())
                 {
-                    return;
+                    return true;
                 }
                 sleep(PROBLEM_DELAY_IN_MS);
                 // waiting, maybe there was not enough time to finish all services
@@ -184,9 +187,33 @@ public class HttpPyramidServerLauncher {
                     javaProcess.destroyForcibly();
                     sleep(SUCCESS_DELAY_IN_MS);
                     // - waiting for better guarantee
+                    return true;
+                } else {
+                    return false;
                 }
             }
         }
+    }
+
+    public boolean restartProcess(String groupId, boolean skipIfAlive) throws IOException {
+        synchronized (lock) {
+            final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
+            final HttpPyramidProcessControl control = new HttpPyramidProcessControl("localhost", processConfiguration);
+            if (skipIfAlive && control.areAllServicesAlive()) {
+                return false;
+            }
+            stopProcess(groupId, false);
+            startProcess(groupId, false);
+            return true;
+        }
+    }
+
+    private HttpPyramidConfiguration.Process getProcessConfiguration(String groupId) {
+        final HttpPyramidConfiguration.Process resyult = configuration.getProcess(groupId);
+        if (resyult == null) {
+            throw new IllegalArgumentException("Service group " + groupId + " not found");
+        }
+        return resyult;
     }
 
     private static boolean waitFor(Process javaProcess, int timeoutInMilliseconds) {
@@ -257,7 +284,7 @@ public class HttpPyramidServerLauncher {
         }
         if (args.length < startArgIndex + 2) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s [--checkAlive] [--serviceMode] start|stop configurationFolder%n",
+            System.out.printf("    %s [--checkAlive] [--serviceMode] start|stop|restart configurationFolder%n",
                 HttpPyramidServerLauncher.class.getName());
             return;
         }
@@ -267,19 +294,22 @@ public class HttpPyramidServerLauncher {
             HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder));
         try {
             switch (command) {
-                case "start":
+                case "start": {
                     launcher.start(checkAlive);
-                    System.out.printf("%n%d services in %d processes are running%n",
-                        launcher.configuration.numberOfServices(), launcher.configuration.numberOfServices());
                     break;
-                case "stop":
+                }
+                case "stop": {
                     launcher.stop(checkAlive);
-                    System.out.printf("%n%d services in %d processes are stopped%n",
-                        launcher.configuration.numberOfServices(), launcher.configuration.numberOfServices());
                     break;
-                default:
+                }
+                case "restart": {
+                    launcher.restart(checkAlive);
+                    break;
+                }
+                default: {
                     System.err.printf("Unknown command \"%s\"%n", command);
                     return;
+                }
             }
         } catch (Exception e) {
             if (serviceMode) {
