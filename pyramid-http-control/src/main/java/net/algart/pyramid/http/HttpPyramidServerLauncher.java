@@ -41,7 +41,7 @@ public class HttpPyramidServerLauncher {
     private static final int SUCCESS_DELAY_IN_MS = 1000;
     private static final int PROBLEM_DELAY_IN_MS = 3000;
     private static final int PROBLEM_NUMBER_OF_ATTEMPTS = 3;
-    private static final int SLOW_START_NUMBER_OF_ATTEMPTS = 10;
+    private static final int SLOW_START_NUMBER_OF_ATTEMPTS = 15;
 
     private final HttpPyramidConfiguration configuration;
     private final Map<String, Process> runningProcesses;
@@ -269,12 +269,12 @@ public class HttpPyramidServerLauncher {
             switch (command) {
                 case "start":
                     launcher.start(checkAlive);
-                    System.out.printf("%n%d services in %d processes are running successfully%n",
+                    System.out.printf("%n%d services in %d processes are running%n",
                         launcher.configuration.numberOfServices(), launcher.configuration.numberOfServices());
                     break;
                 case "stop":
                     launcher.stop(checkAlive);
-                    System.out.printf("%n%d services in %d processes are stopped successfully%n",
+                    System.out.printf("%n%d services in %d processes are stopped%n",
                         launcher.configuration.numberOfServices(), launcher.configuration.numberOfServices());
                     break;
                 default:

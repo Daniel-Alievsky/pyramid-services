@@ -64,12 +64,13 @@ public class HttpPyramidServiceControl {
         }
     }
 
-    public final void finishService() {
+    public final boolean finishService() {
         try {
             final HttpURLConnection connection = openCustomConnection(FINISH_COMMAND_PREFIX, "GET");
-            checkHttpOk(connection);
+            return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
         } catch (IOException e) {
             LOG.log(Level.INFO, "Cannot connect to " + host + ":" + port + ": " + e.getMessage());
+            return false;
         }
     }
 

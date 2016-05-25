@@ -41,7 +41,9 @@ var openLayersMap = null;
  */
 var currentPyramidInfo = null;
 
-var DEFAULT_OBJECTIVE = 80; // really constant
+var onSetPyramid = null;
+
+var DEFAULT_OBJECTIVE = 40; // really constant
 var changingPyramid = false;
 
 /**
@@ -55,13 +57,16 @@ var changingPyramid = false;
  *                              may be null (for debugging needs)
  * @param newControlTagName     the name of some control panel, the visibility of which will be turned off
  *                              while changing the current pyramid; may be null
+ * @param newOnSetPyramid       this function (without arguments) is called every time when setPyramid function 
+                                is called; may be null
  */
-function inititialize(newHost, newMapTagName, newMacroTagName, newInformationTagName, newControlTagName) {
+function inititialize(newHost, newMapTagName, newMacroTagName, newInformationTagName, newControlTagName, newOnSetPyramid) {
     host = newHost;
     mapTagName = newMapTagName;
     macroTagName = newMacroTagName;
     informationTagName = newInformationTagName;
     controlTagName = newControlTagName;
+    onSetPyramid = newOnSetPyramid;
 }
 
 /**
@@ -128,6 +133,9 @@ function requestPyramid(newPyramidId, newPort) {
     var xhr = new XMLHttpRequest();
     currentPyramidId = newPyramidId;
     currentPort = newPort;
+    if (onSetPyramid != null) {
+        onSetPyramid();
+    }
     urlStart = 'http://' + host + ':' + newPort + '/pp-';
     xhr.open('GET', urlStart + 'information?pyramidId=' + newPyramidId, true);
     xhr.send();
@@ -188,7 +196,7 @@ function initOpenLayers() {
     if (macroTagName != null) {
         var macroTag = document.getElementById(macroTagName);
         macroTag.style.visibility = "visible";
-        macroTag.innerHTML = '<img src="'
+        macroTag.innerHTML = '<img src="http://'
             + host + ':' + currentPort + '/pp-read-special-image?pyramidId=' + currentPyramidId
             + '&specialImageName=WHOLE_SLIDE&width=' + macroTag.offsetWidth + '"/>';
     }

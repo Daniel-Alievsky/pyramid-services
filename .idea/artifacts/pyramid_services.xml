@@ -4,7 +4,7 @@
     <root id="root">
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/welcome.html" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/AddImage.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/LaunchJavaServer.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/LaunchJavaServers.cmd" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/pyramids.html" />
       <element id="directory" name="html">
         <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/html" />
@@ -45,6 +45,7 @@
             <element id="artifact" artifact-name="pyramid-http-control:jar" />
           </element>
         </element>
+        <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-config/.users.json" />
       </element>
       <element id="directory" name="pp-images">
         <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-images" />
@@ -54,6 +55,9 @@
       </element>
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/CopyDemoFiles.cmd" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/ControlJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/FindJava.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/StartJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/StopJavaServers.cmd" />
     </root>
   </artifact>
 </component>
