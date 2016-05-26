@@ -43,20 +43,32 @@ public class HttpPyramidService {
 
     private final HttpServer server;
     private final int port;
+    private final int controlPort;
     private final ReadThreadPool threadPool;
     private final ServerConfiguration serverConfiguration;
     private final PlanePyramidPool pyramidPool;
     private volatile boolean shutdown = false;
 
     public HttpPyramidService(PlanePyramidFactory factory, int port) {
+        Objects.requireNonNull(factory, "Null plane pyramid factory");
+        if (port <= 0 || port > HttpPyramidConstants.MAX_ALLOWED_PORT) {
+            throw new IllegalArgumentException("Invalid port " + port
+                + ": must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT);
+        }
         this.pyramidPool = new PlanePyramidPool(factory, HttpPyramidConstants.MAX_NUMBER_OF_PYRAMIDS_IN_POOL);
         this.threadPool = new ReadThreadPool(Runtime.getRuntime().availableProcessors());
         this.server = new HttpServer();
         this.port = port;
-        server.addListener(new NetworkListener(HttpPyramidService.class.getName(), "localhost", port));
+        this.controlPort = port + HttpPyramidConstants.PORT_INCREMENT_FOR_CONTROL_COMMANDS;
+        server.addListener(new NetworkListener(HttpPyramidService.class.getName(),
+            "localhost", port));
+        server.addListener(new NetworkListener(HttpPyramidService.class.getName() + "-control",
+            "localhost", controlPort));
         this.serverConfiguration = server.getServerConfiguration();
 //        try {Thread.sleep(5000);} catch (InterruptedException e) {}
-        addBuiltInHandlers();
+        addHandler(HttpPyramidConstants.ALIVE_STATUS_COMMAND_PREFIX, new AliveStatusCommand(this));
+        addHandler(HttpPyramidConstants.FINISH_CONTROL_COMMAND_PREFIX, new FinishCommand(this));
+        addHandler(HttpPyramidConstants.GC_CONTROL_COMMAND_PREFIX, new GcCommand(this));
     }
 
     public final void addHandler(String urlPrefix, HttpPyramidCommand command) {
@@ -103,6 +115,10 @@ public class HttpPyramidService {
         return port;
     }
 
+    public int getControlPort() {
+        return controlPort;
+    }
+
     public final PlanePyramidPool getPyramidPool() {
         return pyramidPool;
     }
@@ -124,10 +140,22 @@ public class HttpPyramidService {
         return getClass().getName() + " on port " + port + " with factory " + pyramidPool.getFactory();
     }
 
-    private void addBuiltInHandlers() {
-        addHandler(HttpPyramidConstants.ALIVE_STATUS_COMMAND_PREFIX, new AliveStatusCommand(this));
-        addHandler(HttpPyramidConstants.FINISH_COMMAND_PREFIX, new FinishCommand(this));
-        addHandler(HttpPyramidConstants.GC_COMMAND_PREFIX, new GcCommand(this));
+    private class AliveStatusCommand extends HttpPyramidCommand {
+        public AliveStatusCommand(HttpPyramidService httpPyramidService) {
+            super(httpPyramidService);
+        }
+
+        @Override
+        public void service(
+            Request request,
+            Response response)
+            throws Exception
+        {
+            response.setContentType("text/plain");
+            response.setStatus(200, "OK");
+            response.getWriter().write(HttpPyramidConstants.ALIVE_RESPONSE);
+            response.finish();
+        }
     }
 
     private class FinishCommand extends HttpPyramidCommand {
@@ -147,23 +175,10 @@ public class HttpPyramidService {
             response.getWriter().write("Finishing service");
             response.finish();
         }
-    }
-
-    private class AliveStatusCommand extends HttpPyramidCommand {
-        public AliveStatusCommand(HttpPyramidService httpPyramidService) {
-            super(httpPyramidService);
-        }
 
         @Override
-        public void service(
-            Request request,
-            Response response)
-            throws Exception
-        {
-            response.setContentType("text/plain");
-            response.setStatus(200, "OK");
-            response.getWriter().write(HttpPyramidConstants.ALIVE_RESPONSE);
-            response.finish();
+        boolean isControlCommand() {
+            return true;
         }
     }
 
@@ -190,6 +205,11 @@ public class HttpPyramidService {
             response.getWriter().write("Ok");
             response.finish();
         }
+
+        @Override
+        boolean isControlCommand() {
+            return true;
+        }
     }
 
     private class HttpPyramidHandler extends HttpHandler {
@@ -213,7 +233,15 @@ public class HttpPyramidService {
 //            for (String name : request.getParameterNames()) {
 //                System.out.printf("%s: %s%n", name, request.getParameter(name));
 //            }
+            final int requestPort = request.getServerPort();
             final String path = request.getRequestURI();
+            if (requestPort != (command.isControlCommand() ? controlPort : port)) {
+                response.setStatus(404, "Invalid request path");
+                response.setContentType("text/plain");
+                response.getWriter().write(String.format("Invalid path %s%n", path));
+                LOG.log(Level.SEVERE, String.format("Invalid port: %d", requestPort));
+                return;
+            }
             if (!command.isSubFoldersAllowed() && !prefix.equals(path) && !(prefix + "/").equals(path)) {
                 response.setStatus(404, "Invalid request path");
                 response.setContentType("text/plain");

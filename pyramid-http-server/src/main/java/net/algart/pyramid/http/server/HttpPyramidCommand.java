@@ -45,6 +45,11 @@ public abstract class HttpPyramidCommand {
         return false;
     }
 
+    // Cannot be overridden outside the package: user cannot add control commands
+    boolean isControlCommand() {
+        return false;
+    }
+
     public static String getParameter(Request request, String name) {
         return Objects.requireNonNull(request.getParameter(name), "Parameter " + name + " required");
     }

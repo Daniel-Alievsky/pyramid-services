@@ -66,7 +66,7 @@ public class HttpPyramidServiceControl {
 
     public final boolean finishService() {
         try {
-            final HttpURLConnection connection = openCustomConnection(FINISH_COMMAND_PREFIX, "GET");
+            final HttpURLConnection connection = openCustomConnection(FINISH_CONTROL_COMMAND_PREFIX, "GET", true);
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
         } catch (IOException e) {
             LOG.log(Level.INFO, "Cannot connect to " + host + ":" + port + ": " + e.getMessage());
@@ -76,7 +76,7 @@ public class HttpPyramidServiceControl {
 
     public final PlanePyramidInformation information(String pyramidId) throws IOException {
         final HttpURLConnection connection = openCustomConnection(INFORMATION_COMMAND_PREFIX + "?"
-            + PYRAMID_ID_ARGUMENT_NAME + "=" + URLEncoder.encode(pyramidId, StandardCharsets.UTF_8.name()),
+                + PYRAMID_ID_ARGUMENT_NAME + "=" + URLEncoder.encode(pyramidId, StandardCharsets.UTF_8.name()),
             "GET");
         checkHttpOk(connection);
         try (final InputStreamReader reader = new InputStreamReader(connection.getInputStream(),
@@ -86,8 +86,25 @@ public class HttpPyramidServiceControl {
         }
     }
 
-    public final HttpURLConnection openCustomConnection(String pathAndQuery, String requestMethod) throws IOException {
-        final URL url = new URL("http", host, port, pathAndQuery);
+    public final HttpURLConnection openCustomConnection(
+        String pathAndQuery,
+        String requestMethod)
+        throws IOException
+    {
+        return openCustomConnection(pathAndQuery, requestMethod, false);
+    }
+
+    private final HttpURLConnection openCustomConnection(
+        String pathAndQuery,
+        String requestMethod,
+        boolean controlCommand)
+        throws IOException
+    {
+        final URL url = new URL(
+            "http",
+            host,
+            controlCommand ? port + HttpPyramidConstants.PORT_INCREMENT_FOR_CONTROL_COMMANDS : port,
+            pathAndQuery);
         final URLConnection connection = url.openConnection();
         connection.setConnectTimeout(HttpPyramidConstants.CLIENT_CONNECTION_TIMEOUT);
         connection.setReadTimeout(HttpPyramidConstants.CLIENT_READ_TIMEOUT);

@@ -46,9 +46,12 @@ public class HttpPyramidConstants {
     public static final int CLIENT_READ_TIMEOUT = 90000;
     // - read timeout should be greater than timeouts in SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT class
 
+    public static final int MAX_ALLOWED_PORT = 30000;
+    public static final int PORT_INCREMENT_FOR_CONTROL_COMMANDS = 30000;
+
     public static final String ALIVE_STATUS_COMMAND_PREFIX = "/pp-alive-status";
-    public static final String FINISH_COMMAND_PREFIX = "/pp-finish";
-    public static final String GC_COMMAND_PREFIX = "/pp-gc";
+    public static final String FINISH_CONTROL_COMMAND_PREFIX = "/pp-finish";
+    public static final String GC_CONTROL_COMMAND_PREFIX = "/pp-gc";
     public static final String INFORMATION_COMMAND_PREFIX = "/pp-information";
     public static final String READ_RECTANGLE_COMMAND_PREFIX = "/pp-read-rectangle";
     public static final String TMS_COMMAND_PREFIX = "/pp-tms";
