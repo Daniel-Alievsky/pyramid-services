@@ -34,6 +34,7 @@ var zeroLevelObjective = null;
  * or null in other case.
  */
 var openLayersMap = null;
+var pyramidErrorMessage = null;
 
 /**
  * The variable currentPyramidInfo contains current PlanePyramidInformation as JSON, if we have some active pyramid,
@@ -85,6 +86,7 @@ function setPyramid(newPyramidId, newPort) {
         return;
     }
     changingPyramid = true;
+    pyramidErrorMessage = null;
     if (openLayersMap != null) {
         // it is not the 1st call
         openLayersMap = null;
@@ -145,8 +147,9 @@ function requestPyramid(newPyramidId, newPort) {
         }
         var result = "";
         if (xhr.status != 200) {
-            result = "Error: cannot read pyramid information!</br>";
+            pyramidErrorMessage = result = "Error: cannot read pyramid information, maybe Java server not started or replies too slowly";
             currentPyramidInfo = null; // stays null
+            changingPyramid = false;
         } else {
             currentPyramidInfo = JSON.parse(xhr.responseText);
             result = "<p>Detected pyramid information:</p>";
