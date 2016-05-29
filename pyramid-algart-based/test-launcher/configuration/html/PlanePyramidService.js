@@ -176,7 +176,7 @@ function initOpenLayers() {
         "http://" + host + ":" + currentPort + "/pp-zoomify/" + currentPyramidId + "/", imSize);
     /* Map with raster coordinates (pixels) from Zoomify image */
     var options = {
-        maxExtent: new OpenLayers.Bounds(0, 0, currentPyramidInfo.zeroLevelDimX, currentPyramidInfo.zeroLevelDimY),
+        maxExtent: new OpenLayers.Bounds(0, 0, currentPyramidInfo.zeroLevelDimX - 1, currentPyramidInfo.zeroLevelDimY - 1),
         maxResolution: Math.pow(2, zoomify.numberOfTiers - 1),
         numZoomLevels: zoomify.numberOfTiers,
         units: 'pixels'
