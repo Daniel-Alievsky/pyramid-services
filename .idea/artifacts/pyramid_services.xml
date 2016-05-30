@@ -54,11 +54,11 @@
         <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-links" />
       </element>
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/CopyDemoFiles.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/ControlJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/JavaServers.cmd" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/FindJava.cmd" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/StartJavaServers.cmd" />
       <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/StopJavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/RestartJavaServices.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/RestartJavaServers.cmd" />
     </root>
   </artifact>
 </component>

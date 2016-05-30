@@ -18,5 +18,5 @@
   "commonVmOptions" : [
     "-ea"
   ],
-  "commonXmx" : "1g"
+  "commonMemory" : "1g"
 }

@@ -230,7 +230,7 @@ public class HttpPyramidConfiguration {
         }
 
         public Long xmx() {
-            final long commonMemory = parentConfiguration.commonXmx == null ? 0 : parentConfiguration.commonXmx;
+            final long commonMemory = parentConfiguration.commonMemory == null ? 0 : parentConfiguration.commonMemory;
             final long requiredMemory = Math.max(this.requiredMemory, commonMemory);
             return requiredMemory == 0 ? null : requiredMemory;
         }
@@ -285,7 +285,7 @@ public class HttpPyramidConfiguration {
     // - some common JARs used by all processes: common open-source API
     private final Set<String> commonVmOptions;
     // - for example, here we can add -ea -esa to all processes
-    private final Long commonXmx;
+    private final Long commonMemory;
     // - actual -Xmx for every process is a maximum of this value and its xmx()
 
     private HttpPyramidConfiguration(
@@ -316,8 +316,8 @@ public class HttpPyramidConfiguration {
                 this.commonVmOptions.add(commonVmOptions.getString(k));
             }
         }
-        final String commonXmx = globalConfiguration.getString("commonXmx", null);
-        this.commonXmx = commonXmx != null ? parseLongWithMetricalSuffixes(commonXmx) : null;
+        final String commonMemory = globalConfiguration.getString("commonMemory", null);
+        this.commonMemory = commonMemory != null ? parseLongWithMetricalSuffixes(commonMemory) : null;
         this.allServices = new LinkedHashMap<>();
         for (Process process : processList) {
             for (Service service : process.services) {
@@ -472,8 +472,8 @@ public class HttpPyramidConfiguration {
         builder.add("processes", toJsonArray(processes.values()));
         builder.add("commonClassPath", toJsonArray(commonClassPath));
         builder.add("commonVmOptions", toJsonArray(commonVmOptions));
-        if (commonXmx != null) {
-            builder.add("commonXmx", commonXmx);
+        if (commonMemory != null) {
+            builder.add("commonMemory", commonMemory);
         }
         return builder.build();
     }

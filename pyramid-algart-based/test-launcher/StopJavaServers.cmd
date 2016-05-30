@@ -1,2 +1,2 @@
 @echo off
-ControlJavaServers.cmd --checkAlive stop
+JavaServers.cmd --checkAlive stop
