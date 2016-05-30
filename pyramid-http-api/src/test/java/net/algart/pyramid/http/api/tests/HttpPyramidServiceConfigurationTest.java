@@ -36,9 +36,9 @@ public class HttpPyramidServiceConfigurationTest {
             System.out.printf("Usage: %s configurationFolder%n", HttpPyramidServiceConfigurationTest.class.getName());
             return;
         }
-        Path file = Paths.get(args[0]);
+        final Path configurationFolder = Paths.get(args[0]);
         final HttpPyramidConfiguration configuration =
-            HttpPyramidConfiguration.readConfigurationFromFolder(file);
+            HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
         System.out.println(configuration);
     }
 }

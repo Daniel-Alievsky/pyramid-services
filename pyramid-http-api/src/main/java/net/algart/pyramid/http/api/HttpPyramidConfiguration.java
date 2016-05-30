@@ -38,8 +38,12 @@ import java.util.*;
 
 public class HttpPyramidConfiguration {
     public static final String GLOBAL_CONFIGURATION_FILE_NAME = ".global-configuration.json";
+    public static final String CONFIGURATION_FILE_MASK = ".*.json";
+    public static final String COMMON_CLASS_PATH_FIELD = "commonClassPath";
 
     public static class Service extends ConvertibleToJson {
+        public static final String CLASS_PATH_FIELD = "classPath";
+
         private final Path configurationFile;
         private final String formatName;
         // - must be unique
@@ -63,7 +67,7 @@ public class HttpPyramidConfiguration {
             this.groupId = getRequiredString(json, "groupId");
             this.planePyramidFactory = getRequiredString(json, "planePyramidFactory");
             this.planePyramidFactoryConfiguration = json.getString("planePyramidFactoryConfiguration", null);
-            final JsonArray classPath = getRequiredJsonArray(json, "classPath");
+            final JsonArray classPath = getRequiredJsonArray(json, CLASS_PATH_FIELD);
             this.classPath = new TreeSet<>();
             for (int k = 0, n = classPath.size(); k < n; k++) {
                 this.classPath.add(classPath.getString(k));
@@ -123,6 +127,10 @@ public class HttpPyramidConfiguration {
 
         public Process parentProcess() {
             return parentProcess;
+        }
+
+        public String toJsonString() {
+            return toJson().toString();
         }
 
         JsonObject toJson() {
@@ -302,7 +310,7 @@ public class HttpPyramidConfiguration {
         for (Process process : processList) {
             process.parentConfiguration = this;
         }
-        final JsonArray commonClassPath = globalConfiguration.getJsonArray("commonClassPath");
+        final JsonArray commonClassPath = globalConfiguration.getJsonArray(COMMON_CLASS_PATH_FIELD);
         this.commonClassPath = new TreeSet<>();
         if (commonClassPath != null) {
             for (int k = 0, n = commonClassPath.size(); k < n; k++) {
@@ -373,8 +381,8 @@ public class HttpPyramidConfiguration {
         return processes.get(groupId).services.size();
     }
 
-    public String toJsonString() {
-        return toJson().toString();
+    public String toJsonString(boolean includeServices) {
+        return toJson(includeServices).toString();
     }
 
     public String toString() {
@@ -382,7 +390,7 @@ public class HttpPyramidConfiguration {
             Collections.singletonMap(JsonGenerator.PRETTY_PRINTING, true));
         StringWriter stringWriter = new StringWriter();
         try (JsonWriter jsonWriter = jsonWriterFactory.createWriter(stringWriter)) {
-            jsonWriter.writeObject(toJson());
+            jsonWriter.writeObject(toJson(true));
             return stringWriter.toString();
         }
     }
@@ -392,7 +400,9 @@ public class HttpPyramidConfiguration {
     {
         Objects.requireNonNull(configurationFolder, "Null configurationFolder");
         final Path globalConfigurationFile = configurationFolder.resolve(GLOBAL_CONFIGURATION_FILE_NAME);
-        try (final DirectoryStream<Path> files = Files.newDirectoryStream(configurationFolder, ".*.json")) {
+        try (final DirectoryStream<Path> files = Files.newDirectoryStream(
+            configurationFolder, CONFIGURATION_FILE_MASK))
+        {
             return readConfigurationFromFiles(configurationFolder, globalConfigurationFile, files);
         }
     }
@@ -467,10 +477,12 @@ public class HttpPyramidConfiguration {
         return javaFile;
     }
 
-    JsonObject toJson() {
+    private JsonObject toJson(boolean includeServices) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
-        builder.add("processes", toJsonArray(processes.values()));
-        builder.add("commonClassPath", toJsonArray(commonClassPath));
+        if (includeServices) {
+            builder.add("processes", toJsonArray(processes.values()));
+        }
+        builder.add(COMMON_CLASS_PATH_FIELD, toJsonArray(commonClassPath));
         builder.add("commonVmOptions", toJsonArray(commonVmOptions));
         if (commonMemory != null) {
             builder.add("commonMemory", commonMemory);
