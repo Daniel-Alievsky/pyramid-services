@@ -1,19 +1,9 @@
 {
   "commonClassPath" : [
-    "../lib/sdk/pyramid-algart-based.jar",
-    "../lib/sdk/pyramid-common.jar",
-    "../lib/sdk/pyramid-http-api.jar",
-    "../lib/sdk/pyramid-http-server.jar",
-    "../lib/sdk/pyramid-http-control.jar",
-    "../lib/maven/algart/algart-1.2.7.jar",
-    "../lib/maven/algart/json-0.1.jar",
-    "../lib/maven/algart/simagis-plane-pyramid-sdk-1.2.15.jar",
-    "../lib/maven/grizzly/grizzly-framework-2.3.22.jar",
-    "../lib/maven/grizzly/grizzly-http-2.3.22.jar",
-    "../lib/maven/grizzly/grizzly-http-server-2.3.22.jar",
-    "../lib/maven/grizzly/grizzly-http-servlet-2.3.22.jar",
-    "../lib/maven/json/javax.json-1.0.4.jar",
-    "../lib/maven/json/javax.json-api-1.0.jar"
+    "../lib/sdk/*",
+    "../lib/maven/algart/*",
+    "../lib/maven/grizzly/*",
+    "../lib/maven/json/*"
   ],
   "commonVmOptions" : [
     "-ea"

@@ -29,9 +29,11 @@ import net.algart.pyramid.http.api.HttpPyramidConfiguration;
 
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,26 +47,28 @@ public class ClassPathGroupResolver {
         this.configuration = Objects.requireNonNull(configuration);
     }
 
-    public Map<Path, JsonObject> resolveAllClassPaths() {
+    public Map<Path, JsonObject> resolveAllClassPaths() throws IOException {
         final Map<Path, JsonObject> result = new LinkedHashMap<>();
         for (HttpPyramidConfiguration.Service service : configuration.allServices().values()) {
             final JsonObject json = toJson(service.toJsonString());
-            if (resolveClassPath(json, HttpPyramidConfiguration.Service.CLASS_PATH_FIELD)) {
-                result.put(service.getConfigurationFile(), json);
+            final JsonObject resolved = resolveClassPath(json, HttpPyramidConfiguration.Service.CLASS_PATH_FIELD);
+            if (resolved != null) {
+                result.put(service.getConfigurationFile(), resolved);
             }
         }
         final JsonObject json = toJson(configuration.toJsonString(false));
-        if (resolveClassPath(json, HttpPyramidConfiguration.COMMON_CLASS_PATH_FIELD)) {
-            result.put(configuration.getGlobalConfigurationFile(), json);
+        final JsonObject resolved = resolveClassPath(json, HttpPyramidConfiguration.COMMON_CLASS_PATH_FIELD);
+        if (resolved != null) {
+            result.put(configuration.getGlobalConfigurationFile(), resolved);
         }
         return result;
     }
 
-    public boolean resolveClassPath(JsonObject jsonWithClassPath, String classPathField) {
+    public JsonObject resolveClassPath(JsonObject jsonWithClassPath, String classPathField) throws IOException {
         final JsonArray jsonClassPath = jsonWithClassPath.getJsonArray(classPathField);
         if (jsonClassPath == null) {
-            return false;
-            //TODO!! test this
+            // - possible for global configuration file
+            return null;
         }
         Set<String> classPath = new TreeSet<>();
         for (int k = 0, n = jsonClassPath.size(); k < n; k++) {
@@ -73,15 +77,54 @@ public class ClassPathGroupResolver {
         final Set<String> resolveClassPath = resolveClassPath(classPath);
         final boolean changed = !resolveClassPath.equals(classPath);
         if (changed) {
-            //TODO!! test this
-            jsonWithClassPath.put(classPathField, toJsonArray(resolveClassPath));
+            return modifyJsonObject(jsonWithClassPath, classPathField, toJsonArray(resolveClassPath));
+        } else {
+            return null;
         }
-        return changed;
     }
 
-    public Set<String> resolveClassPath(Set<String> sourceClassPath) {
-        throw new UnsupportedOperationException();
-        //TODO!!
+    public Set<String> resolveClassPath(Set<String> sourceClassPath) throws IOException {
+        final Set<String> result = new LinkedHashSet<>();
+        for (String path : sourceClassPath) {
+            if (path.equals("*") || path.endsWith("/*") || path.endsWith(File.separator + "*")) {
+                // java -cp syntax "somefolder/*" means all JARs in this folder
+                final Path jarFolder = Paths.get(path.substring(0, Math.max(0, path.length() - 2)));
+                // - Math.max for a case of single "*" (current folder)
+                final Path actualJarFolder = configuration.getRootFolder().resolve(jarFolder);
+                final List<String> jarNames = new ArrayList<>();
+                if (Files.exists(actualJarFolder)) {
+                    try (final DirectoryStream<Path> jars = Files.newDirectoryStream(actualJarFolder, "*.jar")) {
+                        for (Path jar : jars) {
+                            jarNames.add(jar.getFileName().toString());
+                        }
+                    }
+                }
+                if (jarNames.isEmpty()) {
+                    result.add(path);
+                    // Special case: preserving "*" in for empty or non-existing directory.
+                    // Maybe, the administrator will add some JARs there later,
+                    // and JVM will be able to understand this without resolving.
+                } else {
+                    Collections.sort(jarNames);
+                    for (String jarName : jarNames) {
+                        result.add(jarFolder.resolve(jarName).toString().replace(File.separatorChar, '/'));
+                    }
+                }
+            } else {
+                result.add(path);
+            }
+        }
+        return result;
+    }
+
+    private static JsonObject modifyJsonObject(JsonObject json, String fieldName, JsonValue newValue) {
+        Objects.requireNonNull(fieldName);
+        Objects.requireNonNull(newValue);
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        for (Map.Entry<String, JsonValue> entry : json.entrySet()) {
+            builder.add(entry.getKey(), fieldName.equals(entry.getKey()) ? newValue : entry.getValue());
+        }
+        return builder.build();
     }
 
     private static JsonArray toJsonArray(Collection<String> collection) {
@@ -98,16 +141,10 @@ public class ClassPathGroupResolver {
         }
     }
 
-    private static JsonObject readJson(Path path) throws IOException {
-        try (final JsonReader reader = Json.createReader(Files.newBufferedReader(path, StandardCharsets.UTF_8))) {
-            return reader.readObject();
-        }
-    }
-
     private static void writeJson(Path path, JsonObject json) throws IOException {
         JsonWriterFactory factory = Json.createWriterFactory(
             Collections.singletonMap(JsonGenerator.PRETTY_PRINTING, true));
-        //TODO!! what will be with BOM??
+        // Note: UTF-8 BOM is not added, and it is correct
         try (final JsonWriter writer = factory.createWriter(Files.newBufferedWriter(path, StandardCharsets.UTF_8))) {
             writer.writeObject(json);
         }
@@ -130,9 +167,13 @@ public class ClassPathGroupResolver {
         final HttpPyramidConfiguration configuration =
             HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
         final Map<Path, JsonObject> correctedJsons = new ClassPathGroupResolver(configuration).resolveAllClassPaths();
-        for (Map.Entry<Path, JsonObject> entry : correctedJsons.entrySet()) {
-            if (!readOnly) {
-                writeJson(entry.getKey(), entry.getValue());
+        if (correctedJsons.isEmpty()) {
+            System.out.printf("Nothing to do%n");
+        } else {
+            for (Map.Entry<Path, JsonObject> entry : correctedJsons.entrySet()) {
+                if (!readOnly) {
+                    writeJson(entry.getKey(), entry.getValue());
+                }
                 System.out.printf("File %s %s changed%n", entry.getKey(), readOnly ? "should be" : "has been");
             }
         }

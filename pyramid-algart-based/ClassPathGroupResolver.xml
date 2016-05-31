@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project basedir="." default="resolve" name="ClassPathGroupResolver">
+    <property name="dest" location="${artifact.output.path}" relative="no"/>
+    <target name="resolve">
+        <java dir="${dest}"
+              classname="net.algart.pyramid.external.ClassPathGroupResolver"
+              fork="true">
+            <classpath>
+                <pathelement location="${dest}/pp-config/lib/sdk/*"/>
+                <pathelement location="${dest}/pp-config/lib/maven/json/*"/>
+            </classpath>
+            <arg value="-f"/>
+            <arg value="pp-config/services"/>
+        </java>
+    </target>
+</project>
