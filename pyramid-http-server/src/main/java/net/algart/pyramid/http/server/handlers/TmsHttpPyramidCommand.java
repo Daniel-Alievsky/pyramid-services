@@ -72,6 +72,10 @@ public class TmsHttpPyramidCommand extends HttpPyramidCommand {
         final int y = Integer.parseInt(removeExtension(components[4]));
         final String configuration = pyramidIdToConfiguration(pyramidId);
 //        System.out.println("tms-Configuration: " + configuration);
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        // - Allows using AJAX-based drawing on JavaScript canvas (required by many new libraries).
+        // It does not violate security, because other client can access this information in any case,
+        // and Web pages cannot abuse it: it is not more dangerous than simple ability to read images.
         final PlanePyramidRequest pyramidRequest = new TmsPlanePyramidRequest(configuration, x, y, z);
         httpPyramidService.createReadTask(request, response, pyramidRequest);
     }

@@ -62,7 +62,6 @@ public class ZoomifyHttpPyramidCommand extends HttpPyramidCommand {
                 + "http://some-server.com:NNNN/some-prefix/pyramidId/tileGroupXXX/z-x-y.jpg; "
                 + "but actual path consists of " + components.length + " parts: http://some-server.com:NNNN/" + path);
         }
-        // path[0] is the command prefix "pp-tms"
         final String pyramidId = components[1];
         final String[] zxy = components[3].split("-");
         final int z = Integer.parseInt(zxy[0]);
@@ -70,6 +69,10 @@ public class ZoomifyHttpPyramidCommand extends HttpPyramidCommand {
         final int y = Integer.parseInt(TmsHttpPyramidCommand.removeExtension(zxy[2]));
         final String configuration = pyramidIdToConfiguration(pyramidId);
 //        System.out.println("tms-Configuration: " + configuration);
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        // - Allows using AJAX-based drawing on JavaScript canvas (required by many new libraries).
+        // It does not violate security, because other client can access this information in any case,
+        // and Web pages cannot abuse it: it is not more dangerous than simple ability to read images.
         final PlanePyramidRequest pyramidRequest = new ZoomifyPlanePyramidRequest(configuration, x, y, z);
         httpPyramidService.createReadTask(request, response, pyramidRequest);
     }
