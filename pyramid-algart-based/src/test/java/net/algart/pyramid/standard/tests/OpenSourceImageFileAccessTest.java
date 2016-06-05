@@ -42,7 +42,7 @@ public class OpenSourceImageFileAccessTest {
 
     private static void doMain(String[] args, boolean addGnu) throws Exception {
         System.setProperty(
-            "net.algart.pyramid.http.port", "9001" + (addGnu ? "|9100" : ""));
+            "net.algart.pyramid.http.port", "9010" + (addGnu ? "|9510" : ""));
         System.setProperty(
             "net.algart.pyramid.http.planePyramidFactory",
             StandardPlanePyramidFactory.class.getName()

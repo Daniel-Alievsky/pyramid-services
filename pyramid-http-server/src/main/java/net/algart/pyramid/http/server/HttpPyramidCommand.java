@@ -31,22 +31,20 @@ import java.util.Objects;
 
 public abstract class HttpPyramidCommand {
     protected final HttpPyramidService httpPyramidService;
+    final String urlPrefix;
 
-    protected HttpPyramidCommand(HttpPyramidService httpPyramidService) {
+    protected HttpPyramidCommand(HttpPyramidService httpPyramidService, String urlPrefix) {
         this.httpPyramidService = Objects.requireNonNull(httpPyramidService, "Null httpPyramidService");
+        this.urlPrefix = Objects.requireNonNull(urlPrefix, "Null urlPrefix");
     }
 
-    protected abstract void service(
-        Request request,
-        Response response)
-        throws Exception;
+    public String getUrlPrefix() {
+        return urlPrefix;
+    }
+
+    protected abstract void service(Request request, Response response) throws Exception;
 
     protected boolean isSubFoldersAllowed() {
-        return false;
-    }
-
-    // Cannot be overridden outside the package: user cannot add control commands
-    boolean isControlCommand() {
         return false;
     }
 

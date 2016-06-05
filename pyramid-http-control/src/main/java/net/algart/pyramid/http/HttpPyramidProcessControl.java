@@ -47,7 +47,7 @@ public class HttpPyramidProcessControl {
         this.processConfiguration = Objects.requireNonNull(processConfiguration, "Null processConfiguration");
         this.serviceControls = new ArrayList<>();
         for (HttpPyramidConfiguration.Service service : processConfiguration.getServices()) {
-            this.serviceControls.add(new HttpPyramidServiceControl(host, service.getPort()));
+            this.serviceControls.add(new HttpPyramidServiceControl(host, service));
         }
     }
 
@@ -104,8 +104,8 @@ public class HttpPyramidProcessControl {
         }
         command.add("-cp");
         command.add(cp.toString());
-        command.add(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME);
-        command.add(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG);
+        command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVER_CLASS_NAME);
+        command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG);
         command.add("--groupId=" + processConfiguration.getGroupId());
         command.add(configuration.getRootFolder().toAbsolutePath().toString());
         command.add(configuration.getGlobalConfigurationFile().toAbsolutePath().toString());

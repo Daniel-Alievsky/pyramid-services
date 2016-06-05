@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.Objects;
 
 public class HttpPyramidApiTools {
@@ -39,6 +40,11 @@ public class HttpPyramidApiTools {
     public static boolean isAllowedPyramidId(String pyramidId) {
         Objects.requireNonNull(pyramidId, "Null pyramidId");
         return pyramidId.matches("^[A-Za-z0-9_\\-]*$");
+    }
+
+    public static Path keyFile(Path systemCommandsFolder, String urlPrefix, int port) {
+        final String keyFileFrefix = String.format(Locale.US, HttpPyramidConstants.SYSTEM_COMMANDS_FILE_PREFIX, port);
+        return systemCommandsFolder.resolve(keyFileFrefix + urlPrefix.substring(1, urlPrefix.length()));
     }
 
     public static String pyramidIdToConfiguration(String pyramidId) throws IOException {

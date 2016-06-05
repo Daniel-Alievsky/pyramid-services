@@ -25,6 +25,8 @@
 package net.algart.pyramid.http;
 
 import net.algart.pyramid.PlanePyramidInformation;
+import net.algart.pyramid.http.api.HttpPyramidApiTools;
+import net.algart.pyramid.http.api.HttpPyramidConfiguration;
 import net.algart.pyramid.http.api.HttpPyramidConstants;
 
 import java.io.IOException;
@@ -34,29 +36,55 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static net.algart.pyramid.http.api.HttpPyramidConstants.*;
 
 public class HttpPyramidServiceControl {
     private static final Logger LOG = Logger.getLogger(HttpPyramidServiceControl.class.getName());
 
     private final String host;
     private final int port;
+    private final Path systemCommandsFolder;
+    private final boolean https;
 
-    public HttpPyramidServiceControl(String host, int port) {
+    public HttpPyramidServiceControl(
+        String host,
+        HttpPyramidConfiguration.Service serviceConfiguration)
+    {
+        this(host, serviceConfiguration, false);
+    }
+
+    public HttpPyramidServiceControl(
+        String host,
+        HttpPyramidConfiguration.Service serviceConfiguration,
+        boolean https)
+    {
+        this(host,
+            Objects.requireNonNull(serviceConfiguration, "Null serviceConfiguration").getPort(),
+            serviceConfiguration.parentProcess().parentConfiguration().systemCommandsFolder(),
+            https);
+    }
+
+    public HttpPyramidServiceControl(String host, int port, Path systemCommandsFolder, boolean https) {
         this.host = Objects.requireNonNull(host, "Null host");
-        if (port <= 0) {
-            throw new IllegalArgumentException("Zero or negative port");
+        if (port <= 0 || port > HttpPyramidConstants.MAX_ALLOWED_PORT) {
+            throw new IllegalArgumentException("Invalid port number " + port
+                + " (must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT + ")");
         }
         this.port = port;
+        this.systemCommandsFolder = Objects.requireNonNull(systemCommandsFolder, "Null systemCommandsFolder");
+        this.https = https;
+        // TODO!! support HTTPS on server side
     }
 
     public final boolean isServiceAlive() {
         try {
-            final HttpURLConnection connection = openCustomConnection(ALIVE_STATUS_COMMAND_PREFIX, "GET");
+            final HttpURLConnection connection = openCustomConnection(
+                HttpPyramidConstants.CommandPrefixes.ALIVE_STATUS, "GET");
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
         } catch (IOException e) {
             LOG.log(Level.INFO, "Cannot connect to " + host + ":" + port + ": " + e.getMessage());
@@ -66,17 +94,19 @@ public class HttpPyramidServiceControl {
 
     public final boolean finishService() {
         try {
-            final HttpURLConnection connection = openCustomConnection(FINISH_CONTROL_COMMAND_PREFIX, "GET", true);
-            return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
+            requestSystemCommand(HttpPyramidConstants.CommandPrefixes.FINISH);
+            return true;
         } catch (IOException e) {
-            LOG.log(Level.INFO, "Cannot connect to " + host + ":" + port + ": " + e.getMessage());
+            LOG.log(Level.INFO, "Cannot request finish command in folder "
+                + systemCommandsFolder + ": " + e.getMessage());
             return false;
         }
     }
 
     public final PlanePyramidInformation information(String pyramidId) throws IOException {
-        final HttpURLConnection connection = openCustomConnection(INFORMATION_COMMAND_PREFIX + "?"
-                + PYRAMID_ID_ARGUMENT_NAME + "=" + URLEncoder.encode(pyramidId, StandardCharsets.UTF_8.name()),
+        final HttpURLConnection connection = openCustomConnection(
+            HttpPyramidConstants.CommandPrefixes.INFORMATION + "?" + HttpPyramidConstants.PYRAMID_ID_ARGUMENT_NAME
+                + "=" + URLEncoder.encode(pyramidId, StandardCharsets.UTF_8.name()),
             "GET");
         checkHttpOk(connection);
         try (final InputStreamReader reader = new InputStreamReader(connection.getInputStream(),
@@ -91,20 +121,7 @@ public class HttpPyramidServiceControl {
         String requestMethod)
         throws IOException
     {
-        return openCustomConnection(pathAndQuery, requestMethod, false);
-    }
-
-    private final HttpURLConnection openCustomConnection(
-        String pathAndQuery,
-        String requestMethod,
-        boolean controlCommand)
-        throws IOException
-    {
-        final URL url = new URL(
-            "http",
-            host,
-            controlCommand ? port + HttpPyramidConstants.PORT_INCREMENT_FOR_CONTROL_COMMANDS : port,
-            pathAndQuery);
+        final URL url = new URL(https ? "https" : "http", host, port, pathAndQuery);
         final URLConnection connection = url.openConnection();
         connection.setConnectTimeout(HttpPyramidConstants.CLIENT_CONNECTION_TIMEOUT);
         connection.setReadTimeout(HttpPyramidConstants.CLIENT_READ_TIMEOUT);
@@ -116,6 +133,21 @@ public class HttpPyramidServiceControl {
         final HttpURLConnection result = (HttpURLConnection) connection;
         result.setRequestMethod(requestMethod);
         return result;
+    }
+
+    public final void requestSystemCommand(String commandPrefix) throws IOException {
+        final Path keyFile = HttpPyramidApiTools.keyFile(systemCommandsFolder, commandPrefix, port);
+        try {
+            Files.delete(keyFile);
+            // - to be on the safe side; removing key file does not affect services
+        } catch (IOException e) {
+            // it is not a problem
+        }
+        try {
+            Files.createFile(keyFile);
+        } catch (FileAlreadyExistsException e) {
+            // it is not a problem if a parallel process also created the same file
+        }
     }
 
     private void checkHttpOk(HttpURLConnection connection) throws IOException {

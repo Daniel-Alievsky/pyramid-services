@@ -24,6 +24,7 @@
 
 package net.algart.pyramid.http.server.handlers;
 
+import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.http.server.HttpPyramidCommand;
 import net.algart.pyramid.http.server.HttpPyramidService;
 import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
@@ -35,15 +36,11 @@ import java.io.IOException;
 
 public class ReadRectangleHttpPyramidCommand extends HttpPyramidCommand {
     public ReadRectangleHttpPyramidCommand(HttpPyramidService httpPyramidService) {
-        super(httpPyramidService);
+        super(httpPyramidService, HttpPyramidConstants.CommandPrefixes.READ_RECTANGLE);
     }
 
     @Override
-    public void service(
-        Request request,
-        Response response)
-        throws Exception
-    {
+    protected void service(Request request, Response response) throws Exception {
         final String configuration = pyramidIdToConfiguration(getParameter(request, "pyramidId"));
         final double compression = getDoubleParameter(request, "compression");
         final long fromX = getLongParameter(request, "fromX");

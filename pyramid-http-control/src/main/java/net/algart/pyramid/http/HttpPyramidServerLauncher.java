@@ -25,6 +25,7 @@
 package net.algart.pyramid.http;
 
 import net.algart.pyramid.http.api.HttpPyramidConfiguration;
+import net.algart.pyramid.http.api.HttpPyramidConstants;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -111,7 +112,8 @@ public class HttpPyramidServerLauncher {
     public boolean startProcess(String groupId, boolean skipIfAlive) throws IOException {
         synchronized (lock) {
             final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
-            final HttpPyramidProcessControl control = new HttpPyramidProcessControl("localhost", processConfiguration);
+            final HttpPyramidProcessControl control = new HttpPyramidProcessControl(
+                HttpPyramidConstants.LOCAL_HOST, processConfiguration);
             if (skipIfAlive && control.areAllServicesAlive()) {
                 return false;
             }
@@ -162,7 +164,8 @@ public class HttpPyramidServerLauncher {
     public boolean stopProcess(String groupId, boolean skipIfNotAlive) throws IOException {
         synchronized (lock) {
             final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
-            final HttpPyramidProcessControl control = new HttpPyramidProcessControl("localhost", processConfiguration);
+            final HttpPyramidProcessControl control = new HttpPyramidProcessControl(
+                HttpPyramidConstants.LOCAL_HOST, processConfiguration);
             if (skipIfNotAlive && !control.isAtLeastOneServiceAlive()) {
                 return false;
             }
@@ -198,7 +201,8 @@ public class HttpPyramidServerLauncher {
     public boolean restartProcess(String groupId, boolean skipIfAlive) throws IOException {
         synchronized (lock) {
             final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
-            final HttpPyramidProcessControl control = new HttpPyramidProcessControl("localhost", processConfiguration);
+            final HttpPyramidProcessControl control = new HttpPyramidProcessControl(
+                HttpPyramidConstants.LOCAL_HOST, processConfiguration);
             if (skipIfAlive && control.areAllServicesAlive()) {
                 return false;
             }

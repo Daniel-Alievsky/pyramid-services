@@ -37,15 +37,11 @@ import java.io.IOException;
 public class ReadSpecialImagePyramidCommand extends HttpPyramidCommand {
 
     public ReadSpecialImagePyramidCommand(HttpPyramidService httpPyramidService) {
-        super(httpPyramidService);
+        super(httpPyramidService, HttpPyramidConstants.CommandPrefixes.READ_SPECIAL_IMAGE);
     }
 
     @Override
-    public void service(
-        Request request,
-        Response response)
-        throws Exception
-    {
+    protected void service(Request request, Response response) throws Exception {
         final String configuration = pyramidIdToConfiguration(
             getParameter(request, HttpPyramidConstants.PYRAMID_ID_ARGUMENT_NAME));
         final String specialImageName = getParameter(request, "specialImageName");

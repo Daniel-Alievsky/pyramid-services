@@ -27,6 +27,7 @@ package net.algart.pyramid.http.server.handlers;
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidData;
 import net.algart.pyramid.PlanePyramidInformation;
+import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.http.server.HttpPyramidCommand;
 import net.algart.pyramid.http.server.HttpPyramidService;
 import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
@@ -43,15 +44,11 @@ public class ZoomifyHttpPyramidCommand extends HttpPyramidCommand {
     private volatile int tileDim = DEFAULT_ZOOMIFY_TILE_DIM;
 
     public ZoomifyHttpPyramidCommand(HttpPyramidService httpPyramidService) {
-        super(httpPyramidService);
+        super(httpPyramidService, HttpPyramidConstants.CommandPrefixes.ZOOMIFY);
     }
 
     @Override
-    public void service(
-        Request request,
-        Response response)
-        throws Exception
-    {
+    protected void service(Request request, Response response) throws Exception {
         String path = request.getRequestURI();
         if (path.startsWith("/")) {
             path = path.substring(1);

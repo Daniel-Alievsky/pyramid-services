@@ -35,15 +35,11 @@ import java.io.IOException;
 
 public class InformationHttpPyramidCommand extends HttpPyramidCommand {
     public InformationHttpPyramidCommand(HttpPyramidService httpPyramidService) {
-        super(httpPyramidService);
+        super(httpPyramidService, HttpPyramidConstants.CommandPrefixes.INFORMATION);
     }
 
     @Override
-    public void service(
-        Request request,
-        Response response)
-        throws Exception
-    {
+    protected void service(Request request, Response response) throws Exception {
         final String configuration = pyramidIdToConfiguration(
             HttpPyramidCommand.getParameter(request, HttpPyramidConstants.PYRAMID_ID_ARGUMENT_NAME));
         response.setContentType("application/json; charset=utf-8");

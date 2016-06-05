@@ -27,6 +27,7 @@ package net.algart.pyramid.http.server.handlers;
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidData;
 import net.algart.pyramid.PlanePyramidInformation;
+import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.http.server.HttpPyramidCommand;
 import net.algart.pyramid.http.server.HttpPyramidService;
 import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
@@ -46,15 +47,11 @@ public class TmsHttpPyramidCommand extends HttpPyramidCommand {
     private volatile boolean inverseYDirection = DEFAULT_INVERSE_Y_DIRECTION;
 
     public TmsHttpPyramidCommand(HttpPyramidService httpPyramidService) {
-        super(httpPyramidService);
+        super(httpPyramidService, HttpPyramidConstants.CommandPrefixes.TMS);
     }
 
     @Override
-    public void service(
-        Request request,
-        Response response)
-        throws Exception
-    {
+    protected void service(Request request, Response response) throws Exception {
         String path = request.getRequestURI();
         if (path.startsWith("/")) {
             path = path.substring(1);

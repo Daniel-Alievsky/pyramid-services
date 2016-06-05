@@ -25,10 +25,12 @@
 package net.algart.pyramid.http.api;
 
 public class HttpPyramidConstants {
-    public static final String DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME =
+    public static final String HTTP_PYRAMID_SERVER_CLASS_NAME =
         "net.algart.pyramid.http.server.HttpPyramidServer";
-    public static final String DEFAULT_HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG = "--serviceMode";
+    public static final String HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG = "--serviceMode";
 
+    public static final String LOCAL_HOST = System.getProperty(
+        "net.algart.pyramid.http.localHost", "localhost");
     public static final String CONFIG_ROOT_DIR = System.getProperty(
         "net.algart.pyramid.http.configRoot", "/pp-links");
     public static final String CONFIG_FILE_NAME = System.getProperty(
@@ -47,16 +49,33 @@ public class HttpPyramidConstants {
     // - read timeout should be greater than timeouts in SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT class
 
     public static final int MAX_ALLOWED_PORT = 30000;
-    public static final int PORT_INCREMENT_FOR_CONTROL_COMMANDS = 30000;
 
-    public static final String ALIVE_STATUS_COMMAND_PREFIX = "/pp-alive-status";
-    public static final String FINISH_CONTROL_COMMAND_PREFIX = "/pp-finish";
-    public static final String GC_CONTROL_COMMAND_PREFIX = "/pp-gc";
-    public static final String INFORMATION_COMMAND_PREFIX = "/pp-information";
-    public static final String READ_RECTANGLE_COMMAND_PREFIX = "/pp-read-rectangle";
-    public static final String TMS_COMMAND_PREFIX = "/pp-tms";
-    public static final String ZOOMIFY_COMMAND_PREFIX = "/pp-zoomify";
-    public static final String READ_SPECIAL_IMAGE_COMMAND_PREFIX = "/pp-read-special-image";
+    public static final int SYSTEM_CONNANDS_DELAY = 500;
+
+    /**
+     * Note: all command prexies start with '/' character and contains only alphanumeric characters after this
+     * (maybe including also '-' and '_' characters).
+     */
+    public static class CommandPrefixes {
+        public static final String FINISH = "/pp-finish";
+        public static final String GC = "/pp-gc";
+        public static final String ALIVE_STATUS = "/pp-alive-status";
+        public static final String INFORMATION = "/pp-information";
+        public static final String READ_RECTANGLE = "/pp-read-rectangle";
+        public static final String TMS = "/pp-tms";
+        public static final String ZOOMIFY = "/pp-zoomify";
+        public static final String READ_SPECIAL_IMAGE = "/pp-read-special-image";
+
+        private CommandPrefixes() {}
+    }
+
+    public static final String DEFAULT_SYSTEM_COMMANDS_FOLDER = "for-key-files";
+    /**
+     * Names of key files in {@link #DEFAULT_SYSTEM_COMMANDS_FOLDER} start from this prefix,
+     * where %d is replaced with the port number.
+     */
+    public static final String SYSTEM_COMMANDS_FILE_PREFIX = ".command.%d.";
+
     public static final String PYRAMID_ID_ARGUMENT_NAME = "pyramidId";
     public static final String ALIVE_RESPONSE = "Alive";
 

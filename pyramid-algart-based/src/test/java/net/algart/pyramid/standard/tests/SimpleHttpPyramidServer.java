@@ -25,9 +25,11 @@
 package net.algart.pyramid.standard.tests;
 
 import net.algart.pyramid.PlanePyramidFactory;
+import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.http.server.HttpPyramidService;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 
 class SimpleHttpPyramidServer {
     public final void doMain(String[] args) throws Exception {
@@ -70,14 +72,15 @@ class SimpleHttpPyramidServer {
             new Thread() {
                 @Override
                 public void run() {
-                    service.waitForFinish();
+                    service.waitForFinishAndProcessSystemCommands();
                 }
             }.start();
         }
     }
 
     protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
-        return new HttpPyramidService(factory, port);
+        return new HttpPyramidService(factory, port,
+            Paths.get(HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER));
     }
 
     protected void addHandlers(HttpPyramidService service) {

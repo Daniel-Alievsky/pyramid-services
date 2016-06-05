@@ -37,7 +37,7 @@ import java.util.Objects;
 
 public class HttpPyramidServer {
     static {
-        if (!HttpPyramidServer.class.getName().equals(HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME)) {
+        if (!HttpPyramidServer.class.getName().equals(HttpPyramidConstants.HTTP_PYRAMID_SERVER_CLASS_NAME)) {
             throw new AssertionError("Invalid constant DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME");
         }
     }
@@ -75,13 +75,13 @@ public class HttpPyramidServer {
         this.services = services;
     }
 
-    public void waitForFinish() throws InterruptedException {
+    public void waitForFinishAndProcessSystemCommands() throws InterruptedException {
         final List<Thread> waitingThreads = new ArrayList<>();
         for (final HttpPyramidService service : services) {
             final Thread thread = new Thread() {
                 @Override
                 public void run() {
-                    service.waitForFinish();
+                    service.waitForFinishAndProcessSystemCommands();
                 }
             };
             thread.start();
@@ -138,7 +138,10 @@ public class HttpPyramidServer {
     }
 
     protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
-        return new HttpPyramidService(factory, port);
+        return new HttpPyramidService(
+            factory,
+            port,
+            processConfiguration.parentConfiguration().systemCommandsFolder());
     }
 
     protected void addHandlers(HttpPyramidService service) {
@@ -150,7 +153,7 @@ public class HttpPyramidServer {
         boolean serviceMode = false;
         String groupId = null;
         if (args.length > startArgIndex && args[startArgIndex].equals(
-            HttpPyramidConstants.DEFAULT_HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG))
+            HttpPyramidConstants.HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG))
         {
             serviceMode = true;
             startArgIndex++;
@@ -205,6 +208,6 @@ public class HttpPyramidServer {
         if (!serviceMode) {
             server.printWelcomeAndKillOnEnterKey();
         }
-        server.waitForFinish();
+        server.waitForFinishAndProcessSystemCommands();
     }
 }

@@ -83,6 +83,11 @@ public class HttpPyramidConfiguration {
             final String memory = json.getString("memory", null);
             this.memory = memory != null ? parseLongWithMetricalSuffixes(memory) : null;
             this.port = getRequiredInt(json, "port");
+            if (port <= 0 || port > HttpPyramidConstants.MAX_ALLOWED_PORT) {
+                throw new JsonException("Invalid configuration JSON:"
+                    + " invalid port number " + port
+                    + " (must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT + ")");
+            }
         }
 
         public Path getConfigurationFile() {
@@ -295,6 +300,7 @@ public class HttpPyramidConfiguration {
     // - for example, here we can add -ea -esa to all processes
     private final Long commonMemory;
     // - actual -Xmx for every process is a maximum of this value and its xmx()
+    private String systemCommandsFolder;
 
     private HttpPyramidConfiguration(
         Path rootFolder, Path globalConfigurationFile, JsonObject globalConfiguration, Map<String, Process> processes)
@@ -326,6 +332,8 @@ public class HttpPyramidConfiguration {
         }
         final String commonMemory = globalConfiguration.getString("commonMemory", null);
         this.commonMemory = commonMemory != null ? parseLongWithMetricalSuffixes(commonMemory) : null;
+        this.systemCommandsFolder = globalConfiguration.getString("systemCommandsFolder",
+            HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER);
         this.allServices = new LinkedHashMap<>();
         for (Process process : processList) {
             for (Service service : process.services) {
@@ -359,6 +367,18 @@ public class HttpPyramidConfiguration {
 
     public Collection<String> getCommonVmOptions() {
         return Collections.unmodifiableSet(commonVmOptions);
+    }
+
+    public Long getCommonMemory() {
+        return commonMemory;
+    }
+
+    public String getSystemCommandsFolder() {
+        return systemCommandsFolder;
+    }
+
+    public Path systemCommandsFolder() {
+        return rootFolder.resolve(systemCommandsFolder).toAbsolutePath();
     }
 
     public Collection<String> allGroupId() {

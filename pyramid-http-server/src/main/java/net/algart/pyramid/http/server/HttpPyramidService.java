@@ -32,9 +32,11 @@ import net.algart.pyramid.http.server.handlers.*;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.http.server.*;
 
+import java.io.IOError;
 import java.io.IOException;
-import java.util.Locale;
-import java.util.Objects;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,47 +45,51 @@ public class HttpPyramidService {
 
     private final HttpServer server;
     private final int port;
-    private final int controlPort;
+    private final Path systemCommandsFolder;
+    private final List<SystemCommand> systemHandlers = new ArrayList<>();
     private final ReadThreadPool threadPool;
     private final ServerConfiguration serverConfiguration;
     private final PlanePyramidPool pyramidPool;
     private volatile boolean shutdown = false;
 
-    public HttpPyramidService(PlanePyramidFactory factory, int port) {
+    public HttpPyramidService(PlanePyramidFactory factory, int port, Path systemCommandsFolder) throws IOException {
         Objects.requireNonNull(factory, "Null plane pyramid factory");
+        Objects.requireNonNull(systemCommandsFolder, "Null folder for managing service by key files");
         if (port <= 0 || port > HttpPyramidConstants.MAX_ALLOWED_PORT) {
             throw new IllegalArgumentException("Invalid port " + port
                 + ": must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT);
+        }
+        if (!Files.isDirectory(systemCommandsFolder)) {
+            throw new IOException("Invalid folder for managing service by key files \""
+                + systemCommandsFolder.toAbsolutePath()
+                + "\": it must be an existing folder with permitted read/write operations");
         }
         this.pyramidPool = new PlanePyramidPool(factory, HttpPyramidConstants.MAX_NUMBER_OF_PYRAMIDS_IN_POOL);
         this.threadPool = new ReadThreadPool(Runtime.getRuntime().availableProcessors());
         this.server = new HttpServer();
         this.port = port;
-        this.controlPort = port + HttpPyramidConstants.PORT_INCREMENT_FOR_CONTROL_COMMANDS;
+        this.systemCommandsFolder = systemCommandsFolder;
         server.addListener(new NetworkListener(HttpPyramidService.class.getName(),
-            "localhost", port));
-        server.addListener(new NetworkListener(HttpPyramidService.class.getName() + "-control",
-            "localhost", controlPort));
+            HttpPyramidConstants.LOCAL_HOST, port));
         this.serverConfiguration = server.getServerConfiguration();
 //        try {Thread.sleep(5000);} catch (InterruptedException e) {}
-        addHandler(HttpPyramidConstants.ALIVE_STATUS_COMMAND_PREFIX, new AliveStatusCommand(this));
-        addHandler(HttpPyramidConstants.FINISH_CONTROL_COMMAND_PREFIX, new FinishCommand(this));
-        addHandler(HttpPyramidConstants.GC_CONTROL_COMMAND_PREFIX, new GcCommand(this));
+        addSystemHandler(new FinishCommand(this));
+        addSystemHandler(new GcCommand(this));
+        addHandler(new AliveStatusCommand(this));
     }
 
-    public final void addHandler(String urlPrefix, HttpPyramidCommand command) {
-        Objects.requireNonNull(urlPrefix, "Null URL prefix");
+    public final void addHandler(HttpPyramidCommand command) {
         Objects.requireNonNull(command, "Null HTTP-pyramid command");
-        serverConfiguration.addHttpHandler(new HttpPyramidHandler(urlPrefix, command), urlPrefix);
-        LOG.info("Adding HTTP handler " + urlPrefix);
+        serverConfiguration.addHttpHandler(new HttpPyramidHandler(command.urlPrefix, command), command.urlPrefix);
+        LOG.info("Adding HTTP handler for " + command.urlPrefix);
     }
 
     public final void addStandardHandlers() {
-        addHandler(HttpPyramidConstants.INFORMATION_COMMAND_PREFIX, new InformationHttpPyramidCommand(this));
-        addHandler(HttpPyramidConstants.READ_RECTANGLE_COMMAND_PREFIX, new ReadRectangleHttpPyramidCommand(this));
-        addHandler(HttpPyramidConstants.TMS_COMMAND_PREFIX, new TmsHttpPyramidCommand(this));
-        addHandler(HttpPyramidConstants.ZOOMIFY_COMMAND_PREFIX, new ZoomifyHttpPyramidCommand(this));
-        addHandler(HttpPyramidConstants.READ_SPECIAL_IMAGE_COMMAND_PREFIX, new ReadSpecialImagePyramidCommand(this));
+        addHandler(new InformationHttpPyramidCommand(this));
+        addHandler(new ReadRectangleHttpPyramidCommand(this));
+        addHandler(new TmsHttpPyramidCommand(this));
+        addHandler(new ZoomifyHttpPyramidCommand(this));
+        addHandler(new ReadSpecialImagePyramidCommand(this));
     }
 
     public final void start() throws IOException {
@@ -91,32 +97,40 @@ public class HttpPyramidService {
         server.start();
     }
 
-    public final void waitForFinish() {
+    public final void waitForFinishAndProcessSystemCommands() {
         try {
             while (!shutdown) {
-                Thread.sleep(500);
+                Thread.sleep(HttpPyramidConstants.SYSTEM_CONNANDS_DELAY);
+                for (SystemCommand systemCommand : systemHandlers) {
+                    if (Files.deleteIfExists(systemCommand.keyFile())) {
+                        //TODO!! more guaranteed atomic operation
+                        systemCommand.service();
+                    }
+                }
             }
             Thread.sleep(1000);
+            // - additional delay 1000 is to be on the safe side: allow all tasks to be correctly finished
         } catch (InterruptedException e) {
             LOG.log(Level.SEVERE, "Unexpected interrupted exception", e);
+        } catch (IOException e) {
+            throw new IOError(e);
         }
-        // - to be on the safe side: allow all tasks to be correctly finished
         LOG.info("Finishing " + this);
     }
 
-    public void finish() {
+    public final void finish() {
         LOG.log(Level.INFO, "Shutting down pyramid service...");
         server.shutdown();
         threadPool.shutdown();
         shutdown = true;
     }
 
-    public int getPort() {
+    public final int getPort() {
         return port;
     }
 
-    public int getControlPort() {
-        return controlPort;
+    public final Path getSystemCommandsFolder() {
+        return systemCommandsFolder;
     }
 
     public final PlanePyramidPool getPyramidPool() {
@@ -140,17 +154,50 @@ public class HttpPyramidService {
         return getClass().getName() + " on port " + port + " with factory " + pyramidPool.getFactory();
     }
 
-    private class AliveStatusCommand extends HttpPyramidCommand {
-        public AliveStatusCommand(HttpPyramidService httpPyramidService) {
-            super(httpPyramidService);
+    private void addSystemHandler(SystemCommand command) {
+        Objects.requireNonNull(command, "Null HTTP-pyramid command");
+        systemHandlers.add(command);
+        LOG.info("Adding file-managed handler for " + command.urlPrefix);
+    }
+
+    private class FinishCommand extends SystemCommand {
+
+        FinishCommand(HttpPyramidService httpPyramidService) {
+            super(httpPyramidService, HttpPyramidConstants.CommandPrefixes.FINISH);
+        }
+        @Override
+        void service() throws IOException {
+            finish();
+        }
+    }
+
+    private class GcCommand extends SystemCommand {
+        GcCommand(HttpPyramidService httpPyramidService) {
+            super(httpPyramidService, HttpPyramidConstants.CommandPrefixes.GC);
         }
 
         @Override
-        public void service(
-            Request request,
-            Response response)
-            throws Exception
-        {
+        void service() throws IOException {
+            final Runtime rt = Runtime.getRuntime();
+            LOG.info(String.format(Locale.US, "GC report before: used memory %.5f MB / %.5f MB",
+                (rt.totalMemory() - rt.freeMemory()) / 1048576.0, rt.maxMemory() / 1048576.0));
+            for (int k = 0; k < 3; k++) {
+                // 3 attempts for the best results
+                System.runFinalization();
+                System.gc();
+            }
+            LOG.info(String.format(Locale.US, "GC report after: used memory %.5f MB / %.5f MB",
+                (rt.totalMemory() - rt.freeMemory()) / 1048576.0, rt.maxMemory() / 1048576.0));
+        }
+    }
+
+    private class AliveStatusCommand extends HttpPyramidCommand {
+        public AliveStatusCommand(HttpPyramidService httpPyramidService) {
+            super(httpPyramidService, HttpPyramidConstants.CommandPrefixes.ALIVE_STATUS);
+        }
+
+        @Override
+        protected void service(Request request, Response response) throws Exception {
             response.setContentType("text/plain");
             response.setStatus(200, "OK");
             response.getWriter().write(HttpPyramidConstants.ALIVE_RESPONSE);
@@ -158,69 +205,15 @@ public class HttpPyramidService {
         }
     }
 
-    private class FinishCommand extends HttpPyramidCommand {
-        public FinishCommand(HttpPyramidService httpPyramidService) {
-            super(httpPyramidService);
-        }
-
-        @Override
-        public void service(
-            Request request,
-            Response response)
-            throws Exception
-        {
-            finish();
-            response.setContentType("text/plain");
-            response.setStatus(200, "OK");
-            response.getWriter().write("Finishing service");
-            response.finish();
-        }
-
-        @Override
-        boolean isControlCommand() {
-            return true;
-        }
-    }
-
-    private class GcCommand extends HttpPyramidCommand {
-        public GcCommand(HttpPyramidService httpPyramidService) {
-            super(httpPyramidService);
-        }
-
-        @Override
-        public void service(
-            Request request,
-            Response response)
-            throws Exception
-        {
-            final Runtime rt = Runtime.getRuntime();
-            LOG.info(String.format(Locale.US, "GC report before: used memory %.5f MB / %.5f MB",
-                (rt.totalMemory() - rt.freeMemory()) / 1048576.0, rt.maxMemory() / 1048576.0));
-            System.runFinalization();
-            System.gc();
-            LOG.info(String.format(Locale.US, "GC report after: used memory %.5f MB / %.5f MB",
-                (rt.totalMemory() - rt.freeMemory()) / 1048576.0, rt.maxMemory() / 1048576.0));
-            response.setContentType("text/plain");
-            response.setStatus(200, "OK");
-            response.getWriter().write("Ok");
-            response.finish();
-        }
-
-        @Override
-        boolean isControlCommand() {
-            return true;
-        }
-    }
-
     private class HttpPyramidHandler extends HttpHandler {
-        final String prefix;
+        final String urlPrefix;
         final HttpPyramidCommand command;
 
         HttpPyramidHandler(
-            String prefix,
+            String urlPrefix,
             HttpPyramidCommand command)
         {
-            this.prefix = Objects.requireNonNull(prefix);
+            this.urlPrefix = Objects.requireNonNull(urlPrefix);
             this.command = Objects.requireNonNull(command);
         }
 
@@ -235,18 +228,18 @@ public class HttpPyramidService {
 //            }
             final int requestPort = request.getServerPort();
             final String path = request.getRequestURI();
-            if (requestPort != (command.isControlCommand() ? controlPort : port)) {
-                response.setStatus(404, "Invalid request path");
+            if (requestPort != port) {
+                response.setStatus(500, "Invalid request port");
                 response.setContentType("text/plain");
-                response.getWriter().write(String.format("Invalid path %s%n", path));
-                LOG.log(Level.SEVERE, String.format("Invalid port: %d", requestPort));
+                response.getWriter().write(String.format("Invalid port %n%n", port));
+                LOG.log(Level.SEVERE, String.format("MUST NOT OCCUR! Invalid port: %d", requestPort));
                 return;
             }
-            if (!command.isSubFoldersAllowed() && !prefix.equals(path) && !(prefix + "/").equals(path)) {
+            if (!command.isSubFoldersAllowed() && !urlPrefix.equals(path) && !(urlPrefix + "/").equals(path)) {
                 response.setStatus(404, "Invalid request path");
                 response.setContentType("text/plain");
                 response.getWriter().write(String.format("Invalid path %s%n", path));
-                LOG.log(Level.SEVERE, String.format("Subfolders are not supported: %s", path));
+                LOG.log(Level.WARNING, String.format("Subfolders are not supported: %s", path));
                 return;
             }
             try {
