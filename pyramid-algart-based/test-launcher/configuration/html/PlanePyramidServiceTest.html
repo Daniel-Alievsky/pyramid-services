@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Common test for pyramid service</title>
+    <link rel="stylesheet" href="http://openlayers.org/en/v3.16.0/css/ol.css" type="text/css">
+    <script src="http://openlayers.org/en/v3.16.0/build/ol.js"></script>
     <script src="PlanePyramidService.js"></script>
-    <script src="http://openlayers.org/api/OpenLayers.js"></script>
+    <!--script src="http://openlayers.org/api/OpenLayers.js"></script-->
 </head>
 <body bgcolor="#FFFFB0">
 <!-- Non-white background color is for testing goals (to see the real boundaries of OpenLayers pyramid).
@@ -74,9 +76,9 @@ Professional version should use while color #FFFFFF -->
     function showCurrentZoom() {
         if (window.openLayersMap != null) {
             document.getElementById("currentZoom").innerHTML =
-                    "Level " + (window.openLayersMap.getZoom() + 1)
-                    + " / " + window.openLayersMap.getNumZoomLevels()
-                    + ", resolution " + window.openLayersMap.getResolution()
+                    "Level " + (window.olView.getZoom() + 1)
+                    + " / " + (window.olTileGrid.getMaxZoom() + 1)
+                    + ", resolution " + window.olView.getResolution()
 //                    + ", zoom " + window.openLayersMap.getZoomForResolution(window.openLayersMap.getResolution())
         } else {
             document.getElementById("currentZoom").innerHTML = "";
