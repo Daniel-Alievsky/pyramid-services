@@ -70,8 +70,9 @@
             clear: both;
         }
     </style>
-    <script src="http://openlayers.org/api/OpenLayers.js"></script>
-    <script src="PlanePyramidService.js"></script>
+    <link rel="stylesheet" href="http://openlayers.org/en/v3.16.0/css/ol.css" type="text/css">
+    <script src="http://openlayers.org/en/v3.16.0/build/ol.js"></script>
+    <script src="viewer.js"></script>
     <script>
         // Setting the used server and IDs of used DIVs:
         inititialize("localhost", "map", null, null, "control");
@@ -85,8 +86,8 @@
                                 : currentPyramidInfo.channelCount == 3 ? " (color)"
                                 : currentPyramidInfo.channelCount == 4 ? " (color with transparency)"
                                 : "(???)")
-                        + ", level " + (openLayersMap.getZoom() + 1)
-                        + " / " + openLayersMap.getNumZoomLevels();
+                        + ", level " + (window.olView.getZoom() + 1)
+                        + " / " + (window.olTileGrid.getMaxZoom() + 1);
             } else {
                 document.getElementById("imageInfo").innerHTML = "";
             }

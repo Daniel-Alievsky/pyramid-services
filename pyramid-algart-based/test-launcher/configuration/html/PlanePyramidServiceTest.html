@@ -77,8 +77,7 @@ Professional version should use while color #FFFFFF -->
             document.getElementById("currentZoom").innerHTML =
                     "Level " + (window.olView.getZoom() + 1)
                     + " / " + (window.olTileGrid.getMaxZoom() + 1)
-                    + ", resolution " + window.olView.getResolution()
-//                    + ", zoom " + window.openLayersMap.getZoomForResolution(window.openLayersMap.getResolution())
+                    + ", resolution " + window.olView.getResolution();
         } else {
             document.getElementById("currentZoom").innerHTML = "";
         }

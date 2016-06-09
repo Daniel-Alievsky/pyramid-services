@@ -125,7 +125,7 @@ function changeObjective(newObjective) {
         return;
     }
     var objective = zeroLevelObjective;
-    var level = olMaxZoom;
+    var level = olTileGrid.getMaxZoom();
     while (objective > newObjective && level > 0) {
         objective /= 2;
         level--;
