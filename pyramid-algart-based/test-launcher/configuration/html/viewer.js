@@ -34,6 +34,8 @@ var zeroLevelObjective = null;
  * or null in other case.
  */
 var openLayersMap = null;
+var olView = null;
+var olTileGrid = null;
 var pyramidErrorMessage = null;
 
 /**
@@ -59,7 +61,7 @@ var changingPyramid = false;
  * @param newControlTagName     the name of some control panel, the visibility of which will be turned off
  *                              while changing the current pyramid; may be null
  * @param newOnSetPyramid       this function (without arguments) is called every time when setPyramid function
-                                is called; may be null
+ is called; may be null
  */
 function inititialize(newHost, newMapTagName, newMacroTagName, newInformationTagName, newControlTagName, newOnSetPyramid) {
     host = newHost;
@@ -70,7 +72,7 @@ function inititialize(newHost, newMapTagName, newMacroTagName, newInformationTag
     onSetPyramid = newOnSetPyramid;
 }
 
-/**
+/*
  * Sends a request to the server to load the pyramid and get its parameters;
  * when the server answers, it initializes new pyramid.
  *
@@ -90,6 +92,8 @@ function setPyramid(newPyramidId, newPort) {
     if (openLayersMap != null) {
         // it is not the 1st call
         openLayersMap = null;
+        olView = null;
+        olTileGrid = null;
         currentPyramidInfo = null;
         document.getElementById(mapTagName).innerHTML = "";
         if (controlTagName != null) {
@@ -121,12 +125,12 @@ function changeObjective(newObjective) {
         return;
     }
     var objective = zeroLevelObjective;
-    var level = openLayersMap.getNumZoomLevels() - 1;
+    var level = olMaxZoom;
     while (objective > newObjective && level > 0) {
         objective /= 2;
         level--;
     }
-    openLayersMap.zoomTo(level);
+    olView.setZoom(level);
 }
 
 
@@ -170,29 +174,61 @@ function requestPyramid(newPyramidId, newPort) {
 function initOpenLayers() {
 // The following line allows to emulate TMS intead of Zoomify, but not correct for boundary tiles:
 //        OpenLayers.Layer.Zoomify.prototype.getURL = getMyTmsUrl;
+    var imgWidth = currentPyramidInfo.zeroLevelDimX;
+    var imgHeight = currentPyramidInfo.zeroLevelDimY;
 
-    var imSize = new OpenLayers.Size(currentPyramidInfo.zeroLevelDimX, currentPyramidInfo.zeroLevelDimY);
-    var zoomify = new OpenLayers.Layer.Zoomify("Layer 1",
-        "http://" + host + ":" + currentPort + "/pp-zoomify/" + currentPyramidId + "/", imSize);
-    /* Map with raster coordinates (pixels) from Zoomify image */
-    var options = {
-        maxExtent: new OpenLayers.Bounds(0, 0, currentPyramidInfo.zeroLevelDimX - 1, currentPyramidInfo.zeroLevelDimY - 1),
-        maxResolution: Math.pow(2, zoomify.numberOfTiers - 1),
-        numZoomLevels: zoomify.numberOfTiers,
-        units: 'pixels'
-    };
+    var imgCenter = [imgWidth / 2, -imgHeight / 2];
 
-    openLayersMap = new OpenLayers.Map(mapTagName, options);
-    changingPyramid = false;
-    openLayersMap.addLayer(zoomify);
-    openLayersMap.setBaseLayer(zoomify);
-    openLayersMap.addControl(new OpenLayers.Control.LayerSwitcher());
-    openLayersMap.addControl(new OpenLayers.Control.OverviewMap({
-        minRatio: 0,
-        maxRatio: openLayersMap.maxResolution,
-        mapOptions: options
-    }));
-    openLayersMap.zoomToMaxExtent();
+    // Maps always need a projection, but Zoomify layers are not geo-referenced, and
+    // are only measured in pixels.  So, we create a fake projection that the map
+    // can use to properly display the layer.
+    var proj = new ol.proj.Projection({
+        code: 'ZOOMIFY',
+        units: 'pixels',
+        extent: [0, 0, imgWidth, imgHeight]
+    });
+
+    var source = new ol.source.Zoomify({
+        url: "http://" + host + ":" + currentPort + "/pp-zoomify/" + currentPyramidId + "/",
+        size: [imgWidth, imgHeight],
+        crossOrigin: 'anonymous'
+    });
+
+    olTileGrid = source.getTileGrid();
+
+    var extent = [0, -imgHeight, imgWidth, 0];
+
+    olView = new ol.View({
+        projection: proj,
+        center: imgCenter,
+        maxZoom: olTileGrid.getMaxZoom() + 2,
+        // constrain the center: center cannot be set outside this extent
+        extent: extent
+    });
+
+    var overview = new ol.control.OverviewMap({
+        view: new ol.View({
+            projection: proj
+        })
+    });
+
+    openLayersMap = new ol.Map({
+        controls: [
+            new ol.control.Zoom(),
+            //new ol.control.ScaleLine(), //work only with real scale
+            overview
+        ],
+        layers: [
+            new ol.layer.Tile({
+                source: source
+            })
+        ],
+        target: mapTagName,
+        view: olView
+    });
+
+    olView.fit(extent, openLayersMap.getSize(), {padding: [10, 10, 10, 10]});
+
     if (controlTagName != null) {
         document.getElementById(controlTagName).style.visibility = "visible";
     }
@@ -215,3 +251,6 @@ function getMyTmsUrl(bounds) {
 
     return urlStart + "tms/" + currentPyramidId + "/" + z + "/" + x + "/" + y + ".jpg";
 }
+
+
+
