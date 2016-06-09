@@ -150,10 +150,10 @@ function requestPyramid(newPyramidId, newPort) {
             return;
         }
         var result = "";
+        changingPyramid = false;
         if (xhr.status != 200) {
             pyramidErrorMessage = result = "Error: cannot read pyramid information, maybe Java server not started or replies too slowly";
             currentPyramidInfo = null; // stays null
-            changingPyramid = false;
         } else {
             currentPyramidInfo = JSON.parse(xhr.responseText);
             result = "<p>Detected pyramid information:</p>";
