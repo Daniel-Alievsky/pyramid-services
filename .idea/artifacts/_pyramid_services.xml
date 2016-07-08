@@ -45,6 +45,9 @@
             <element id="directory" name="loci">
               <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/readme.loci.txt" output-file-name="readme.txt" />
             </element>
+            <element id="directory" name="openslide">
+              <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/readme.openslide.txt" output-file-name="readme.txt" />
+            </element>
           </element>
           <element id="directory" name="sdk">
             <element id="artifact" artifact-name="pyramid-algart-based-with-test:jar" />

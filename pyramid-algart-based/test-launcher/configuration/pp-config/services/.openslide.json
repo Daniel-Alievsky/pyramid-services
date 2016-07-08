@@ -1,0 +1,12 @@
+{
+  "formatName": "openslide",
+  "groupId": "com.simagis.pyramid.openslide",
+  "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
+  "planePyramidFactoryConfiguration": "com.simagis.pyramid.openslide.server.OpenSlidePlanePyramidSourceFactory",
+  "port": 9520,
+  "classPath": [
+    "../lib/maven/openslide/OpenSlide.jar",
+    "../lib/maven/openslide/PlanePyramidSourceOpenSlide.jar"
+  ],
+  "memory": "2g"
+}
