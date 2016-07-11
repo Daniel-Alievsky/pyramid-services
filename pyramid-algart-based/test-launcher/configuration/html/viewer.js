@@ -201,7 +201,7 @@ function initOpenLayers() {
     olView = new ol.View({
         projection: proj,
         center: imgCenter,
-        maxZoom: olTileGrid.getMaxZoom() + 2,
+        maxZoom: olTileGrid.getMaxZoom(),
         // constrain the center: center cannot be set outside this extent
         extent: extent
     });
