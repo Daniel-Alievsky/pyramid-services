@@ -8,5 +8,6 @@
     "../lib/maven/openslide/OpenSlide.jar",
     "../lib/maven/openslide/PlanePyramidSourceOpenSlide.jar"
   ],
+  "workingDirectory": "bin/openslide",
   "memory": "2g"
 }
