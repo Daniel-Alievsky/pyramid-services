@@ -59,18 +59,18 @@ public class HttpPyramidProcessControl {
         return processConfiguration;
     }
 
-    public final boolean areAllServicesAlive() {
+    public final boolean areAllServicesAlive(boolean logWhenFails) {
         for (HttpPyramidServiceControl serviceControl : serviceControls) {
-            if (!serviceControl.isServiceAlive()) {
+            if (!serviceControl.isServiceAlive(logWhenFails)) {
                 return false;
             }
         }
         return true;
     }
 
-    public final boolean isAtLeastOneServiceAlive() {
+    public final boolean isAtLeastOneServiceAlive(boolean logWhenFails) {
         for (HttpPyramidServiceControl serviceControl : serviceControls) {
-            if (serviceControl.isServiceAlive()) {
+            if (serviceControl.isServiceAlive(logWhenFails)) {
                 return true;
             }
         }

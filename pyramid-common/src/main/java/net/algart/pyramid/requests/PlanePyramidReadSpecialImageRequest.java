@@ -63,6 +63,11 @@ public final class PlanePyramidReadSpecialImageRequest extends PlanePyramidAnyIm
     }
 
     @Override
+    public int priority() {
+        return READ_SPECIAL_IMAGE_PRIORITY;
+    }
+
+    @Override
     public PlanePyramidImageData readData(PlanePyramid pyramid) throws IOException {
         return pyramid.readSpecialImage(this);
     }

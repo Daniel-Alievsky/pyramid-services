@@ -81,13 +81,15 @@ public class HttpPyramidServiceControl {
         // TODO!! support HTTPS on server side
     }
 
-    public final boolean isServiceAlive() {
+    public final boolean isServiceAlive(boolean logWhenFails) {
         try {
             final HttpURLConnection connection = openCustomConnection(
                 HttpPyramidConstants.CommandPrefixes.ALIVE_STATUS, "GET");
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
         } catch (IOException e) {
-            LOG.log(Level.INFO, "Cannot connect to " + host + ":" + port + ": " + e.getMessage());
+            if (logWhenFails) {
+                LOG.log(Level.INFO, "Cannot connect to " + host + ":" + port + ": " + e.getMessage());
+            }
             return false;
         }
     }

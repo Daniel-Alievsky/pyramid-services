@@ -34,17 +34,18 @@ import org.glassfish.grizzly.http.server.Response;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-final class ReadTask {
+final class ReadTask implements Comparable<ReadTask> {
     private static final int CHUNK_SIZE = 8192;
     private static final Logger LOG = Logger.getLogger(ReadTask.class.getName());
 
     private static final Lock GLOBAL_LOCK = new ReentrantLock();
+    private static final AtomicLong GLOBAL_TIME_STAMP = new AtomicLong(0);
 
     private final Response response;
     private final PlanePyramidRequest pyramidRequest;
@@ -55,6 +56,8 @@ final class ReadTask {
     private final boolean alreadyInClientCache;
     private byte[] responseBytes;
     private int responseBytesCurrentOffset;
+
+    private final long taskCreationTimeStamp = GLOBAL_TIME_STAMP.getAndIncrement();
 
     private volatile boolean sendingDataStarted = false;
     private volatile boolean cancelled = false;
@@ -110,6 +113,17 @@ final class ReadTask {
     @Override
     public final int hashCode() {
         return super.hashCode();
+    }
+
+    @Override
+    public int compareTo(ReadTask o) {
+        final int p1 = pyramidRequest.priority();
+        final int p2 = o.pyramidRequest.priority();
+        if (p1 != p2) {
+            return p1 > p2 ? -1 : 1;
+        }
+        return taskCreationTimeStamp < o.taskCreationTimeStamp ? -1 :
+            taskCreationTimeStamp > o.taskCreationTimeStamp ? 1 : 0;
     }
 
     void perform() throws Exception {

@@ -25,11 +25,10 @@
 package net.algart.pyramid;
 
 public abstract class PlanePyramidData {
-    long creationTime;
+    private final long creationTime = System.currentTimeMillis();
 
     // Disable subclassing outside this package:
     PlanePyramidData() {
-        this.creationTime = System.currentTimeMillis();
     }
 
     public long getCreationTime() {

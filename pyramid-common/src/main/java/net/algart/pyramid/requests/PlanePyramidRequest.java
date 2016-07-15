@@ -31,6 +31,10 @@ import java.io.IOException;
 import java.util.Objects;
 
 public abstract class PlanePyramidRequest {
+    public static final int READ_PYRAMID_PRIORITY = 10000;
+    static final int READ_SPECIAL_IMAGE_PRIORITY = 5000;
+    static final int READ_INFORMATION_PRIORITY = 6000;
+
     private final String pyramidUniqueId;
 
     protected PlanePyramidRequest(String pyramidUniqueId) {
@@ -39,6 +43,21 @@ public abstract class PlanePyramidRequest {
 
     public final String getPyramidUniqueId() {
         return pyramidUniqueId;
+    }
+
+    /**
+     * <p>Returns priority of this request. The default value is {@link #READ_PYRAMID_PRIORITY},
+     * that corresponds to the most popular task of reading pyramid data and should be the maximum
+     * or one of maximal values.</p>
+     *
+     * <p>All priorities, used by this package, are multiples of 1000.
+     * You may little vary the default value by adding or subtracting values less than 1000:
+     * it will not change the order of priorities of basic requests.
+     *
+     * @return priority of this request.
+     */
+    public int priority() {
+        return READ_PYRAMID_PRIORITY;
     }
 
     public abstract PlanePyramidData readData(PlanePyramid pyramid) throws IOException;
@@ -70,6 +89,5 @@ public abstract class PlanePyramidRequest {
     protected abstract boolean equalsIgnoringPyramidUniqueId(PlanePyramidRequest o);
 
     protected abstract int hashCodeIgnoringPyramidUniqueId();
-
 }
 

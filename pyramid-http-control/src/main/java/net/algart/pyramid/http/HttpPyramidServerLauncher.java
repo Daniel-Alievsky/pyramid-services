@@ -114,7 +114,7 @@ public class HttpPyramidServerLauncher {
             final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
             final HttpPyramidProcessControl control = new HttpPyramidProcessControl(
                 HttpPyramidConstants.LOCAL_HOST, processConfiguration);
-            if (skipIfAlive && control.areAllServicesAlive()) {
+            if (skipIfAlive && control.areAllServicesAlive(true)) {
                 return false;
             }
             if (runningProcesses.get(processConfiguration.getGroupId()) != null) {
@@ -142,7 +142,7 @@ public class HttpPyramidServerLauncher {
                 if (attempt >= SLOW_START_NUMBER_OF_ATTEMPTS) {
                     break;
                 }
-                if (control.areAllServicesAlive()) {
+                if (control.areAllServicesAlive(true)) {
                     // All O'k
                     runningProcesses.put(groupId, javaProcess);
                     return true;
@@ -166,7 +166,7 @@ public class HttpPyramidServerLauncher {
             final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
             final HttpPyramidProcessControl control = new HttpPyramidProcessControl(
                 HttpPyramidConstants.LOCAL_HOST, processConfiguration);
-            if (skipIfNotAlive && !control.isAtLeastOneServiceAlive()) {
+            if (skipIfNotAlive && !control.isAtLeastOneServiceAlive(true)) {
                 return false;
             }
             final Process javaProcess = runningProcesses.get(processConfiguration.getGroupId());
@@ -175,7 +175,7 @@ public class HttpPyramidServerLauncher {
                 sleep(SUCCESS_DELAY_IN_MS);
                 if (javaProcess != null ?
                     !javaProcess.isAlive() :
-                    !control.isAtLeastOneServiceAlive())
+                    !control.isAtLeastOneServiceAlive(false))
                 {
                     return true;
                 }
@@ -203,7 +203,7 @@ public class HttpPyramidServerLauncher {
             final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
             final HttpPyramidProcessControl control = new HttpPyramidProcessControl(
                 HttpPyramidConstants.LOCAL_HOST, processConfiguration);
-            if (skipIfAlive && control.areAllServicesAlive()) {
+            if (skipIfAlive && control.areAllServicesAlive(true)) {
                 return false;
             }
             stopProcess(groupId, false);

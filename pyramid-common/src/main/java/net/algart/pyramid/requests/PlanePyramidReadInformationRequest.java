@@ -35,6 +35,11 @@ public final class PlanePyramidReadInformationRequest extends PlanePyramidReques
     }
 
     @Override
+    public int priority() {
+        return READ_INFORMATION_PRIORITY;
+    }
+
+    @Override
     public PlanePyramidInformation readData(PlanePyramid pyramid) throws IOException {
         return pyramid.readInformation();
     }

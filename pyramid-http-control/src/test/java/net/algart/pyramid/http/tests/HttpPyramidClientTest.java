@@ -49,7 +49,7 @@ public class HttpPyramidClientTest {
         final boolean alive;
         long t1 = System.nanoTime();
         try {
-            alive = client.isServiceAlive();
+            alive = client.isServiceAlive(true);
         } finally {
             long t2 = System.nanoTime();
             System.out.printf("Status checked in %.5f seconds%n", (t2 - t1) * 1e-9);
