@@ -25,7 +25,13 @@ Professional version should use while color #FFFFFF -->
     var tileDim = 256; // - 256 is the standard constant for OpenLayers protocols
 
     // Setting the used server and IDs of used DIVs:
-    inititialize("localhost", "map", "macro", "information", "control");
+    inititializeViewer("localhost",
+            "map",          // mapTagName
+            "macro",        // macroTagName
+            "information",  // informationTagName
+            "control",      // controlTagName
+            null            // onSetPyramid
+    );
 </script>
 
 <div id="macroContainer" style="float:right">

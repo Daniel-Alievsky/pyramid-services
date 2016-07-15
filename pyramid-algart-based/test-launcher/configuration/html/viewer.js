@@ -63,7 +63,7 @@ var changingPyramid = false;
  * @param newOnSetPyramid       this function (without arguments) is called every time when setPyramid function
  is called; may be null
  */
-function inititialize(newHost, newMapTagName, newMacroTagName, newInformationTagName, newControlTagName, newOnSetPyramid) {
+function inititializeViewer(newHost, newMapTagName, newMacroTagName, newInformationTagName, newControlTagName, newOnSetPyramid) {
     host = newHost;
     mapTagName = newMapTagName;
     macroTagName = newMacroTagName;

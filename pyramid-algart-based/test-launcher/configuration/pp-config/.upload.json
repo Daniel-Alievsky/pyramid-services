@@ -1,0 +1,36 @@
+{
+  "uploaders": [
+    {
+      "formatDetection": {
+        "extensions": [
+          "svs",
+          "scn",
+          "ndpi"
+        ]
+      },
+      "formatName": "loci"
+    },
+    {
+      "formatDetection": {
+        "extensions": [
+          "bif",
+          "tiff",
+          "tif"
+        ]
+      },
+      "formatName": "openslide"
+    },
+    {
+      "formatDetection": {
+        "extensions": [
+          "bmp",
+          "gif",
+          "png",
+          "jpg",
+          "jpeg"
+        ]
+      },
+      "formatName": "imageIO"
+    }
+  ]
+}
