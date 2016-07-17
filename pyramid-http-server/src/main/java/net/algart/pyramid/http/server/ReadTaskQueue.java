@@ -25,23 +25,26 @@
 package net.algart.pyramid.http.server;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 final class ReadTaskQueue {
     private static final int QUEUE_MAX_SIZE = 256;
     private static final int POLL_TIMEOUT_IN_MILLISECONDS = 1000;
 
-    private BlockingQueue<ReadTask> queue = new LinkedBlockingDeque<>(QUEUE_MAX_SIZE);
+    private BlockingQueue<ReadTask> queue = new PriorityBlockingQueue<>(QUEUE_MAX_SIZE);
 
     void add(ReadTask task) {
+//        System.out.println("!!!Offering " + task);
         if (!queue.offer(task)) {
             throw new IllegalStateException("Task queue is full");
         }
     }
 
     ReadTask pollOrNullAfterTimeout() throws InterruptedException {
-        return queue.poll(POLL_TIMEOUT_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
+        final ReadTask result = queue.poll(POLL_TIMEOUT_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
+//        if (result != null) System.out.println("???Polling " + result);
+        return result;
         // - timeout is necessary to allow shutdown: this method should never work infinitely
     }
 }

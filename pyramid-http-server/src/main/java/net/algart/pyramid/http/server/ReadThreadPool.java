@@ -90,7 +90,7 @@ final class ReadThreadPool {
                     task = queue.pollOrNullAfterTimeout();
                     if (task == null) {
                         continue;
-                        // Continue waitint for new task, or exiting if shutdown.
+                        // Continue waiting for new task or exiting if shutdown.
                         // Timeout is necessary to allow shutdown.
                     }
                     LOG.fine("Taking " + task);

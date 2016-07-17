@@ -101,7 +101,8 @@ final class ReadTask implements Comparable<ReadTask> {
     @Override
     public String toString() {
         return "ReadTask for request " + pyramidRequest
-            + ", elapsed time=" + (System.currentTimeMillis() - lastAccessTime) + "ms";
+            + ", elapsed time=" + (System.currentTimeMillis() - lastAccessTime) + "ms"
+            + " (priority " + pyramidRequest.priority() + ", timestamp " + taskCreationTimeStamp + ")";
     }
 
     // Equals and hashCode must be standard, for correct work of the set of active tasks
@@ -133,6 +134,7 @@ final class ReadTask implements Comparable<ReadTask> {
         if (checkCancellingTask("Task cancelled because of too slow waiting in queue")) {
             return;
         }
+        LOG.info("Starting " + this);
         PlanePyramidData data = previousCachedData;
         final boolean cacheable;
         if (data == null) {
