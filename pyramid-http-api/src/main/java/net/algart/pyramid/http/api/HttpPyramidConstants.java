@@ -77,6 +77,8 @@ public class HttpPyramidConstants {
     public static final String SYSTEM_COMMANDS_FILE_PREFIX = ".command.%d.";
 
     public static final String PYRAMID_ID_ARGUMENT_NAME = "pyramidId";
+    public static final String PYRAMID_ID_PREFIX_IN_PATHNAME = "~~~PyramidID~~~";
+    public static final String PYRAMID_ID_POSTFIX_IN_PATHNAME = "~~~";
     public static final String ALIVE_RESPONSE = "Alive";
 
     private HttpPyramidConstants() {

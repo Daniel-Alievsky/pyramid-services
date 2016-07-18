@@ -27,6 +27,7 @@ package net.algart.pyramid.http.server.handlers;
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidData;
 import net.algart.pyramid.PlanePyramidInformation;
+import net.algart.pyramid.http.api.HttpPyramidApiTools;
 import net.algart.pyramid.http.api.HttpPyramidConstants;
 import net.algart.pyramid.http.server.HttpPyramidCommand;
 import net.algart.pyramid.http.server.HttpPyramidService;
@@ -59,11 +60,12 @@ public class TmsHttpPyramidCommand extends HttpPyramidCommand {
         final String[] components = path.split("/");
         if (components.length != 5) {
             throw new IllegalArgumentException("TMS path must contain 5 parts separated by /: "
-                + "http://some-server.com:NNNN/some-prefix/pyramidId/z/x/y.jpg; "
+                + "http://some-server.com:NNNN/some-prefix/"
+                + HttpPyramidApiTools.appendPyramidIdForURLPath("(pyramidId)") + "/z/x/y.jpg; "
                 + "but actual path consists of " + components.length + " parts: http://some-server.com:NNNN/" + path);
         }
         // path[0] is the command prefix "pp-tms"
-        final String pyramidId = components[1];
+        final String pyramidId = HttpPyramidApiTools.extractPyramidIdFromAppendedIdForURLPath(components[1]);
         final int z = Integer.parseInt(components[2]);
         final int x = Integer.parseInt(components[3]);
         final int y = Integer.parseInt(removeExtension(components[4]));

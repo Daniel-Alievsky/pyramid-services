@@ -41,7 +41,7 @@ public class InformationHttpPyramidCommand extends HttpPyramidCommand {
     @Override
     protected void service(Request request, Response response) throws Exception {
         final String configuration = pyramidIdToConfiguration(
-            HttpPyramidCommand.getParameter(request, HttpPyramidConstants.PYRAMID_ID_ARGUMENT_NAME));
+            getParameter(request, HttpPyramidConstants.PYRAMID_ID_ARGUMENT_NAME));
         response.setContentType("application/json; charset=utf-8");
         response.addHeader("Access-Control-Allow-Origin", "*");
         // - Allows browser JavaScript to access this via XMLHttpRequest.

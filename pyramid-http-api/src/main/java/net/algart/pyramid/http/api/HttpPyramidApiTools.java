@@ -47,6 +47,47 @@ public class HttpPyramidApiTools {
         return systemCommandsFolder.resolve(keyFileFrefix + urlPrefix.substring(1, urlPrefix.length()));
     }
 
+    /**
+     * Appends pyramid ID by special prefix and postfix. It is useful when the pyramid ID is not a separate
+     * argument with name {@link HttpPyramidConstants#PYRAMID_ID_ARGUMENT_NAME}, but a part of path
+     * (like in TMS request). It allows to find pyramid ID in URL by 3rd party services like proxy.
+     *
+     * @param pyramidId the pyramid unique identifier.
+     * @return          this ID appedned by {@link HttpPyramidConstants#PYRAMID_ID_PREFIX_IN_PATHNAME}
+     *                  and {@link HttpPyramidConstants#PYRAMID_ID_POSTFIX_IN_PATHNAME}.
+     */
+    public static String appendPyramidIdForURLPath(String pyramidId) {
+        return HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME
+            + pyramidId
+            + HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME;
+    }
+
+    public static String extractPyramidIdFromAppendedIdForURLPath(String appendedId) {
+        if (!appendedId.startsWith(HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME)
+            || !appendedId.endsWith(HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME))
+        {
+            throw new IllegalArgumentException("Invalid path syntax: pyramid ID must be written as \""
+                + appendPyramidIdForURLPath("XXXXXXXX")
+                + "\", but it is actually written as \"" + appendedId + "\"");
+        }
+        return appendedId.substring(
+            HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME.length(),
+            appendedId.length() - HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME.length());
+    }
+
+    public static String tryToFindPyramidIdInURLPath(String path) {
+        int p = path.indexOf(HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME);
+        if (p == -1) {
+            return null;
+        }
+        p += HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME.length();
+        int q = path.indexOf(HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME, p);
+        if (q == -1) {
+            return null;
+        }
+        return path.substring(p, q);
+    }
+
     public static String pyramidIdToConfiguration(String pyramidId) throws IOException {
         if (!isAllowedPyramidId(pyramidId)) {
             throw new IllegalArgumentException("Disallowed pyramid id: \"" + pyramidId + "\"");

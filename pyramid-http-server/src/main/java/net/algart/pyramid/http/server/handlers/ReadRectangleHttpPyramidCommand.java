@@ -41,7 +41,8 @@ public class ReadRectangleHttpPyramidCommand extends HttpPyramidCommand {
 
     @Override
     protected void service(Request request, Response response) throws Exception {
-        final String configuration = pyramidIdToConfiguration(getParameter(request, "pyramidId"));
+        final String configuration = pyramidIdToConfiguration(
+            getParameter(request, HttpPyramidConstants.PYRAMID_ID_ARGUMENT_NAME));
         final double compression = getDoubleParameter(request, "compression");
         final long fromX = getLongParameter(request, "fromX");
         final long fromY = getLongParameter(request, "fromY");
