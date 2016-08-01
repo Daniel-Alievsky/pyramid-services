@@ -12,6 +12,7 @@
         <module>pyramid-common</module>
         <module>pyramid-http-api</module>
         <module>pyramid-http-server</module>
+        <module>pyramid-http-proxy</module>
         <module>pyramid-http-control</module>
         <module>pyramid-algart-based</module>
     </modules>
