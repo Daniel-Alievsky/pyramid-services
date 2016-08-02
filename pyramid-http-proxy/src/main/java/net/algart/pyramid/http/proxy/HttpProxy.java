@@ -24,12 +24,19 @@
 
 package net.algart.pyramid.http.proxy;
 
+import org.glassfish.grizzly.filterchain.FilterChainBuilder;
+import org.glassfish.grizzly.filterchain.TransportFilter;
+import org.glassfish.grizzly.http.HttpClientFilter;
+import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.server.*;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -59,6 +66,7 @@ public abstract class HttpProxy {
     static final String LOCAL_HOST = System.getProperty(
         "net.algart.pyramid.http.localHost", "localhost");
     static final int CLIENT_CONNECTION_TIMEOUT = 30000;
+    static final int CLIENT_READ_TIMEOUT = 30000;
 
     private static final Logger LOG = Logger.getLogger(HttpProxy.class.getName());
 
@@ -98,7 +106,40 @@ public abstract class HttpProxy {
     private class HttpProxyHandler extends HttpHandler {
         @Override
         public void service(Request request, Response response) throws Exception {
+            final ServerAddress server = getServer(request);
+            final HttpRequestPacket httpRequestPacket = request.getRequest();
+            final HttpClientFilter httpClientFilter = new HttpClientFilter();
+            final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(
+                clientTransport, request, response, server.serverHost, server.serverPort);
+            final FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
+            clientFilterChainBuilder.add(new TransportFilter());
+            clientFilterChainBuilder.add(httpClientFilter);
+            clientFilterChainBuilder.add(clientProcessor);
+            clientTransport.setProcessor(clientFilterChainBuilder.build());
+            try {
+                clientProcessor.connect();
 
+            } catch (TimeoutException e) {
+                //TODO!! return 500
+                System.err.println("Timeout while reading target resource");
+            } catch (ExecutionException e) {
+                System.err.println("Error downloading the resource");
+                e.getCause().printStackTrace();
+            }
+            response.suspend(7, TimeUnit.SECONDS, null, new TimeoutHandler() {
+                @Override
+                public boolean onTimeout(Response response) {
+                    LOG.info("Timeout");
+                    response.finish();
+                    try {
+                        clientProcessor.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    //TODO!! corrent response; better timeout, corresponding ReadTask login
+                    return true;
+                }
+            });
         }
     }
 }

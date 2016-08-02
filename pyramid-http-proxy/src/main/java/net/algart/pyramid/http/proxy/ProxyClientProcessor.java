@@ -25,17 +25,19 @@
 package net.algart.pyramid.http.proxy;
 
 import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.http.io.NIOOutputStream;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-class ProxyClientProcessor {
+class ProxyClientProcessor extends BaseFilter {
     private final TCPNIOTransport clientTransport;
     private final Request request;
     private final Response response;
@@ -44,6 +46,8 @@ class ProxyClientProcessor {
     private final NIOOutputStream outputStream;
     private volatile Connection connection = null;
     private boolean firstReply = true;
+
+    private final Object lock = new Object();
 
     ProxyClientProcessor(
         TCPNIOTransport clientTransport,
@@ -62,7 +66,18 @@ class ProxyClientProcessor {
 
     public void connect() throws InterruptedException, ExecutionException, TimeoutException {
         Future<Connection> connectFuture = clientTransport.connect(serverHost, serverPort);
-        this.connection = connectFuture.get(10, TimeUnit.SECONDS);
+        this.connection = connectFuture.get(HttpProxy.CLIENT_CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+    }
+
+    public void close() throws IOException {
+        synchronized (lock) {
+            //TODO!! synchronize also access to connection/outputStream
+            if (connection != null) {
+                connection.close();
+                connection = null;
+            }
+            outputStream.close();
+        }
     }
 
 }
