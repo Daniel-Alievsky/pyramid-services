@@ -68,7 +68,7 @@ public abstract class HttpProxy {
     static final int CLIENT_CONNECTION_TIMEOUT = 30000;
     static final int CLIENT_READ_TIMEOUT = 30000;
 
-    private static final Logger LOG = Logger.getLogger(HttpProxy.class.getName());
+    static final Logger LOG = Logger.getLogger(HttpProxy.class.getName());
 
     private final int proxyPort;
     private final TCPNIOTransport clientTransport;
@@ -106,11 +106,9 @@ public abstract class HttpProxy {
     private class HttpProxyHandler extends HttpHandler {
         @Override
         public void service(Request request, Response response) throws Exception {
-            final ServerAddress server = getServer(request);
-            final HttpRequestPacket httpRequestPacket = request.getRequest();
             final HttpClientFilter httpClientFilter = new HttpClientFilter();
             final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(
-                clientTransport, request, response, server.serverHost, server.serverPort);
+                clientTransport, request, response, HttpProxy.this);
             final FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
             clientFilterChainBuilder.add(new TransportFilter());
             clientFilterChainBuilder.add(httpClientFilter);
@@ -118,7 +116,6 @@ public abstract class HttpProxy {
             clientTransport.setProcessor(clientFilterChainBuilder.build());
             try {
                 clientProcessor.connect();
-
             } catch (TimeoutException e) {
                 //TODO!! return 500
                 System.err.println("Timeout while reading target resource");
@@ -126,7 +123,7 @@ public abstract class HttpProxy {
                 System.err.println("Error downloading the resource");
                 e.getCause().printStackTrace();
             }
-            response.suspend(7, TimeUnit.SECONDS, null, new TimeoutHandler() {
+            response.suspend(700, TimeUnit.SECONDS, null, new TimeoutHandler() {
                 @Override
                 public boolean onTimeout(Response response) {
                     LOG.info("Timeout");
@@ -136,7 +133,7 @@ public abstract class HttpProxy {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    //TODO!! corrent response; better timeout, corresponding ReadTask login
+                    //TODO!! corrent response; better timeout, corresponding ReadTask logic
                     return true;
                 }
             });
