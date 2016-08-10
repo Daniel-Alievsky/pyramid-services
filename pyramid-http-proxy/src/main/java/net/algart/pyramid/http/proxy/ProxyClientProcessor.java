@@ -24,9 +24,7 @@
 
 package net.algart.pyramid.http.proxy;
 
-import org.glassfish.grizzly.Buffer;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.WriteHandler;
+import org.glassfish.grizzly.*;
 import org.glassfish.grizzly.filterchain.BaseFilter;
 import org.glassfish.grizzly.filterchain.FilterChainContext;
 import org.glassfish.grizzly.filterchain.NextAction;
@@ -34,51 +32,45 @@ import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Protocol;
-import org.glassfish.grizzly.http.io.InputBuffer;
+import org.glassfish.grizzly.http.io.NIOInputStream;
 import org.glassfish.grizzly.http.io.NIOOutputStream;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.util.MimeHeaders;
 import org.glassfish.grizzly.memory.Buffers;
+import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.net.InetSocketAddress;
+import java.util.Objects;
 import java.util.logging.Level;
 
 class ProxyClientProcessor extends BaseFilter {
-    private final TCPNIOTransport clientTransport;
     private final HttpRequestPacket requestToServerHeaders;
-    private final ByteBuffer requestToServerBody;
     private final Response response;
     private final String serverHost;
     private final int serverPort;
+    private final NIOInputStream inputStream;
     private final NIOOutputStream outputStream;
+    private TCPNIOConnectorHandler connectorHandler = null;
+    // - should be set after constructing the object on the base of resulting FilterChain
     private volatile Connection connection = null;
     private volatile boolean firstReply = true;
 
     private final Object lock = new Object();
 
     ProxyClientProcessor(
-        TCPNIOTransport clientTransport,
         Request request,
         Response response,
         HttpProxy httpProxy)
     {
-        this.clientTransport = clientTransport;
         this.response = response;
+        this.inputStream = request.getNIOInputStream();
         this.outputStream = response.getNIOOutputStream();
 
-        InputBuffer inputBuffer = request.getInputBuffer();
-        this.requestToServerBody = inputBuffer.readBuffer().toByteBuffer();
-        request.replayPayload(Buffers.wrap(null, cloneByteBuffer(requestToServerBody)));
-        // - clone necessary, because probable reading parameters from request in getServer
-        // method below damages the content of the buffer passed to replayPayload
-        final HttpProxy.ServerAddress server = httpProxy.getServer(request);
+        final HttpProxy.ServerAddress server = httpProxy.getServer(null);
+        //TODO!! analyze query manually
         this.serverHost = server.serverHost();
         this.serverPort = server.serverPort();
 
@@ -89,88 +81,161 @@ class ProxyClientProcessor extends BaseFilter {
         builder.query(request.getQueryString());
         builder.contentType(request.getContentType());
         builder.contentLength(request.getContentLength());
-        builder.chunked(false); //TODO!! - Q: is it correct?
+        // - maybe contentType and contentLength are not necessary
+        for (String headerName : request.getHeaderNames()) {
+            for (String headerValue : request.getHeaders(headerName)) {
+                builder.header(headerName, headerValue);
+                //TODO!! check identical names
+            }
+        }
         builder.removeHeader("Host");
         builder.header("Host", serverHost + ":" + serverPort);
         this.requestToServerHeaders = builder.build();
     }
 
-    public void connect() throws InterruptedException, ExecutionException, TimeoutException {
-        Future<Connection> connectFuture = clientTransport.connect(serverHost, serverPort);
-        this.connection = connectFuture.get(HttpProxy.CLIENT_CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+    public void setConnectorHandler(TCPNIOConnectorHandler connectorHandler) {
+        this.connectorHandler = Objects.requireNonNull(connectorHandler);
     }
 
-    public void close() throws IOException {
+    public void requestConnectionToServer() throws InterruptedException {
+        HttpProxy.LOG.config("Requesting connection to " + serverHost + ":" + serverPort + "...");
+        connectorHandler.connect(
+            new InetSocketAddress(serverHost, serverPort), new CompletionHandler<Connection>() {
+                @Override
+                public void cancelled() {
+                }
+
+                @Override
+                public void failed(Throwable throwable) {
+                    synchronized (lock) {
+                        HttpProxy.LOG.log(Level.WARNING,
+                            "Connection to server " + serverHost + ":" + serverPort + " failed", throwable);
+                        closeAndReturnError("Cannot connect to the server");
+                    }
+                }
+
+                @Override
+                public void completed(Connection connection) {
+                    HttpProxy.LOG.fine("Connected");
+                }
+
+                @Override
+                public void updated(Connection connection) {
+                }
+            });
+    }
+
+    public void close() {
         synchronized (lock) {
-            //TODO!! synchronize also access to connection/outputStream
             if (connection != null) {
                 connection.close();
                 connection = null;
             }
-            outputStream.close();
+            try {
+                outputStream.close();
+            } catch (IOException e) {
+                HttpProxy.LOG.log(Level.FINE, "Error while closing output stream", e);
+                // only FINE: this exception can occur if the browser terminates connection;
+                // no sense to duplicate messages - an attempt to write will also lead to an exception
+            }
+        }
+    }
+
+    public void closeAndReturnError(String message) {
+        response.setStatus(500, message);
+        // - must be before closing
+        response.setContentType("text/plain");
+        try {
+            outputStream.write(Buffers.wrap(null, message));
+        } catch (IOException e) {
+            // ignore this problem
+        }
+        close();
+        if (response.isSuspended()) {
+            response.resume();
+            HttpProxy.LOG.config("Response is resumed: " + message);
+        } else {
+            response.finish();
+            HttpProxy.LOG.config("Response is finished: " + message);
         }
     }
 
     @Override
     public NextAction handleConnect(FilterChainContext ctx) throws IOException {
-        System.out.println("Connected to " + serverHost + ":" + serverPort);
+        setConnection(ctx.getConnection());
+        inputStream.notifyAvailable(new ReadHandler() {
+            @Override
+            public void onDataAvailable() throws Exception {
+                synchronized (lock) {
+                    sendData();
+                }
+                inputStream.notifyAvailable(this);
+            }
 
-        synchronized (lock) {
-            final HttpContent.Builder contentBuilder = HttpContent.builder(requestToServerHeaders);
-            Buffer buffer = Buffers.wrap(null, requestToServerBody);
-            contentBuilder.content(buffer);
-            contentBuilder.last(true);
-            //TODO!! Q - is it necessary?
-            HttpContent content = contentBuilder.build();
-//            System.out.println("Sending request to server: header " + content.getHttpHeader());
-//            System.out.println("Sending request to server: buffer " + buffer);
-            ctx.write(content);
-            return ctx.getStopAction();
-        }
+            @Override
+            public void onError(Throwable throwable) {
+                HttpProxy.LOG.log(Level.WARNING, "Error while reading request", throwable);
+                closeAndReturnError("Error while reading request");
+            }
+
+            @Override
+            public void onAllDataRead() throws Exception {
+                synchronized (lock) {
+                    HttpProxy.LOG.config("All data ready");
+                    sendData();
+                    try {
+                        inputStream.close();
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+
+            private void sendData() {
+                final Buffer buffer = inputStream.readBuffer();
+                final boolean finished = inputStream.isFinished();
+                HttpProxy.LOG.config("Data ready, sending request to server: buffer " + buffer);
+                final HttpContent httpContent = HttpContent.builder(requestToServerHeaders)
+                    .content(buffer)
+                    .last(finished)
+                    .build();
+                connection.write(httpContent);
+                // - note: buffer will be destroyed by this call
+            }
+        });
+        HttpProxy.LOG.config("Connected to " + serverHost + ":" + serverPort
+            + "; starting sending request to server: header " + requestToServerHeaders);
+        return ctx.getStopAction();
     }
 
     @Override
     public NextAction handleRead(FilterChainContext ctx) throws IOException {
         final HttpContent httpContent = ctx.getMessage();
-        final byte[] bytes;
         synchronized (lock) {
-            bytes = byteBufferToArray(httpContent.getContent().toByteBuffer());
-//            System.out.printf("first: %s, isHeader: %s, isLast: %s, counter: %d%n",
-//                firstReply, httpContent.isHeader(), httpContent.isLast(), currentCounter);
-            if (firstReply) { // TODO!! Q: is it correct?
+            if (firstReply) {
                 final HttpResponsePacket httpHeader = (HttpResponsePacket) httpContent.getHttpHeader();
                 response.setStatus(httpHeader.getHttpStatus());
                 final MimeHeaders headers = httpHeader.getHeaders();
                 for (String headerName : headers.names()) {
                     for (String headerValue : headers.values(headerName)) {
+                        //TODO!! check identical names
                         response.addHeader(headerName, headerValue);
                     }
                 }
                 firstReply = false;
             }
-//            System.out.printf("ByteBuffer limit %d, position %d, remaining %d%n",
-//                byteBuffer.limit(), byteBuffer.position(), byteBuffer.remaining());
         }
 
-        // It seems that events in notifyCanWrite are internally synchronized,
+        // Events in notifyCanWrite are internally synchronized,
         // and all calls of onWritePossible will be in proper order.
         outputStream.notifyCanWrite(new WriteHandler() {
             @Override
             public void onWritePossible() throws Exception {
-//                    System.out.printf("Sending %d bytes (counter=%d): starting...%n", bytesToClient.length, currentCounter);
-//                    Thread.sleep(new java.util.Random().nextInt(1000));
                 synchronized (lock) {
-                    // System.out.printf("Sending %d bytes (counter=%d)...%n", bytes.length, currentCounter);
-                    outputStream.write(bytes);
+                    outputStream.write(httpContent.getContent());
                     if (httpContent.isLast()) {
-                        //TODO!! Q: is it correct?
-                        outputStream.close();
-                        connection.close();
-                        if (response.isSuspended()) {
-                            response.resume();
-                        } else {
-                            response.finish();
-                        }
+                        close();
+                        response.resume();
+                        HttpProxy.LOG.config("Response is resumed");
                     }
                 }
             }
@@ -183,19 +248,9 @@ class ProxyClientProcessor extends BaseFilter {
         return ctx.getStopAction();
     }
 
-
-    private static ByteBuffer cloneByteBuffer(ByteBuffer byteBuffer) {
-        byteBuffer = byteBuffer.duplicate();
-        ByteBuffer result = ByteBuffer.allocate(byteBuffer.remaining());
-        result.duplicate().put(byteBuffer);
-        return result;
+    private void setConnection(Connection connection) {
+        synchronized (lock) {
+            this.connection = connection;
+        }
     }
-
-    private static byte[] byteBufferToArray(ByteBuffer byteBuffer) {
-        byteBuffer = byteBuffer.duplicate();
-        final byte[] bytes = new byte[byteBuffer.remaining()];
-        byteBuffer.get(bytes);
-        return bytes;
-    }
-
 }

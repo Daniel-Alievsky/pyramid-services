@@ -24,19 +24,20 @@
 
 package net.algart.pyramid.http.proxy;
 
+import org.glassfish.grizzly.filterchain.FilterChain;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
+import org.glassfish.grizzly.http.ContentEncoding;
 import org.glassfish.grizzly.http.HttpClientFilter;
-import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.server.*;
+import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -65,8 +66,8 @@ public abstract class HttpProxy {
 
     static final String LOCAL_HOST = System.getProperty(
         "net.algart.pyramid.http.localHost", "localhost");
-    static final int CLIENT_CONNECTION_TIMEOUT = 30000;
     static final int CLIENT_READ_TIMEOUT = 30000;
+    // - 5 minutes
 
     static final Logger LOG = Logger.getLogger(HttpProxy.class.getName());
 
@@ -101,42 +102,48 @@ public abstract class HttpProxy {
         return proxyPort;
     }
 
-    public abstract ServerAddress getServer(Request request);
+    public abstract ServerAddress getServer(Map<String, String> requestParameters);
 
     private class HttpProxyHandler extends HttpHandler {
         @Override
         public void service(Request request, Response response) throws Exception {
+//            System.out.println("Proxying " + request.getRequestURI() + " - " + request.getRequestURL());
+//            System.out.println("  port: " + request.getServerPort());
+//            System.out.println("  remote port: " + request.getRemotePort());
+//            System.out.println("  path info: " + request.getPathInfo());
+//            System.out.println("  context: " + request.getContextPath());
+//            System.out.println("  query: " + request.getQueryString());
+//            System.out.println("  headers:");
+//            for (String headerName : request.getHeaderNames()) {
+//                for (String headerValue : request.getHeaders(headerName)) {
+//                    System.out.printf("    %s=%s%n", headerName, headerValue);
+//                }
+//            }
+
             final HttpClientFilter httpClientFilter = new HttpClientFilter();
-            final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(
-                clientTransport, request, response, HttpProxy.this);
+            for (ContentEncoding encoding : httpClientFilter.getContentEncodings()) {
+                httpClientFilter.removeContentEncoding(encoding);
+                // - we must not decode encoded data, but need to pass them to the client
+            }
+            final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(request, response, HttpProxy.this);
             final FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
             clientFilterChainBuilder.add(new TransportFilter());
             clientFilterChainBuilder.add(httpClientFilter);
             clientFilterChainBuilder.add(clientProcessor);
-            clientTransport.setProcessor(clientFilterChainBuilder.build());
-            try {
-                clientProcessor.connect();
-            } catch (TimeoutException e) {
-                //TODO!! return 500
-                System.err.println("Timeout while reading target resource");
-            } catch (ExecutionException e) {
-                System.err.println("Error downloading the resource");
-                e.getCause().printStackTrace();
-            }
-            response.suspend(700, TimeUnit.SECONDS, null, new TimeoutHandler() {
+            final FilterChain filterChain = clientFilterChainBuilder.build();
+            final TCPNIOConnectorHandler connectorHandler =
+                TCPNIOConnectorHandler.builder(clientTransport).processor(filterChain).build();
+            clientProcessor.setConnectorHandler(connectorHandler);
+            response.suspend(HttpProxy.CLIENT_READ_TIMEOUT, TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
                 @Override
                 public boolean onTimeout(Response response) {
-                    LOG.info("Timeout");
-                    response.finish();
-                    try {
-                        clientProcessor.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    //TODO!! corrent response; better timeout, corresponding ReadTask logic
+                    LOG.info("Timeout while waiting for the server response");
+                    clientProcessor.closeAndReturnError("Proxy timeout");
+                    response.resume();
                     return true;
                 }
             });
+            clientProcessor.requestConnectionToServer();
         }
     }
 }
