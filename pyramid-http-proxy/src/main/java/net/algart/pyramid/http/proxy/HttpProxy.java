@@ -102,7 +102,7 @@ public abstract class HttpProxy {
         return proxyPort;
     }
 
-    public abstract ServerAddress getServer(Map<String, String> requestParameters);
+    public abstract ServerAddress getServer(Map<String, String> queryParameters);
 
     private class HttpProxyHandler extends HttpHandler {
         @Override
@@ -137,7 +137,7 @@ public abstract class HttpProxy {
             response.suspend(HttpProxy.CLIENT_READ_TIMEOUT, TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
                 @Override
                 public boolean onTimeout(Response response) {
-                    LOG.info("Timeout while waiting for the server response");
+                    LOG.info("Timeout while waiting for the server response for " + request.getRequestURL());
                     clientProcessor.closeAndReturnError("Proxy timeout");
                     response.resume();
                     return true;

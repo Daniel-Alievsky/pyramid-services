@@ -41,7 +41,7 @@ public class HttpProxyTest {
 
         final HttpProxy proxy = new HttpProxy(proxyPort) {
             @Override
-            public ServerAddress getServer(Map<String, String> requestParameters) {
+            public ServerAddress getServer(Map<String, String> queryParameters) {
                 return new ServerAddress(serverHost, serverPort);
             }
         };
