@@ -104,7 +104,7 @@ public abstract class HttpProxy {
         return proxyPort;
     }
 
-    public abstract ServerAddress getServer(Map<String, String> queryParameters);
+    public abstract ServerAddress getServer(Map<String, List<String>> queryParameters);
 
     private class HttpProxyHandler extends HttpHandler {
         @Override
@@ -147,44 +147,6 @@ public abstract class HttpProxy {
             });
             clientProcessor.requestConnectionToServer();
         }
-    }
-
-    private static Map<String, List<String>> parseQueryOnly(Request request) {
-        final Map<String, List<String>> result = new LinkedHashMap<>();
-        final Parameters parameters = new Parameters();
-        final Charset charset = lookupCharset(request.getCharacterEncoding());
-        parameters.setHeaders(request.getRequest().getHeaders());
-        parameters.setQuery(request.getRequest().getQueryStringDC());
-        parameters.setEncoding(charset);
-        parameters.setQueryStringEncoding(charset);
-        parameters.handleQueryParameters();
-        for (final String name : parameters.getParameterNames()) {
-            final String[] values = parameters.getParameterValues(name);
-            final List<String> valuesList = new ArrayList<>();
-            if (values != null) {
-                for (String value : values) {
-                    valuesList.add(value);
-                }
-            }
-            result.put(name, valuesList);
-        }
-        return result;
-    }
-
-
-    private static Charset lookupCharset(final String enc) {
-        Charset charset = Charsets.UTF8_CHARSET;
-        // Note: we don't use org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARSET here.
-        // It is necessary to provide correct parsing GET and POST parameters, when encoding is not specified
-        // (typical situation for POST, always for GET).
-        if (enc != null) {
-            try {
-                charset = Charsets.lookupCharset(enc);
-            } catch (Exception e) {
-                // ignore possible exception
-            }
-        }
-        return charset;
     }
 }
 

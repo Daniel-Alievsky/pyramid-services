@@ -27,6 +27,7 @@ package net.algart.pyramid.http.proxy.tests;
 import net.algart.pyramid.http.proxy.HttpProxy;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class HttpProxyTest {
@@ -41,7 +42,7 @@ public class HttpProxyTest {
 
         final HttpProxy proxy = new HttpProxy(proxyPort) {
             @Override
-            public ServerAddress getServer(Map<String, String> queryParameters) {
+            public ServerAddress getServer(Map<String, List<String>> queryParameters) {
                 return new ServerAddress(serverHost, serverPort);
             }
         };

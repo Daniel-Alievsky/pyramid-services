@@ -37,13 +37,15 @@ import org.glassfish.grizzly.http.io.NIOOutputStream;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.util.MimeHeaders;
+import org.glassfish.grizzly.http.util.Parameters;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
-import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
+import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Objects;
+import java.nio.charset.Charset;
+import java.util.*;
 import java.util.logging.Level;
 
 class ProxyClientProcessor extends BaseFilter {
@@ -69,8 +71,7 @@ class ProxyClientProcessor extends BaseFilter {
         this.inputStream = request.getNIOInputStream();
         this.outputStream = response.getNIOOutputStream();
 
-        final HttpProxy.ServerAddress server = httpProxy.getServer(null);
-        //TODO!! analyze query manually
+        final HttpProxy.ServerAddress server = httpProxy.getServer(parseQueryOnly(request));
         this.serverHost = server.serverHost();
         this.serverPort = server.serverPort();
 
@@ -252,5 +253,45 @@ class ProxyClientProcessor extends BaseFilter {
         synchronized (lock) {
             this.connection = connection;
         }
+    }
+
+    private static Map<String, List<String>> parseQueryOnly(Request request) {
+        final Map<String, List<String>> result = new LinkedHashMap<>();
+        final Parameters parameters = new Parameters();
+        final Charset charset = lookupCharset(request.getCharacterEncoding());
+        parameters.setHeaders(request.getRequest().getHeaders());
+        parameters.setQuery(request.getRequest().getQueryStringDC());
+        parameters.setEncoding(charset);
+        parameters.setQueryStringEncoding(charset);
+        parameters.handleQueryParameters();
+        for (final String name : parameters.getParameterNames()) {
+            final String[] values = parameters.getParameterValues(name);
+            final List<String> valuesList = new ArrayList<>();
+            if (values != null) {
+                for (String value : values) {
+                    valuesList.add(value);
+                }
+            }
+            result.put(name, valuesList);
+        }
+        return result;
+    }
+
+
+    private static Charset lookupCharset(final String enc) {
+        Charset charset = Charsets.UTF8_CHARSET;
+        // We don't use org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARSET here.
+        // It is necessary to provide correct parsing GET and POST parameters, when encoding is not specified
+        // (typical situation for POST, always for GET).
+        // Note: it is the only place, where the proxy can need access to request parameters, so we can stay
+        // the constant org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARSET unchanged.
+        if (enc != null) {
+            try {
+                charset = Charsets.lookupCharset(enc);
+            } catch (Exception e) {
+                // ignore possible exception
+            }
+        }
+        return charset;
     }
 }
