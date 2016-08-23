@@ -26,6 +26,8 @@ package net.algart.pyramid.http.api;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,6 +41,9 @@ public class HttpPyramidApiTools {
 
     public static boolean isAllowedPyramidId(String pyramidId) {
         Objects.requireNonNull(pyramidId, "Null pyramidId");
+        if (HttpPyramidConstants.ENABLE_ALL_CHARACTERS_IN_PYRAMID_ID) {
+            return true;
+        }
         return pyramidId.matches("^[A-Za-z0-9_\\-]*$");
     }
 
@@ -62,7 +67,13 @@ public class HttpPyramidApiTools {
             + HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME;
     }
 
-    public static String extractPyramidIdFromAppendedIdForURLPath(String appendedId) {
+    public static String extractPyramidIdFromAppendedIdForURLPath(String urlEncodedAppendedId) {
+        final String appendedId;
+        try {
+            appendedId = URLDecoder.decode(urlEncodedAppendedId, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new AssertionError("UTF-8 encoding not found");
+        }
         if (!appendedId.startsWith(HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME)
             || !appendedId.endsWith(HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME))
         {

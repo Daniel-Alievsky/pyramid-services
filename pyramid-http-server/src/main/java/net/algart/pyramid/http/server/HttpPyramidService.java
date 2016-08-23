@@ -41,6 +41,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HttpPyramidService {
+    static {
+        System.setProperty(
+            org.glassfish.grizzly.http.util.Constants.class.getName() + ".default-character-encoding", "UTF-8");
+        // - Necessary to provide correct parsing GET and POST parameters, when encoding is not specified
+        // (typical situation for POST, always for GET).
+    }
     private static final Logger LOG = Logger.getLogger(HttpPyramidService.class.getName());
 
     private final HttpServer server;

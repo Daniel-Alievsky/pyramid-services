@@ -25,14 +25,12 @@
 package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.http.api.HttpPyramidApiTools;
-import net.algart.pyramid.http.api.HttpPyramidConstants;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Locale;
 import java.util.Objects;
 
-// Unlike usual commands, all system commands are executed  as a reply to appearing special key files.
+// Unlike usual commands, all system commands are executed as a reply to appearing special key files.
 abstract class SystemCommand {
     final HttpPyramidService httpPyramidService;
     final String urlPrefix;

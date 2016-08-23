@@ -30,13 +30,15 @@ import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.http.ContentEncoding;
 import org.glassfish.grizzly.http.HttpClientFilter;
 import org.glassfish.grizzly.http.server.*;
+import org.glassfish.grizzly.http.util.Parameters;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
+import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Objects;
+import java.nio.charset.Charset;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -145,6 +147,44 @@ public abstract class HttpProxy {
             });
             clientProcessor.requestConnectionToServer();
         }
+    }
+
+    private static Map<String, List<String>> parseQueryOnly(Request request) {
+        final Map<String, List<String>> result = new LinkedHashMap<>();
+        final Parameters parameters = new Parameters();
+        final Charset charset = lookupCharset(request.getCharacterEncoding());
+        parameters.setHeaders(request.getRequest().getHeaders());
+        parameters.setQuery(request.getRequest().getQueryStringDC());
+        parameters.setEncoding(charset);
+        parameters.setQueryStringEncoding(charset);
+        parameters.handleQueryParameters();
+        for (final String name : parameters.getParameterNames()) {
+            final String[] values = parameters.getParameterValues(name);
+            final List<String> valuesList = new ArrayList<>();
+            if (values != null) {
+                for (String value : values) {
+                    valuesList.add(value);
+                }
+            }
+            result.put(name, valuesList);
+        }
+        return result;
+    }
+
+
+    private static Charset lookupCharset(final String enc) {
+        Charset charset = Charsets.UTF8_CHARSET;
+        // Note: we don't use org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARSET here.
+        // It is necessary to provide correct parsing GET and POST parameters, when encoding is not specified
+        // (typical situation for POST, always for GET).
+        if (enc != null) {
+            try {
+                charset = Charsets.lookupCharset(enc);
+            } catch (Exception e) {
+                // ignore possible exception
+            }
+        }
+        return charset;
     }
 }
 

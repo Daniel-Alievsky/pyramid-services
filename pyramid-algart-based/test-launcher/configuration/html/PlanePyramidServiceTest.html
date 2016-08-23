@@ -19,7 +19,7 @@ Professional version should use while color #FFFFFF -->
 
     var search = document.location.search.substr(1);
     var parameters = search.split(":");
-    var currentPyramidId = parameters[0];
+    var currentPyramidId = decodeURIComponent(parameters[0]);
     var currentPort = parameters[1];
     var urlStart = 'http://localhost:' + currentPort + '/pp-';
     var tileDim = 256; // - 256 is the standard constant for OpenLayers protocols
@@ -65,7 +65,7 @@ Professional version should use while color #FFFFFF -->
     In professional version, changePyramid function should be called when the user
     selects another pyramid from the list. -->
     An example of switching to another image:
-    <button onclick="setPyramid('some-unique-folder-18572',9001)">
+    <button onclick="setPyramid('some-unique-folder-18572',9010)">
         Switch to image &quot;some-unique-folder-18572&quot;
     </button>
 </div>
