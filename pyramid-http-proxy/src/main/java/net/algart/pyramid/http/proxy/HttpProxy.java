@@ -138,9 +138,10 @@ public abstract class HttpProxy {
             response.suspend(HttpProxy.CLIENT_READ_TIMEOUT, TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
                 @Override
                 public boolean onTimeout(Response response) {
+                    //TODO!! move all this into clientProcessor synchronized method
                     LOG.info("Timeout while waiting for the server response for " + request.getRequestURL());
                     clientProcessor.closeAndReturnError("Proxy timeout");
-                    response.resume();
+                    // response.resume(); -- duplicate!
                     return true;
                 }
             });

@@ -143,6 +143,7 @@ class ProxyClientProcessor extends BaseFilter {
     }
 
     public void closeAndReturnError(String message) {
+        //TODO!! synchronize
         response.setStatus(500, message);
         // - must be before closing
         response.setContentType("text/plain");
