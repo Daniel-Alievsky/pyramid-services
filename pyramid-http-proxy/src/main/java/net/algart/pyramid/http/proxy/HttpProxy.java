@@ -30,15 +30,14 @@ import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.http.ContentEncoding;
 import org.glassfish.grizzly.http.HttpClientFilter;
 import org.glassfish.grizzly.http.server.*;
-import org.glassfish.grizzly.http.util.Parameters;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
-import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
