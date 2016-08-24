@@ -49,31 +49,34 @@ import java.util.*;
 import java.util.logging.Level;
 
 class ProxyClientProcessor extends BaseFilter {
+    private final HttpServerFailureHandler serverFailureHandler;
     private final HttpRequestPacket requestToServerHeaders;
     private final Response response;
-    private final String serverHost;
-    private final int serverPort;
-    private final NIOInputStream inputStream;
-    private final NIOOutputStream outputStream;
-    private TCPNIOConnectorHandler connectorHandler = null;
+    private final HttpServerAddress server;
+    private final NIOInputStream inputStreamFromClient;
+    // - usually for POST requests
+    private final NIOOutputStream outputStreamToClient;
+    private TCPNIOConnectorHandler connectorToServer = null;
     // - should be set after constructing the object on the base of resulting FilterChain
-    private volatile Connection connection = null;
+    private volatile Connection connectionToServer = null;
     private volatile boolean firstReply = true;
+    private volatile boolean connectionToServerClosed = false;
 
     private final Object lock = new Object();
 
     ProxyClientProcessor(
         Request request,
         Response response,
-        HttpProxy httpProxy)
+        HttpServerAddress server,
+        HttpServerFailureHandler serverFailureHandler)
     {
+        assert server != null;
+        assert serverFailureHandler != null;
         this.response = response;
-        this.inputStream = request.getNIOInputStream();
-        this.outputStream = response.getNIOOutputStream();
-
-        final HttpProxy.ServerAddress server = httpProxy.getServer(parseQueryOnly(request));
-        this.serverHost = server.serverHost();
-        this.serverPort = server.serverPort();
+        this.inputStreamFromClient = request.getNIOInputStream();
+        this.outputStreamToClient = response.getNIOOutputStream();
+        this.serverFailureHandler = serverFailureHandler;
+        this.server = server;
 
         final HttpRequestPacket.Builder builder = HttpRequestPacket.builder();
         builder.protocol(Protocol.HTTP_1_1);
@@ -82,26 +85,24 @@ class ProxyClientProcessor extends BaseFilter {
         builder.query(request.getQueryString());
         builder.contentType(request.getContentType());
         builder.contentLength(request.getContentLength());
-        // - maybe contentType and contentLength are not necessary
         for (String headerName : request.getHeaderNames()) {
             for (String headerValue : request.getHeaders(headerName)) {
                 builder.header(headerName, headerValue);
-                //TODO!! check identical names
             }
         }
         builder.removeHeader("Host");
-        builder.header("Host", serverHost + ":" + serverPort);
+        builder.header("Host", server.canonicalHTTPHostHeader());
         this.requestToServerHeaders = builder.build();
     }
 
-    public void setConnectorHandler(TCPNIOConnectorHandler connectorHandler) {
-        this.connectorHandler = Objects.requireNonNull(connectorHandler);
+    public void setConnectorToServer(TCPNIOConnectorHandler connectorToServer) {
+        this.connectorToServer = Objects.requireNonNull(connectorToServer);
     }
 
     public void requestConnectionToServer() throws InterruptedException {
-        HttpProxy.LOG.config("Requesting connection to " + serverHost + ":" + serverPort + "...");
-        connectorHandler.connect(
-            new InetSocketAddress(serverHost, serverPort), new CompletionHandler<Connection>() {
+        HttpProxy.LOG.config("Requesting connection to " + server + "...");
+        connectorToServer.connect(
+            new InetSocketAddress(server.serverHost(), server.serverPort()), new CompletionHandler<Connection>() {
                 @Override
                 public void cancelled() {
                 }
@@ -110,14 +111,16 @@ class ProxyClientProcessor extends BaseFilter {
                 public void failed(Throwable throwable) {
                     synchronized (lock) {
                         HttpProxy.LOG.log(Level.WARNING,
-                            "Connection to server " + serverHost + ":" + serverPort + " failed", throwable);
+                            "Connection to server " + server + " failed", throwable);
                         closeAndReturnError("Cannot connect to the server");
+                        serverFailureHandler.onConnectionFailed(server, throwable);
                     }
                 }
 
                 @Override
                 public void completed(Connection connection) {
                     HttpProxy.LOG.fine("Connected");
+                    // actually will be processed in handleConnect method
                 }
 
                 @Override
@@ -126,14 +129,16 @@ class ProxyClientProcessor extends BaseFilter {
             });
     }
 
-    public void close() {
+    public void closeServerAndClientConnections() {
         synchronized (lock) {
-            if (connection != null) {
-                connection.close();
-                connection = null;
+            connectionToServerClosed = true;
+            // - closeSilently will invoke handleClose, but it will do nothing
+            if (connectionToServer != null) {
+                connectionToServer.closeSilently();
+                connectionToServer = null;
             }
             try {
-                outputStream.close();
+                outputStreamToClient.close();
             } catch (IOException e) {
                 HttpProxy.LOG.log(Level.FINE, "Error while closing output stream", e);
                 // only FINE: this exception can occur if the browser terminates connection;
@@ -142,41 +147,53 @@ class ProxyClientProcessor extends BaseFilter {
         }
     }
 
-    public void closeAndReturnError(String message) {
-        //TODO!! synchronize
-        response.setStatus(500, message);
-        // - must be before closing
-        response.setContentType("text/plain");
-        try {
-            outputStream.write(Buffers.wrap(null, message));
-        } catch (IOException e) {
-            // ignore this problem
+    public void closeConnectionsAndResponse(boolean resumeResponse) {
+        synchronized (lock) {
+            closeServerAndClientConnections();
+            if (resumeResponse) {
+                response.resume();
+                HttpProxy.LOG.config("Response is resumed normally");
+            } else {
+                response.finish();
+                System.out.println("Response is cancelled");
+            }
         }
-        close();
-        if (response.isSuspended()) {
-            response.resume();
-            HttpProxy.LOG.config("Response is resumed: " + message);
-        } else {
-            response.finish();
-            HttpProxy.LOG.config("Response is finished: " + message);
+    }
+
+    public void closeAndReturnError(String message) {
+        synchronized (lock) {
+            response.setStatus(500, message);
+            response.setContentType("text/plain");
+            try {
+                outputStreamToClient.write(Buffers.wrap(null, message));
+            } catch (IOException ignored) {
+            }
+            closeServerAndClientConnections();
+            if (response.isSuspended()) {
+                response.resume();
+                HttpProxy.LOG.config("Response is resumed: " + message);
+            } else {
+                response.finish();
+                HttpProxy.LOG.config("Response is finished: " + message);
+            }
         }
     }
 
     @Override
     public NextAction handleConnect(FilterChainContext ctx) throws IOException {
-        setConnection(ctx.getConnection());
-        inputStream.notifyAvailable(new ReadHandler() {
+        setConnectionToServer(ctx.getConnection());
+        inputStreamFromClient.notifyAvailable(new ReadHandler() {
             @Override
             public void onDataAvailable() throws Exception {
                 synchronized (lock) {
                     sendData();
                 }
-                inputStream.notifyAvailable(this);
+                inputStreamFromClient.notifyAvailable(this);
             }
 
             @Override
-            public void onError(Throwable throwable) {
-                HttpProxy.LOG.log(Level.WARNING, "Error while reading request", throwable);
+            public void onError(Throwable error) {
+                HttpProxy.LOG.log(Level.WARNING, "Error while reading request", error);
                 closeAndReturnError("Error while reading request");
             }
 
@@ -186,25 +203,25 @@ class ProxyClientProcessor extends BaseFilter {
                     HttpProxy.LOG.config("All data ready");
                     sendData();
                     try {
-                        inputStream.close();
+                        inputStreamFromClient.close();
                     } catch (IOException ignored) {
                     }
                 }
             }
 
             private void sendData() {
-                final Buffer buffer = inputStream.readBuffer();
-                final boolean finished = inputStream.isFinished();
+                final Buffer buffer = inputStreamFromClient.readBuffer();
+                final boolean finished = inputStreamFromClient.isFinished();
                 HttpProxy.LOG.config("Data ready, sending request to server: buffer " + buffer);
                 final HttpContent httpContent = HttpContent.builder(requestToServerHeaders)
                     .content(buffer)
                     .last(finished)
                     .build();
-                connection.write(httpContent);
+                connectionToServer.write(httpContent);
                 // - note: buffer will be destroyed by this call
             }
         });
-        HttpProxy.LOG.config("Connected to " + serverHost + ":" + serverPort
+        HttpProxy.LOG.config("Connected to " + server
             + "; starting sending request to server: header " + requestToServerHeaders);
         return ctx.getStopAction();
     }
@@ -212,14 +229,19 @@ class ProxyClientProcessor extends BaseFilter {
     @Override
     public NextAction handleRead(FilterChainContext ctx) throws IOException {
         final HttpContent httpContent = ctx.getMessage();
+        final Buffer contentBuffer = httpContent.getContent();
+        final boolean last = httpContent.isLast();
         synchronized (lock) {
+            if (connectionToServerClosed) {
+                // - to be on the safe side (should not occur)
+                return ctx.getStopAction();
+            }
             if (firstReply) {
                 final HttpResponsePacket httpHeader = (HttpResponsePacket) httpContent.getHttpHeader();
                 response.setStatus(httpHeader.getHttpStatus());
                 final MimeHeaders headers = httpHeader.getHeaders();
                 for (String headerName : headers.names()) {
                     for (String headerValue : headers.values(headerName)) {
-                        //TODO!! check identical names
                         response.addHeader(headerName, headerValue);
                     }
                 }
@@ -227,17 +249,17 @@ class ProxyClientProcessor extends BaseFilter {
             }
         }
 
+        HttpProxy.LOG.config("Notifying about sending " + contentBuffer + (last ? " (LAST)" : ""));
         // Events in notifyCanWrite are internally synchronized,
         // and all calls of onWritePossible will be in proper order.
-        outputStream.notifyCanWrite(new WriteHandler() {
+        outputStreamToClient.notifyCanWrite(new WriteHandler() {
             @Override
             public void onWritePossible() throws Exception {
                 synchronized (lock) {
-                    outputStream.write(httpContent.getContent());
-                    if (httpContent.isLast()) {
-                        close();
-                        response.resume();
-                        HttpProxy.LOG.config("Response is resumed");
+                    outputStreamToClient.write(contentBuffer);
+                    outputStreamToClient.flush(); // - necessary to avoid a bug in Grizzly 2.3.22!
+                    if (last) {
+                        closeConnectionsAndResponse(true);
                     }
                 }
             }
@@ -250,49 +272,28 @@ class ProxyClientProcessor extends BaseFilter {
         return ctx.getStopAction();
     }
 
-    private void setConnection(Connection connection) {
+    @Override
+    public void exceptionOccurred(FilterChainContext ctx, Throwable error) {
+        HttpProxy.LOG.log(Level.SEVERE, "Error while sending data", error);
+    }
+
+
+    @Override
+    public NextAction handleClose(FilterChainContext ctx) throws IOException {
+        // getMessage will be null
+        if (connectionToServerClosed) {
+            // Nothing to do: maybe we already called closeServerAndClientConnections
+            return ctx.getStopAction();
+        }
+
+        HttpProxy.LOG.log(Level.INFO, "UNEXPECTED CONNECTION CLOSE");
+        closeConnectionsAndResponse(true);
+        return ctx.getStopAction();
+    }
+
+    private void setConnectionToServer(Connection connectionToServer) {
         synchronized (lock) {
-            this.connection = connection;
+            this.connectionToServer = connectionToServer;
         }
-    }
-
-    private static Map<String, List<String>> parseQueryOnly(Request request) {
-        final Map<String, List<String>> result = new LinkedHashMap<>();
-        final Parameters parameters = new Parameters();
-        final Charset charset = lookupCharset(request.getCharacterEncoding());
-        parameters.setHeaders(request.getRequest().getHeaders());
-        parameters.setQuery(request.getRequest().getQueryStringDC());
-        parameters.setEncoding(charset);
-        parameters.setQueryStringEncoding(charset);
-        parameters.handleQueryParameters();
-        for (final String name : parameters.getParameterNames()) {
-            final String[] values = parameters.getParameterValues(name);
-            final List<String> valuesList = new ArrayList<>();
-            if (values != null) {
-                for (String value : values) {
-                    valuesList.add(value);
-                }
-            }
-            result.put(name, valuesList);
-        }
-        return result;
-    }
-
-
-    private static Charset lookupCharset(final String enc) {
-        Charset charset = Charsets.UTF8_CHARSET;
-        // We don't use org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARSET here.
-        // It is necessary to provide correct parsing GET and POST parameters, when encoding is not specified
-        // (typical situation for POST, always for GET).
-        // Note: it is the only place, where the proxy can need access to request parameters, so we can stay
-        // the constant org.glassfish.grizzly.http.util.Constants.DEFAULT_HTTP_CHARSET unchanged.
-        if (enc != null) {
-            try {
-                charset = Charsets.lookupCharset(enc);
-            } catch (Exception e) {
-                // ignore possible exception
-            }
-        }
-        return charset;
     }
 }

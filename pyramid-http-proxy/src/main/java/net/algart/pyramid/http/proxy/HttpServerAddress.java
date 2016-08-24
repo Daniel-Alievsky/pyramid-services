@@ -22,32 +22,40 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.proxy.tests;
+package net.algart.pyramid.http.proxy;
 
-import net.algart.pyramid.http.proxy.HttpProxy;
-import net.algart.pyramid.http.proxy.HttpServerAddress;
-import net.algart.pyramid.http.proxy.HttpServerFailureHandler;
+import java.util.Objects;
 
-import java.io.IOException;
+public final class HttpServerAddress {
+    private final String serverHost;
+    private final int serverPort;
 
-public class HttpProxyTest {
-    public static void main(String[] args) throws IOException {
-        if (args.length < 3) {
-            System.out.println("Usage: " + HttpProxyTest.class.getName() + " server-host server-port proxy-port");
-            return;
+    public HttpServerAddress(String serverHost, int serverPort) {
+        Objects.requireNonNull(serverHost);
+        if (serverPort <= 0) {
+            throw new IllegalArgumentException("Zero or negative port " + serverPort);
         }
-        final String serverHost = args[0];
-        final int serverPort = Integer.parseInt(args[1]);
-        final int proxyPort = Integer.parseInt(args[2]);
+        this.serverHost = serverHost;
+        this.serverPort = serverPort;
+    }
 
-        final HttpProxy proxy = new HttpProxy(proxyPort,
-            queryParameters -> new HttpServerAddress(serverHost, serverPort),
-            new HttpServerFailureHandler());
-        proxy.start();
-        System.out.println("Press ENTER to stop the proxy server...");
-        System.in.read();
-        proxy.finish();
-        System.out.println("Proxy server finished");
+    public String serverHost() {
+        return serverHost;
+    }
 
+    public int serverPort() {
+        return serverPort;
+    }
+
+    public String canonicalHTTPHostHeader() {
+        return serverHost + (serverPort == 80 ? "" : ":" + serverPort);
+        // - Important: to be congruent with popular browsers, the port should be stripped from
+        // the 'Host' field when the port is 80. In other case, it is possible that the server
+        // will return "moved" response (instead of correct page) to remove port number from URL.
+    }
+
+    @Override
+    public String toString() {
+        return serverHost + ":" + serverPort;
     }
 }

@@ -22,32 +22,14 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.proxy.tests;
+package net.algart.pyramid.http.proxy;
 
-import net.algart.pyramid.http.proxy.HttpProxy;
-import net.algart.pyramid.http.proxy.HttpServerAddress;
-import net.algart.pyramid.http.proxy.HttpServerFailureHandler;
+import java.util.logging.Level;
 
-import java.io.IOException;
+public class HttpServerFailureHandler {
+    public void onConnectionFailed(HttpServerAddress address, Throwable throwable) {
+    }
 
-public class HttpProxyTest {
-    public static void main(String[] args) throws IOException {
-        if (args.length < 3) {
-            System.out.println("Usage: " + HttpProxyTest.class.getName() + " server-host server-port proxy-port");
-            return;
-        }
-        final String serverHost = args[0];
-        final int serverPort = Integer.parseInt(args[1]);
-        final int proxyPort = Integer.parseInt(args[2]);
-
-        final HttpProxy proxy = new HttpProxy(proxyPort,
-            queryParameters -> new HttpServerAddress(serverHost, serverPort),
-            new HttpServerFailureHandler());
-        proxy.start();
-        System.out.println("Press ENTER to stop the proxy server...");
-        System.in.read();
-        proxy.finish();
-        System.out.println("Proxy server finished");
-
+    public void onServerTimeout(HttpServerAddress address, String requestURI) {
     }
 }
