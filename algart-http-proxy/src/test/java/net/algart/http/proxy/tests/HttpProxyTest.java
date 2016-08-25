@@ -22,15 +22,32 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.proxy;
+package net.algart.http.proxy.tests;
 
-/**
- * Failure handler. Can be used, for example, for restarting a service that does not reply to requests.
- */
-public class HttpServerFailureHandler {
-    public void onConnectionFailed(HttpServerAddress address, Throwable throwable) {
-    }
+import net.algart.http.proxy.HttpProxy;
+import net.algart.http.proxy.HttpServerAddress;
+import net.algart.http.proxy.HttpServerFailureHandler;
 
-    public void onServerTimeout(HttpServerAddress address, String requestURI) {
+import java.io.IOException;
+
+public class HttpProxyTest {
+    public static void main(String[] args) throws IOException {
+        if (args.length < 3) {
+            System.out.println("Usage: " + HttpProxyTest.class.getName() + " server-host server-port proxy-port");
+            return;
+        }
+        final String serverHost = args[0];
+        final int serverPort = Integer.parseInt(args[1]);
+        final int proxyPort = Integer.parseInt(args[2]);
+
+        final HttpProxy proxy = new HttpProxy(proxyPort,
+            queryParameters -> new HttpServerAddress(serverHost, serverPort),
+            new HttpServerFailureHandler());
+        proxy.start();
+        System.out.println("Press ENTER to stop the proxy server...");
+        System.in.read();
+        proxy.finish();
+        System.out.println("Proxy server finished");
+
     }
 }

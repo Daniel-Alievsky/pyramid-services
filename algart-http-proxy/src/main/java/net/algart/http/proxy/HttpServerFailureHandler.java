@@ -22,33 +22,15 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.proxy;
+package net.algart.http.proxy;
 
-import org.glassfish.grizzly.http.util.Parameters;
+/**
+ * Failure handler. Can be used, for example, for restarting a service that does not reply to requests.
+ */
+public class HttpServerFailureHandler {
+    public void onConnectionFailed(HttpServerAddress address, Throwable throwable) {
+    }
 
-import java.util.*;
-
-public interface HttpServerDetector {
-    HttpServerAddress getServer(Parameters queryParameters);
-
-    abstract class BasedOnMap implements HttpServerDetector {
-        @Override
-        public HttpServerAddress getServer(Parameters queryParameters) {
-            Objects.requireNonNull(queryParameters);
-            final Map<String, String> parsedParameters = new LinkedHashMap<>();
-            for (final String name : queryParameters.getParameterNames()) {
-                final String[] values = queryParameters.getParameterValues(name);
-                if (values != null) {
-                    for (String value : values) {
-                        parsedParameters.put(name, value);
-                        // - using 1st from several values
-                        break;
-                    }
-                }
-            }
-            return getServer(parsedParameters);
-        }
-
-        public abstract HttpServerAddress getServer(Map<String, String> queryParameters);
+    public void onServerTimeout(HttpServerAddress address, String requestURI) {
     }
 }

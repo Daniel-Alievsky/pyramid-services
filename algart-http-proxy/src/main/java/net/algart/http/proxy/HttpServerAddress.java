@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.proxy;
+package net.algart.http.proxy;
 
 import java.util.Objects;
 

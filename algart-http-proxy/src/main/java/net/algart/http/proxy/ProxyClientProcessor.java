@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.proxy;
+package net.algart.http.proxy;
 
 import org.glassfish.grizzly.*;
 import org.glassfish.grizzly.filterchain.BaseFilter;

@@ -22,32 +22,33 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.proxy.tests;
+package net.algart.http.proxy;
 
-import net.algart.pyramid.http.proxy.HttpProxy;
-import net.algart.pyramid.http.proxy.HttpServerAddress;
-import net.algart.pyramid.http.proxy.HttpServerFailureHandler;
+import org.glassfish.grizzly.http.util.Parameters;
 
-import java.io.IOException;
+import java.util.*;
 
-public class HttpProxyTest {
-    public static void main(String[] args) throws IOException {
-        if (args.length < 3) {
-            System.out.println("Usage: " + HttpProxyTest.class.getName() + " server-host server-port proxy-port");
-            return;
+public interface HttpServerDetector {
+    HttpServerAddress getServer(Parameters queryParameters);
+
+    abstract class BasedOnMap implements HttpServerDetector {
+        @Override
+        public HttpServerAddress getServer(Parameters queryParameters) {
+            Objects.requireNonNull(queryParameters);
+            final Map<String, String> parsedParameters = new LinkedHashMap<>();
+            for (final String name : queryParameters.getParameterNames()) {
+                final String[] values = queryParameters.getParameterValues(name);
+                if (values != null) {
+                    for (String value : values) {
+                        parsedParameters.put(name, value);
+                        // - using 1st from several values
+                        break;
+                    }
+                }
+            }
+            return getServer(parsedParameters);
         }
-        final String serverHost = args[0];
-        final int serverPort = Integer.parseInt(args[1]);
-        final int proxyPort = Integer.parseInt(args[2]);
 
-        final HttpProxy proxy = new HttpProxy(proxyPort,
-            queryParameters -> new HttpServerAddress(serverHost, serverPort),
-            new HttpServerFailureHandler());
-        proxy.start();
-        System.out.println("Press ENTER to stop the proxy server...");
-        System.in.read();
-        proxy.finish();
-        System.out.println("Proxy server finished");
-
+        public abstract HttpServerAddress getServer(Map<String, String> queryParameters);
     }
 }
