@@ -24,8 +24,9 @@
 
 package net.algart.pyramid.http.proxy;
 
-import java.util.logging.Level;
-
+/**
+ * Failure handler. Can be used, for example, for restarting a service that does not reply to requests.
+ */
 public class HttpServerFailureHandler {
     public void onConnectionFailed(HttpServerAddress address, Throwable throwable) {
     }

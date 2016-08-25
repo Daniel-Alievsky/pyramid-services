@@ -37,18 +37,17 @@ import org.glassfish.grizzly.http.io.NIOOutputStream;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.util.MimeHeaders;
-import org.glassfish.grizzly.http.util.Parameters;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
-import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Objects;
 import java.util.logging.Level;
 
 class ProxyClientProcessor extends BaseFilter {
+    private final String requestURL;
+    // - for logging needs
     private final HttpServerFailureHandler serverFailureHandler;
     private final HttpRequestPacket requestToServerHeaders;
     private final Response response;
@@ -72,6 +71,7 @@ class ProxyClientProcessor extends BaseFilter {
     {
         assert server != null;
         assert serverFailureHandler != null;
+        this.requestURL = String.valueOf(request.getRequestURL());
         this.response = response;
         this.inputStreamFromClient = request.getNIOInputStream();
         this.outputStreamToClient = response.getNIOOutputStream();
@@ -111,7 +111,7 @@ class ProxyClientProcessor extends BaseFilter {
                 public void failed(Throwable throwable) {
                     synchronized (lock) {
                         HttpProxy.LOG.log(Level.WARNING,
-                            "Connection to server " + server + " failed", throwable);
+                            "Connection to server " + server + " failed (" + requestURL + ")", throwable);
                         closeAndReturnError("Cannot connect to the server");
                         serverFailureHandler.onConnectionFailed(server, throwable);
                     }
@@ -147,34 +147,23 @@ class ProxyClientProcessor extends BaseFilter {
         }
     }
 
-    public void closeConnectionsAndResponse(boolean resumeResponse) {
-        synchronized (lock) {
-            closeServerAndClientConnections();
-            if (resumeResponse) {
-                response.resume();
-                HttpProxy.LOG.config("Response is resumed normally");
-            } else {
-                response.finish();
-                System.out.println("Response is cancelled");
-            }
-        }
-    }
-
     public void closeAndReturnError(String message) {
         synchronized (lock) {
             response.setStatus(500, message);
             response.setContentType("text/plain");
             try {
+                outputStreamToClient.flush();
                 outputStreamToClient.write(Buffers.wrap(null, message));
+                outputStreamToClient.flush();
             } catch (IOException ignored) {
             }
             closeServerAndClientConnections();
             if (response.isSuspended()) {
                 response.resume();
-                HttpProxy.LOG.config("Response is resumed: " + message);
+                HttpProxy.LOG.config("Response is resumed due to error: " + message + " (" + requestURL + ")");
             } else {
                 response.finish();
-                HttpProxy.LOG.config("Response is finished: " + message);
+                HttpProxy.LOG.config("Response is finished due to error: " + message + " (" + requestURL + ")");
             }
         }
     }
@@ -193,7 +182,7 @@ class ProxyClientProcessor extends BaseFilter {
 
             @Override
             public void onError(Throwable error) {
-                HttpProxy.LOG.log(Level.WARNING, "Error while reading request", error);
+                HttpProxy.LOG.log(Level.WARNING, "Error while reading request (" + requestURL + ")", error);
                 closeAndReturnError("Error while reading request");
             }
 
@@ -259,14 +248,14 @@ class ProxyClientProcessor extends BaseFilter {
                     outputStreamToClient.write(contentBuffer);
                     outputStreamToClient.flush(); // - necessary to avoid a bug in Grizzly 2.3.22!
                     if (last) {
-                        closeConnectionsAndResponse(true);
+                        closeConnectionsAndResponse();
                     }
                 }
             }
 
             @Override
             public void onError(Throwable t) {
-                HttpProxy.LOG.log(Level.WARNING, t.getMessage(), t);
+                HttpProxy.LOG.log(Level.WARNING, "Error while sending data to client (" + requestURL + ")", t);
             }
         });
         return ctx.getStopAction();
@@ -274,9 +263,8 @@ class ProxyClientProcessor extends BaseFilter {
 
     @Override
     public void exceptionOccurred(FilterChainContext ctx, Throwable error) {
-        HttpProxy.LOG.log(Level.SEVERE, "Error while sending data", error);
+        HttpProxy.LOG.log(Level.SEVERE, "Error while reading data from " + server + " (" + requestURL + ")", error);
     }
-
 
     @Override
     public NextAction handleClose(FilterChainContext ctx) throws IOException {
@@ -286,9 +274,18 @@ class ProxyClientProcessor extends BaseFilter {
             return ctx.getStopAction();
         }
 
-        HttpProxy.LOG.log(Level.INFO, "UNEXPECTED CONNECTION CLOSE");
-        closeConnectionsAndResponse(true);
+        HttpProxy.LOG.log(Level.INFO, "Unexpected connection close while reading from "
+            + server + " (" + requestURL + ")");
+        closeConnectionsAndResponse();
         return ctx.getStopAction();
+    }
+
+    private void closeConnectionsAndResponse() {
+        synchronized (lock) {
+            closeServerAndClientConnections();
+            response.resume();
+            HttpProxy.LOG.config("Response is resumed");
+        }
     }
 
     private void setConnectionToServer(Connection connectionToServer) {
