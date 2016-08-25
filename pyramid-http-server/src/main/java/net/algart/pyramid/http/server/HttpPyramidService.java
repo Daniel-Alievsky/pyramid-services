@@ -204,7 +204,7 @@ public class HttpPyramidService {
 
         @Override
         protected void service(Request request, Response response) throws Exception {
-            response.setContentType("text/plain");
+            response.setContentType("text/plain; charset=utf-8");
             response.setStatus(200, "OK");
             response.getWriter().write(HttpPyramidConstants.ALIVE_RESPONSE);
             response.finish();
@@ -236,14 +236,14 @@ public class HttpPyramidService {
             final String path = request.getRequestURI();
             if (requestPort != port) {
                 response.setStatus(500, "Invalid request port");
-                response.setContentType("text/plain");
+                response.setContentType("text/plain; charset=utf-8");
                 response.getWriter().write(String.format("Invalid port %n%n", port));
                 LOG.log(Level.SEVERE, String.format("MUST NOT OCCUR! Invalid port: %d", requestPort));
                 return;
             }
             if (!command.isSubFoldersAllowed() && !urlPrefix.equals(path) && !(urlPrefix + "/").equals(path)) {
                 response.setStatus(404, "Invalid request path");
-                response.setContentType("text/plain");
+                response.setContentType("text/plain; charset=utf-8");
                 response.getWriter().write(String.format("Invalid path %s%n", path));
                 LOG.log(Level.WARNING, String.format("Subfolders are not supported: %s", path));
                 return;

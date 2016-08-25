@@ -149,11 +149,10 @@ class ProxyClientProcessor extends BaseFilter {
 
     public void closeAndReturnError(String message) {
         synchronized (lock) {
-            response.setStatus(500, message);
-            response.setContentType("text/plain");
+            response.setStatus(500, "AlgART Proxy: " + message);
+            response.setContentType("text/plain; charset=utf-8");
             try {
-                outputStreamToClient.flush();
-                outputStreamToClient.write(Buffers.wrap(null, message));
+                outputStreamToClient.write(Buffers.wrap(null, "AlgART Proxy: " + message));
                 outputStreamToClient.flush();
             } catch (IOException ignored) {
             }
