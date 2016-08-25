@@ -151,19 +151,22 @@ class ProxyClientProcessor extends BaseFilter {
         synchronized (lock) {
             response.setStatus(500, "AlgART Proxy: " + message);
             response.setContentType("text/plain; charset=utf-8");
-            try {
-                outputStreamToClient.write(Buffers.wrap(null, "AlgART Proxy: " + message));
-                outputStreamToClient.flush();
-            } catch (IOException ignored) {
-            }
-            closeServerAndClientConnections();
-            if (response.isSuspended()) {
-                response.resume();
-                HttpProxy.LOG.config("Response is resumed due to error: " + message + " (" + requestURL + ")");
-            } else {
-                response.finish();
-                HttpProxy.LOG.config("Response is finished due to error: " + message + " (" + requestURL + ")");
-            }
+            final Buffer contentBuffer = Buffers.wrap(null, "AlgART Proxy: " + message);
+            outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, true));
+            HttpProxy.LOG.warning("Error: " + message + " (" + requestURL + ")");
+//            try {
+//                outputStreamToClient.write(contentBuffer);
+//                outputStreamToClient.flush();
+//            } catch (IOException ignored) {
+//            }
+//            closeServerAndClientConnections();
+//            if (response.isSuspended()) {
+//                response.resume();
+//                HttpProxy.LOG.warning("Response is resumed due to error: " + message + " (" + requestURL + ")");
+//            } else {
+//                response.finish();
+//                HttpProxy.LOG.warning("Response is finished due to error: " + message + " (" + requestURL + ")");
+//            }
         }
     }
 
@@ -240,23 +243,7 @@ class ProxyClientProcessor extends BaseFilter {
         HttpProxy.LOG.config("Notifying about sending " + contentBuffer + (last ? " (LAST)" : ""));
         // Events in notifyCanWrite are internally synchronized,
         // and all calls of onWritePossible will be in proper order.
-        outputStreamToClient.notifyCanWrite(new WriteHandler() {
-            @Override
-            public void onWritePossible() throws Exception {
-                synchronized (lock) {
-                    outputStreamToClient.write(contentBuffer);
-                    outputStreamToClient.flush(); // - necessary to avoid a bug in Grizzly 2.3.22!
-                    if (last) {
-                        closeConnectionsAndResponse();
-                    }
-                }
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                HttpProxy.LOG.log(Level.WARNING, "Error while sending data to client (" + requestURL + ")", t);
-            }
-        });
+        outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, last));
         return ctx.getStopAction();
     }
 
@@ -290,6 +277,33 @@ class ProxyClientProcessor extends BaseFilter {
     private void setConnectionToServer(Connection connectionToServer) {
         synchronized (lock) {
             this.connectionToServer = connectionToServer;
+        }
+    }
+
+    private class ProxyWriteHandler implements WriteHandler {
+        private final Buffer contentBuffer;
+        private final boolean last;
+
+        ProxyWriteHandler(Buffer contentBuffer, boolean last) {
+            assert contentBuffer != null;
+            this.contentBuffer = contentBuffer;
+            this.last = last;
+        }
+
+        @Override
+        public void onWritePossible() throws Exception {
+            synchronized (lock) {
+                outputStreamToClient.write(contentBuffer);
+                outputStreamToClient.flush(); // - necessary to avoid a bug in Grizzly 2.3.22!
+                if (last) {
+                    closeConnectionsAndResponse();
+                }
+            }
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            HttpProxy.LOG.log(Level.WARNING, "Error while sending data to client (" + requestURL + ")", t);
         }
     }
 }
