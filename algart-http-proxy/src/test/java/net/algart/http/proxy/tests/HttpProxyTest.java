@@ -26,7 +26,9 @@ package net.algart.http.proxy.tests;
 
 import net.algart.http.proxy.HttpProxy;
 import net.algart.http.proxy.HttpServerAddress;
+import net.algart.http.proxy.HttpServerDetector;
 import net.algart.http.proxy.HttpServerFailureHandler;
+import org.glassfish.grizzly.http.util.Parameters;
 
 import java.io.IOException;
 
@@ -39,9 +41,20 @@ public class HttpProxyTest {
         final String serverHost = args[0];
         final int serverPort = Integer.parseInt(args[1]);
         final int proxyPort = Integer.parseInt(args[2]);
+        final HttpServerAddress serverAddress = new HttpServerAddress(serverHost, serverPort);
 
         final HttpProxy proxy = new HttpProxy(proxyPort,
-            queryParameters -> new HttpServerAddress(serverHost, serverPort),
+            new HttpServerDetector() {
+                @Override
+                public HttpServerAddress getServer(Parameters queryParameters) {
+                    return serverAddress;
+                }
+
+                @Override
+                public String toString() {
+                    return "debugging detector for fixed address " + serverAddress;
+                }
+            },
             new HttpServerFailureHandler());
         proxy.start();
         System.out.println("Press ENTER to stop the proxy server...");

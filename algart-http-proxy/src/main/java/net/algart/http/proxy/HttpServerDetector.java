@@ -34,21 +34,25 @@ public interface HttpServerDetector {
     abstract class BasedOnMap implements HttpServerDetector {
         @Override
         public HttpServerAddress getServer(Parameters queryParameters) {
+            return getServer(toMap(queryParameters));
+        }
+
+        public abstract HttpServerAddress getServer(Map<String, String> queryParameters);
+
+        public static Map<String, String> toMap(Parameters queryParameters) {
             Objects.requireNonNull(queryParameters);
-            final Map<String, String> parsedParameters = new LinkedHashMap<>();
+            final Map<String, String> result = new LinkedHashMap<>();
             for (final String name : queryParameters.getParameterNames()) {
                 final String[] values = queryParameters.getParameterValues(name);
                 if (values != null) {
                     for (String value : values) {
-                        parsedParameters.put(name, value);
+                        result.put(name, value);
                         // - using 1st from several values
                         break;
                     }
                 }
             }
-            return getServer(parsedParameters);
+            return result;
         }
-
-        public abstract HttpServerAddress getServer(Map<String, String> queryParameters);
     }
 }

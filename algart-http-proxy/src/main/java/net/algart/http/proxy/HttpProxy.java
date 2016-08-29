@@ -38,20 +38,16 @@ import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class HttpProxy {
+public final class HttpProxy {
 
-    static final String LOCAL_HOST = System.getProperty(
+    private static final String LOCAL_HOST = System.getProperty(
         "net.algart.pyramid.http.localHost", "localhost");
-    static final int READING_FROM_SERVER_TIMEOUT = 300000;
-    // - 5 minutes
+    private static final int READING_FROM_SERVER_TIMEOUT_IN_MS = 300000;
 
     static final Logger LOG = Logger.getLogger(HttpProxy.class.getName());
 
@@ -96,6 +92,11 @@ public class HttpProxy {
         return proxyPort;
     }
 
+    @Override
+    public String toString() {
+        return "AlgART HTTP Proxy at port " + proxyPort + " (server detector: " + serverDetector + ")";
+    }
+
     private class HttpProxyHandler extends HttpHandler {
         @Override
         public void service(Request request, Response response) throws Exception {
@@ -118,9 +119,13 @@ public class HttpProxy {
                 httpClientFilter.removeContentEncoding(encoding);
                 // - we must not decode encoded data, but need to pass them to the client
             }
-            final HttpServerAddress server = serverDetector.getServer(parseQueryOnly(request));
+            final Parameters queryParameters = parseQueryOnly(request);
+            final HttpServerAddress server = serverDetector.getServer(queryParameters);
             final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(
                 request, response, server, serverFailureHandler);
+            LOG.config("Proxying " + requestURI + " to " + server);
+//            System.out.println("    Parameters: " + HttpServerDetector.BasedOnMap.toMap(queryParameters));
+//              - note: this call requires some resources for new Map and must be commented usually
             final FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
             clientFilterChainBuilder.add(new TransportFilter());
             clientFilterChainBuilder.add(httpClientFilter);
@@ -129,22 +134,17 @@ public class HttpProxy {
             final TCPNIOConnectorHandler connectorHandler =
                 TCPNIOConnectorHandler.builder(clientTransport).processor(filterChain).build();
             clientProcessor.setConnectorToServer(connectorHandler);
-            response.suspend(HttpProxy.READING_FROM_SERVER_TIMEOUT, TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
-                @Override
-                public boolean onTimeout(Response response) {
-                    LOG.info("Timeout while waiting for the server response for " + server + ", uri " + requestURI);
-                    clientProcessor.closeAndReturnError("Timeout while waiting for the server response");
-                    // - maybe this message will be not be sent correctly, if some data was already sent to the client
-                    serverFailureHandler.onServerTimeout(server, requestURI);
-                    return true;
-                }
+            response.suspend(READING_FROM_SERVER_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS, null, responseInTimeout -> {
+                clientProcessor.closeAndReturnError("Timeout while waiting for the server response");
+                // - maybe this message will be not be sent correctly, if some data was already sent to the client
+                serverFailureHandler.onServerTimeout(server, requestURI);
+                return true;
             });
             clientProcessor.requestConnectionToServer();
         }
     }
 
     private static Parameters parseQueryOnly(Request request) {
-        final Map<String, List<String>> result = new LinkedHashMap<>();
         final Parameters parameters = new Parameters();
         final Charset charset = lookupCharset(request.getCharacterEncoding());
         parameters.setHeaders(request.getRequest().getHeaders());

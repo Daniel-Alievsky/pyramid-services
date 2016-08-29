@@ -153,7 +153,7 @@ class ProxyClientProcessor extends BaseFilter {
             response.setContentType("text/plain; charset=utf-8");
             final Buffer contentBuffer = Buffers.wrap(null, "AlgART Proxy: " + message);
             outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, true));
-            HttpProxy.LOG.warning("Error: " + message + " (" + requestURL + ")");
+            HttpProxy.LOG.warning("Error: " + message + " (" + requestURL + ", forwarded to " + server + ")");
 //            try {
 //                outputStreamToClient.write(contentBuffer);
 //                outputStreamToClient.flush();

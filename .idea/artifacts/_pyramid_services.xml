@@ -59,6 +59,9 @@
         </element>
         <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-config/.users.json" />
         <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-config/.upload.json" />
+        <element id="directory" name="logging">
+          <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/logging" />
+        </element>
       </element>
       <element id="directory" name="pp-images">
         <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-images" />

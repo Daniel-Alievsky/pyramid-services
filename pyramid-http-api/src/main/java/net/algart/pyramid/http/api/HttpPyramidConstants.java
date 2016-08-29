@@ -37,8 +37,6 @@ public class HttpPyramidConstants {
         "net.algart.pyramid.http.configFile", "config.json");
     public static final int MAX_NUMBER_OF_PYRAMIDS_IN_POOL = Math.max(16, Integer.getInteger(
         "net.algart.pyramid.http.imageCachingMemory", 256));
-    public static final boolean ENABLE_ALL_CHARACTERS_IN_PYRAMID_ID = Boolean.getBoolean(
-        "net.algart.pyramid.http.enableAllCharactersInPyramidId");
 
     public static final long IMAGE_CACHING_MEMORY = Math.max(16, Long.getLong(
         "net.algart.pyramid.http.imageCachingMemory", 256L * 1024L * 1024L));

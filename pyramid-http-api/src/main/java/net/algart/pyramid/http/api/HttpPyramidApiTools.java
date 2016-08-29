@@ -36,12 +36,16 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class HttpPyramidApiTools {
+    private static final boolean ENABLE_ALL_CHARACTERS_IN_PYRAMID_ID_FOR_DEBUG = false;
+    // - must be false for secure working
+
     private HttpPyramidApiTools() {
     }
 
     public static boolean isAllowedPyramidId(String pyramidId) {
         Objects.requireNonNull(pyramidId, "Null pyramidId");
-        if (HttpPyramidConstants.ENABLE_ALL_CHARACTERS_IN_PYRAMID_ID) {
+        if (ENABLE_ALL_CHARACTERS_IN_PYRAMID_ID_FOR_DEBUG) {
+            // - dangerous solution: in any case we must disable characters like / \ . ..
             return true;
         }
         return pyramidId.matches("^[A-Za-z0-9_\\-]*$");
