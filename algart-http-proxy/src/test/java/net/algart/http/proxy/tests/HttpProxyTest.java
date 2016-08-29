@@ -46,7 +46,8 @@ public class HttpProxyTest {
         final HttpProxy proxy = new HttpProxy(proxyPort,
             new HttpServerDetector() {
                 @Override
-                public HttpServerAddress getServer(Parameters queryParameters) {
+                public HttpServerAddress getServer(String requestURI, Parameters queryParameters) {
+                    System.out.printf("Test proxy forwards %s to %s%n", requestURI, serverAddress);
                     return serverAddress;
                 }
 

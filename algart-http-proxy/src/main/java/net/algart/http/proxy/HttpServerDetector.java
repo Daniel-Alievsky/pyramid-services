@@ -29,15 +29,23 @@ import org.glassfish.grizzly.http.util.Parameters;
 import java.util.*;
 
 public interface HttpServerDetector {
-    HttpServerAddress getServer(Parameters queryParameters);
+    /**
+     * Finds and returns the server, to which the proxy should address the request.
+     *
+     * @param requestURI      path in the site, for example /folder/test.html for request
+     *                        http://localhost:8080/folder/test.html?arg1=value1&arg2=value2 (8080 is the proxy port)
+     * @param queryParameters parsed GET/POST parameters in the query string (arg1=value1 and arg2=value2)
+     * @return host and port of the server, which should really process this request, for example somesite.com:9000
+     */
+    HttpServerAddress getServer(String requestURI, Parameters queryParameters);
 
     abstract class BasedOnMap implements HttpServerDetector {
         @Override
-        public HttpServerAddress getServer(Parameters queryParameters) {
-            return getServer(toMap(queryParameters));
+        public HttpServerAddress getServer(String requestURI, Parameters queryParameters) {
+            return getServer(requestURI, toMap(queryParameters));
         }
 
-        public abstract HttpServerAddress getServer(Map<String, String> queryParameters);
+        public abstract HttpServerAddress getServer(String requestURI, Map<String, String> queryParameters);
 
         public static Map<String, String> toMap(Parameters queryParameters) {
             Objects.requireNonNull(queryParameters);

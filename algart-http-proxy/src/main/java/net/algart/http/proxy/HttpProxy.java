@@ -120,7 +120,7 @@ public final class HttpProxy {
                 // - we must not decode encoded data, but need to pass them to the client
             }
             final Parameters queryParameters = parseQueryOnly(request);
-            final HttpServerAddress server = serverDetector.getServer(queryParameters);
+            final HttpServerAddress server = serverDetector.getServer(requestURI, queryParameters);
             final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(
                 request, response, server, serverFailureHandler);
             LOG.config("Proxying " + requestURI + " to " + server);
