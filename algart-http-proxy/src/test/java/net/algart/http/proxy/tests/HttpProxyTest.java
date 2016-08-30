@@ -56,7 +56,8 @@ public class HttpProxyTest {
                     return "debugging detector for fixed address " + serverAddress;
                 }
             },
-            new HttpServerFailureHandler());
+            new HttpServerFailureHandler() {
+            });
         proxy.start();
         System.out.println("Press ENTER to stop the proxy server...");
         System.in.read();

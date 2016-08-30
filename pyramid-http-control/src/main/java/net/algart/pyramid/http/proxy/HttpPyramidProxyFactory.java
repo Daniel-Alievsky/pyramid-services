@@ -22,16 +22,31 @@
  * SOFTWARE.
  */
 
-package net.algart.http.proxy;
+package net.algart.pyramid.http.proxy;
 
-/**
- * Failure handler. Can be used, for example, for restarting a service that does not reply to requests.
- */
-public interface HttpServerFailureHandler {
-    default void onConnectionFailed(HttpServerAddress address, Throwable throwable) {
+import net.algart.http.proxy.HttpServerAddress;
+import net.algart.http.proxy.HttpServerDetector;
+import net.algart.http.proxy.HttpServerFailureHandler;
+import org.glassfish.grizzly.http.util.Parameters;
+
+public class HttpPyramidProxyFactory {
+
+    static class ServerDetector implements HttpServerDetector {
+        @Override
+        public HttpServerAddress getServer(String requestURI, Parameters queryParameters) {
+            throw new UnsupportedOperationException();
+        }
     }
 
+    static class ServerFailureHandler implements HttpServerFailureHandler {
+        @Override
+        public void onConnectionFailed(HttpServerAddress address, Throwable throwable) {
+            throw new UnsupportedOperationException();
+        }
 
-    default void onServerTimeout(HttpServerAddress address, String requestURI) {
+        @Override
+        public void onServerTimeout(HttpServerAddress address, String requestURI) {
+            throw new UnsupportedOperationException();
+        }
     }
 }
