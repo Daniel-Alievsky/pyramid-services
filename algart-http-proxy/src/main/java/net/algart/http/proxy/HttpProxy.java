@@ -47,7 +47,7 @@ public final class HttpProxy {
 
     private static final String LOCAL_HOST = System.getProperty(
         "net.algart.pyramid.http.localHost", "localhost");
-    private static final int READING_FROM_SERVER_TIMEOUT_IN_MS = 300000;
+    private static final int READING_FROM_SERVER_TIMEOUT_IN_MS = 30000;
 
     static final Logger LOG = Logger.getLogger(HttpProxy.class.getName());
 
@@ -134,11 +134,15 @@ public final class HttpProxy {
             final TCPNIOConnectorHandler connectorHandler =
                 TCPNIOConnectorHandler.builder(clientTransport).processor(filterChain).build();
             clientProcessor.setConnectorToServer(connectorHandler);
-            response.suspend(READING_FROM_SERVER_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS, null, responseInTimeout -> {
-                clientProcessor.closeAndReturnError("Timeout while waiting for the server response");
-                // - maybe this message will be not be sent correctly, if some data was already sent to the client
-                serverFailureHandler.onServerTimeout(server, requestURI);
-                return true;
+            //TODO!! pass directly to requestConnectionToServer?
+            response.suspend(READING_FROM_SERVER_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
+                @Override
+                public boolean onTimeout(Response responseInTimeout) {
+                    clientProcessor.closeAndReturnError("Timeout while waiting for the server response");
+                    // - maybe this message will be not be sent correctly, if some data was already sent to the client
+                    serverFailureHandler.onServerTimeout(server, requestURI);
+                    return true;
+                }
             });
             clientProcessor.requestConnectionToServer();
         }

@@ -55,6 +55,7 @@ class ProxyClientProcessor extends BaseFilter {
     private final NIOInputStream inputStreamFromClient;
     // - usually for POST requests
     private final NIOOutputStream outputStreamToClient;
+    private final Connection connectionToClient;
     private TCPNIOConnectorHandler connectorToServer = null;
     // - should be set after constructing the object on the base of resulting FilterChain
     private volatile Connection connectionToServer = null;
@@ -74,6 +75,7 @@ class ProxyClientProcessor extends BaseFilter {
         this.requestURL = String.valueOf(request.getRequestURL());
         this.response = response;
         this.inputStreamFromClient = request.getNIOInputStream();
+        this.connectionToClient = request.getRequest().getConnection();
         this.outputStreamToClient = response.getNIOOutputStream();
         this.serverFailureHandler = serverFailureHandler;
         this.server = server;
@@ -138,7 +140,11 @@ class ProxyClientProcessor extends BaseFilter {
                 connectionToServer = null;
             }
             try {
+                System.out.println("Closing to browser");
                 outputStreamToClient.close();
+                connectionToClient.closeSilently();
+                // - closing connection is necessary in a case of some problem like timeout;
+                // in other case, the browser will wait for all Content-Length bytes
             } catch (IOException e) {
                 HttpProxy.LOG.log(Level.FINE, "Error while closing output stream", e);
                 // only FINE: this exception can occur if the browser terminates connection;
@@ -149,24 +155,15 @@ class ProxyClientProcessor extends BaseFilter {
 
     public void closeAndReturnError(String message) {
         synchronized (lock) {
-            response.setStatus(500, "AlgART Proxy: " + message);
-            response.setContentType("text/plain; charset=utf-8");
-            final Buffer contentBuffer = Buffers.wrap(null, "AlgART Proxy: " + message);
-            outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, true));
+            if (response.isCommitted()) {
+                closeConnectionsAndResponse();
+            } else {
+                response.setStatus(500, "AlgART Proxy: " + message);
+                response.setContentType("text/plain; charset=utf-8");
+                final Buffer contentBuffer = Buffers.wrap(null, "AlgART Proxy: " + message);
+                outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, true));
+            }
             HttpProxy.LOG.warning("Error: " + message + " (" + requestURL + ", forwarded to " + server + ")");
-//            try {
-//                outputStreamToClient.write(contentBuffer);
-//                outputStreamToClient.flush();
-//            } catch (IOException ignored) {
-//            }
-//            closeServerAndClientConnections();
-//            if (response.isSuspended()) {
-//                response.resume();
-//                HttpProxy.LOG.warning("Response is resumed due to error: " + message + " (" + requestURL + ")");
-//            } else {
-//                response.finish();
-//                HttpProxy.LOG.warning("Response is finished due to error: " + message + " (" + requestURL + ")");
-//            }
         }
     }
 
