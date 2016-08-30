@@ -290,8 +290,73 @@ public class HttpPyramidConfiguration {
         }
     }
 
+    public static class Proxy {
+        private final int proxyPort;
+        private final PyramidServer pyramidServer;
+        private final DefaultServer defaultServer;
+
+        private Proxy(JsonObject json) {
+            Objects.requireNonNull(json);
+            this.proxyPort = getRequiredInt(json, "proxyPort");
+            if (proxyPort <= 0) {
+                throw new JsonException("Invalid configuration JSON:"
+                    + " zero or negative proxy port number " + proxyPort);
+            }
+            this.pyramidServer = new PyramidServer(json.getJsonObject("pyramidServer"));
+            this.defaultServer = new DefaultServer(json.getJsonObject("defaultServer"));
+        }
+
+        public int getProxyPort() {
+            return proxyPort;
+        }
+
+        //TODO!! toJson
+
+        private static class PyramidServer {
+            private String host = "localhost";
+            private String pathRegExp = HttpPyramidConstants.CommandPrefixes.PREXIX_START_REG_EXP;
+
+            public PyramidServer(JsonObject json) {
+                if (json != null) {
+                    this.host = json.getString("host", host);
+                    this.pathRegExp = json.getString("pathRegExp", pathRegExp);
+                }
+            }
+
+            public String getHost() {
+                return host;
+            }
+
+            public String getPathRegExp() {
+                return pathRegExp;
+            }
+        }
+
+        private static class DefaultServer {
+            private String host = "localhost";
+            private int port = 80;
+
+            public DefaultServer(JsonObject json) {
+                if (json != null) {
+                    this.host = json.getString("host", host);
+                    this.port = json.getInt("port", port);
+                }
+            }
+
+            public String getHost() {
+                return host;
+            }
+
+            public int getPort() {
+                return port;
+            }
+        }
+    }
+
     private final Map<String, Process> processes;
     private final Map<String, Service> allServices;
+    private final Proxy proxy = null;
+    // TODO!! read from JSON
     private final Path rootFolder;
     private final Path globalConfigurationFile;
     private final Set<String> commonClassPath;
@@ -351,6 +416,14 @@ public class HttpPyramidConfiguration {
 
     public Process getProcess(String groupId) {
         return processes.get(groupId);
+    }
+
+    /**
+     * Returns proxy configuraion.
+     * @return proxy configuraion; may be <tt>null</tt>.
+     */
+    public Proxy getProxy() {
+        return proxy;
     }
 
     public Path getRootFolder() {

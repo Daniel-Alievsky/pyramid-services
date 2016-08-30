@@ -24,25 +24,26 @@
 
 package net.algart.pyramid.http.proxy;
 
-import net.algart.http.proxy.HttpProxy;
+import net.algart.http.proxy.HttpServerAddress;
+import net.algart.http.proxy.HttpServerFailureHandler;
 import net.algart.pyramid.http.api.HttpPyramidConfiguration;
 
-import java.util.Objects;
-
-public class HttpPyramidProxyFactory {
-
+class ServerFailureHandler implements HttpServerFailureHandler {
     private final HttpPyramidConfiguration configuration;
 
-    public HttpPyramidProxyFactory(HttpPyramidConfiguration configuration) {
-        Objects.requireNonNull(configuration, "Null configuration");
-        Objects.requireNonNull(configuration.getProxy(), "Proxy configuration not present");
+    ServerFailureHandler(HttpPyramidConfiguration configuration) {
+        assert configuration != null;
         this.configuration = configuration;
     }
 
-    public HttpProxy newProxy() {
-        return new HttpProxy(
-            configuration.getProxy().getProxyPort(),
-            new ServerDetector(configuration),
-            new ServerFailureHandler(configuration));
+    @Override
+    public void onConnectionFailed(HttpServerAddress address, Throwable throwable) {
+        throw new UnsupportedOperationException();
+        //TODO!! restart the server, reserving 2nd instance to be on the safe side
+    }
+
+    @Override
+    public void onServerTimeout(HttpServerAddress address, String requestURI) {
+        throw new UnsupportedOperationException();
     }
 }

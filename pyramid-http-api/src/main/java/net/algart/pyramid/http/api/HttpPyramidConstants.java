@@ -57,14 +57,17 @@ public class HttpPyramidConstants {
      * (maybe including also '-' and '_' characters).
      */
     public static class CommandPrefixes {
-        public static final String FINISH = "/pp-finish";
-        public static final String GC = "/pp-gc";
-        public static final String ALIVE_STATUS = "/pp-alive-status";
-        public static final String INFORMATION = "/pp-information";
-        public static final String READ_RECTANGLE = "/pp-read-rectangle";
-        public static final String TMS = "/pp-tms";
-        public static final String ZOOMIFY = "/pp-zoomify";
-        public static final String READ_SPECIAL_IMAGE = "/pp-read-special-image";
+        public static final String PREXIX_START = "/pp-";
+        public static final String PREXIX_START_REG_EXP = "^\\/pp\\-";
+        // - must correspond to PREFIX_START
+        public static final String FINISH = PREXIX_START + "finish";
+        public static final String GC = PREXIX_START + "gc";
+        public static final String ALIVE_STATUS = PREXIX_START + "alive-status";
+        public static final String INFORMATION = PREXIX_START + "information";
+        public static final String READ_RECTANGLE = PREXIX_START + "read-rectangle";
+        public static final String TMS = PREXIX_START + "tms";
+        public static final String ZOOMIFY = PREXIX_START + "zoomify";
+        public static final String READ_SPECIAL_IMAGE = PREXIX_START + "read-special-image";
 
         private CommandPrefixes() {}
     }
