@@ -35,12 +35,15 @@ import java.io.IOException;
 public class HttpProxyTest {
     public static void main(String[] args) throws IOException {
         if (args.length < 3) {
-            System.out.println("Usage: " + HttpProxyTest.class.getName() + " server-host server-port proxy-port");
+            System.out.println("Usage: " + HttpProxyTest.class.getName()
+                + " server-host server-port proxy-port [timeout [localhost]]");
             return;
         }
         final String serverHost = args[0];
         final int serverPort = Integer.parseInt(args[1]);
         final int proxyPort = Integer.parseInt(args[2]);
+        final Integer timeout = args.length > 3 ? Integer.valueOf(args[3]) : null;
+        final String localhost = args.length > 4 ? args[4] : null;
         final HttpServerAddress serverAddress = new HttpServerAddress(serverHost, serverPort);
 
         final HttpProxy proxy = new HttpProxy(proxyPort,
@@ -58,6 +61,12 @@ public class HttpProxyTest {
             },
             new HttpServerFailureHandler() {
             });
+        if (timeout != null) {
+            proxy.setReadingFromServerTimeoutInMs(timeout);
+        }
+        if (localhost != null) {
+            proxy.setLocalHost(localhost);
+        }
         proxy.start();
         System.out.println("Press ENTER to stop the proxy server...");
         System.in.read();

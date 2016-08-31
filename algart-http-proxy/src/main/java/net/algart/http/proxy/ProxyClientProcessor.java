@@ -56,8 +56,6 @@ class ProxyClientProcessor extends BaseFilter {
     // - usually for POST requests
     private final NIOOutputStream outputStreamToClient;
     private final Connection connectionToClient;
-    private TCPNIOConnectorHandler connectorToServer = null;
-    // - should be set after constructing the object on the base of resulting FilterChain
     private volatile Connection connectionToServer = null;
     private volatile boolean firstReply = true;
     private volatile boolean connectionToServerClosed = false;
@@ -97,11 +95,7 @@ class ProxyClientProcessor extends BaseFilter {
         this.requestToServerHeaders = builder.build();
     }
 
-    public void setConnectorToServer(TCPNIOConnectorHandler connectorToServer) {
-        this.connectorToServer = Objects.requireNonNull(connectorToServer);
-    }
-
-    public void requestConnectionToServer() throws InterruptedException {
+    public void requestConnectionToServer(TCPNIOConnectorHandler connectorToServer) throws InterruptedException {
         HttpProxy.LOG.config("Requesting connection to " + server + "...");
         connectorToServer.connect(
             new InetSocketAddress(server.serverHost(), server.serverPort()), new CompletionHandler<Connection>() {
@@ -129,42 +123,6 @@ class ProxyClientProcessor extends BaseFilter {
                 public void updated(Connection connection) {
                 }
             });
-    }
-
-    public void closeServerAndClientConnections() {
-        synchronized (lock) {
-            connectionToServerClosed = true;
-            // - closeSilently will invoke handleClose, but it will do nothing
-            if (connectionToServer != null) {
-                connectionToServer.closeSilently();
-                connectionToServer = null;
-            }
-            try {
-                System.out.println("Closing to browser");
-                outputStreamToClient.close();
-                connectionToClient.closeSilently();
-                // - closing connection is necessary in a case of some problem like timeout;
-                // in other case, the browser will wait for all Content-Length bytes
-            } catch (IOException e) {
-                HttpProxy.LOG.log(Level.FINE, "Error while closing output stream", e);
-                // only FINE: this exception can occur if the browser terminates connection;
-                // no sense to duplicate messages - an attempt to write will also lead to an exception
-            }
-        }
-    }
-
-    public void closeAndReturnError(String message) {
-        synchronized (lock) {
-            if (response.isCommitted()) {
-                closeConnectionsAndResponse();
-            } else {
-                response.setStatus(500, "AlgART Proxy: " + message);
-                response.setContentType("text/plain; charset=utf-8");
-                final Buffer contentBuffer = Buffers.wrap(null, "AlgART Proxy: " + message);
-                outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, true));
-            }
-            HttpProxy.LOG.warning("Error: " + message + " (" + requestURL + ", forwarded to " + server + ")");
-        }
     }
 
     @Override
@@ -261,6 +219,41 @@ class ProxyClientProcessor extends BaseFilter {
             + server + " (" + requestURL + ")");
         closeConnectionsAndResponse();
         return ctx.getStopAction();
+    }
+
+    public void closeAndReturnError(String message) {
+        synchronized (lock) {
+            if (response.isCommitted()) {
+                closeConnectionsAndResponse();
+            } else {
+                response.setStatus(500, "AlgART Proxy: " + message);
+                response.setContentType("text/plain; charset=utf-8");
+                final Buffer contentBuffer = Buffers.wrap(null, "AlgART Proxy: " + message);
+                outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, true));
+            }
+            HttpProxy.LOG.warning("Error: " + message + " (" + requestURL + ", forwarded to " + server + ")");
+        }
+    }
+
+    private void closeServerAndClientConnections() {
+        synchronized (lock) {
+            connectionToServerClosed = true;
+            // - closeSilently will invoke handleClose, but it will do nothing
+            if (connectionToServer != null) {
+                connectionToServer.closeSilently();
+                connectionToServer = null;
+            }
+            try {
+                outputStreamToClient.close();
+                connectionToClient.closeSilently();
+                // - closing connection is necessary in a case of some problem like timeout;
+                // in other case, the browser will wait for all Content-Length bytes
+            } catch (IOException e) {
+                HttpProxy.LOG.log(Level.FINE, "Error while closing output stream", e);
+                // only FINE: this exception can occur if the browser terminates connection;
+                // no sense to duplicate messages - an attempt to write will also lead to an exception
+            }
+        }
     }
 
     private void closeConnectionsAndResponse() {

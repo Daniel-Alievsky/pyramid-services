@@ -45,17 +45,24 @@ import java.util.logging.Logger;
 
 public final class HttpProxy {
 
-    private static final String LOCAL_HOST = System.getProperty(
-        "net.algart.pyramid.http.localHost", "localhost");
-    private static final int READING_FROM_SERVER_TIMEOUT_IN_MS = 30000;
+    private static final String DEFAULT_LOCAL_HOST = System.getProperty(
+        "net.algart.http.proxy.localHost", "localhost");
+    private static final int DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS = Integer.getInteger(
+        "net.algart.http.proxy.timeout", 60000);
 
     static final Logger LOG = Logger.getLogger(HttpProxy.class.getName());
 
+    private final int proxyPort;
     private final HttpServerDetector serverDetector;
     private final HttpServerFailureHandler serverFailureHandler;
-    private final int proxyPort;
     private final TCPNIOTransport clientTransport;
     private final HttpServer proxyServer;
+
+    private String localHost = DEFAULT_LOCAL_HOST;
+    private int readingFromServerTimeoutInMs = DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS;
+    private volatile boolean firstStart = true;
+
+    private final Object lock = new Object();
 
     public HttpProxy(
         int proxyPort,
@@ -72,20 +79,46 @@ public final class HttpProxy {
             "Handler of failures while working with server must be specified (may be trivial)");
         this.clientTransport = TCPNIOTransportBuilder.newInstance().build();
         this.proxyServer = new HttpServer();
-        this.proxyServer.addListener(new NetworkListener(HttpProxy.class.getName(), LOCAL_HOST, proxyPort));
         this.proxyServer.getServerConfiguration().addHttpHandler(new HttpProxyHandler());
     }
 
+    public String getLocalHost() {
+        return localHost;
+    }
+
+    public void setLocalHost(String localHost) {
+        this.localHost = Objects.requireNonNull(localHost, "Null localHost argument");
+    }
+
+    public int getReadingFromServerTimeoutInMs() {
+        return readingFromServerTimeoutInMs;
+    }
+
+    public void setReadingFromServerTimeoutInMs(int readingFromServerTimeoutInMs) {
+        if (readingFromServerTimeoutInMs <= 0) {
+            throw new IllegalArgumentException("Zero or negative timeout for reading from server");
+        }
+        this.readingFromServerTimeoutInMs = readingFromServerTimeoutInMs;
+    }
+
     public final void start() throws IOException {
-        LOG.info("Starting " + this);
-        clientTransport.start();
-        proxyServer.start();
+        synchronized (lock) {
+            if (firstStart) {
+                this.proxyServer.addListener(new NetworkListener(HttpProxy.class.getName(), localHost, proxyPort));
+                firstStart = false;
+            }
+            LOG.info("Starting " + this);
+            clientTransport.start();
+            proxyServer.start();
+        }
     }
 
     public final void finish() {
-        LOG.log(Level.INFO, "Shutting down pyramid service...");
-        proxyServer.shutdown();
-        clientTransport.shutdown();
+        synchronized (lock) {
+            LOG.log(Level.INFO, "Shutting down pyramid service...");
+            proxyServer.shutdown();
+            clientTransport.shutdown();
+        }
     }
 
     public final int getProxyPort() {
@@ -94,7 +127,7 @@ public final class HttpProxy {
 
     @Override
     public String toString() {
-        return "AlgART HTTP Proxy at port " + proxyPort + " (server detector: " + serverDetector + ")";
+        return "AlgART HTTP Proxy at  " + localHost + ":" + proxyPort + " (server detector: " + serverDetector + ")";
     }
 
     private class HttpProxyHandler extends HttpHandler {
@@ -133,18 +166,15 @@ public final class HttpProxy {
             final FilterChain filterChain = clientFilterChainBuilder.build();
             final TCPNIOConnectorHandler connectorHandler =
                 TCPNIOConnectorHandler.builder(clientTransport).processor(filterChain).build();
-            clientProcessor.setConnectorToServer(connectorHandler);
-            //TODO!! pass directly to requestConnectionToServer?
-            response.suspend(READING_FROM_SERVER_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
+            response.suspend(readingFromServerTimeoutInMs, TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
                 @Override
                 public boolean onTimeout(Response responseInTimeout) {
                     clientProcessor.closeAndReturnError("Timeout while waiting for the server response");
-                    // - maybe this message will be not be sent correctly, if some data was already sent to the client
                     serverFailureHandler.onServerTimeout(server, requestURI);
                     return true;
                 }
             });
-            clientProcessor.requestConnectionToServer();
+            clientProcessor.requestConnectionToServer(connectorHandler);
         }
     }
 
