@@ -127,7 +127,7 @@ public final class HttpProxy {
 
     @Override
     public String toString() {
-        return "AlgART HTTP Proxy at  " + localHost + ":" + proxyPort + " (server detector: " + serverDetector + ")";
+        return "AlgART HTTP Proxy at " + localHost + ":" + proxyPort + " (server detector: " + serverDetector + ")";
     }
 
     private class HttpProxyHandler extends HttpHandler {

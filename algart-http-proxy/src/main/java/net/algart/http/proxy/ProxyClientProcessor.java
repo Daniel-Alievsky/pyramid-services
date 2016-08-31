@@ -293,7 +293,8 @@ class ProxyClientProcessor extends BaseFilter {
 
         @Override
         public void onError(Throwable t) {
-            HttpProxy.LOG.log(Level.WARNING, "Error while sending data to client (" + requestURL + ")", t);
+            HttpProxy.LOG.config("Error while sending data to client (" + requestURL + "): " + t);
+            // - this is not a serious problem, just the client cannot receive data too quickly (internet is slow)
         }
     }
 }
