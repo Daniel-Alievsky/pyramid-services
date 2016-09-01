@@ -8,5 +8,8 @@
   "commonVmOptions" : [
     "-ea"
   ],
-  "commonMemory" : "1g"
+  "commonMemory" : "1g",
+  "proxy" : {
+    "proxyPort" : 100
+  }
 }

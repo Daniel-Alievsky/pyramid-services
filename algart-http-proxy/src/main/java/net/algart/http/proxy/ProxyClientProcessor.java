@@ -107,9 +107,14 @@ class ProxyClientProcessor extends BaseFilter {
                 public void failed(Throwable throwable) {
                     synchronized (lock) {
                         HttpProxy.LOG.log(Level.WARNING,
-                            "Connection to server " + server + " failed (" + requestURL + ")", throwable);
+                            "Connection to server " + server + " failed (" + requestURL + "): " + throwable);
+                        // - possible situation, no sense to print stack trace
                         closeAndReturnError("Cannot connect to the server");
-                        serverFailureHandler.onConnectionFailed(server, throwable);
+                        try {
+                            serverFailureHandler.onConnectionFailed(server, throwable);
+                        } catch (Throwable t) {
+                            HttpProxy.LOG.log(Level.SEVERE, "Problem in onConnectionFailed (" + requestURL + ")", t);
+                        }
                     }
                 }
 

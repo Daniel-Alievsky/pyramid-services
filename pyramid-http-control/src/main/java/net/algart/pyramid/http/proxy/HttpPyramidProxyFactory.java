@@ -42,7 +42,7 @@ public class HttpPyramidProxyFactory {
     public HttpProxy newProxy() {
         return new HttpProxy(
             configuration.getProxy().getProxyPort(),
-            new ServerDetector(configuration),
-            new ServerFailureHandler(configuration));
+            new StandardPlanePyramidServerDetector(configuration),
+            new HttpPyramidServiceServerFailureHandler(configuration));
     }
 }

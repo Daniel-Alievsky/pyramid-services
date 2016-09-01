@@ -25,56 +25,25 @@
 package net.algart.pyramid.http.proxy;
 
 import net.algart.http.proxy.HttpServerAddress;
-import net.algart.http.proxy.HttpServerDetector;
-import net.algart.pyramid.PlanePyramid;
-import net.algart.pyramid.PlanePyramidPool;
+import net.algart.http.proxy.HttpServerFailureHandler;
 import net.algart.pyramid.http.api.HttpPyramidConfiguration;
-import org.glassfish.grizzly.http.util.Parameters;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.logging.Logger;
-
-class ServerDetector implements HttpServerDetector {
-
-    private static final int POOL_SIZE = 500000;
-    // - several megabytes as a maximum
-    private static final Logger LOG = Logger.getLogger(ServerDetector.class.getName());
-
-    private final Map<String, HttpServerAddress> pool = new ServerAddressHashMap();
+class HttpPyramidServiceServerFailureHandler implements HttpServerFailureHandler {
     private final HttpPyramidConfiguration configuration;
 
-    ServerDetector(HttpPyramidConfiguration configuration) {
+    HttpPyramidServiceServerFailureHandler(HttpPyramidConfiguration configuration) {
         assert configuration != null;
         this.configuration = configuration;
     }
 
     @Override
-    public HttpServerAddress getServer(String requestURI, Parameters queryParameters) {
+    public void onConnectionFailed(HttpServerAddress address, Throwable throwable) {
         throw new UnsupportedOperationException();
+        //TODO!! restart the server, reserving 2nd instance to be on the safe side
     }
 
-
-    private static final HttpServerAddress pyramidIdToServerAddress(String pyramidId) {
+    @Override
+    public void onServerTimeout(HttpServerAddress address, String requestURI) {
         throw new UnsupportedOperationException();
-        //TODO!! see StandardPlanePyramidFactory
-    }
-
-    private static class ServerAddressHashMap extends LinkedHashMap<String, HttpServerAddress> {
-        public ServerAddressHashMap() {
-            super(16, 0.75f, true);
-            // necessary to set access order to true
-        }
-
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, HttpServerAddress> eldest) {
-            if (size() > POOL_SIZE) {
-                LOG.info("Proxy server detector pool overflow; freeing and removing pyramid id " + eldest.getKey());
-                return true;
-            } else {
-                return false;
-            }
-        }
     }
 }

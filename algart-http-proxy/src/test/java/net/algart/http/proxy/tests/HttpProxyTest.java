@@ -60,6 +60,10 @@ public class HttpProxyTest {
                 }
             },
             new HttpServerFailureHandler() {
+                @Override
+                public void onServerTimeout(HttpServerAddress address, String requestURI) throws IOException {
+                    throw new UnsupportedOperationException("Don't know how to restart server");
+                }
             });
         if (timeout != null) {
             proxy.setReadingFromServerTimeoutInMs(timeout);

@@ -24,14 +24,16 @@
 
 package net.algart.http.proxy;
 
+import java.io.IOException;
+
 /**
  * Failure handler. Can be used, for example, for restarting a service that does not reply to requests.
  */
 public interface HttpServerFailureHandler {
-    default void onConnectionFailed(HttpServerAddress address, Throwable throwable) {
+    default void onConnectionFailed(HttpServerAddress address, Throwable throwable) throws IOException {
     }
 
 
-    default void onServerTimeout(HttpServerAddress address, String requestURI) {
+    default void onServerTimeout(HttpServerAddress address, String requestURI) throws IOException {
     }
 }

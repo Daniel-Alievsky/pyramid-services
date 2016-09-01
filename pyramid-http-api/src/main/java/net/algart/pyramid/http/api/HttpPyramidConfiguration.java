@@ -290,7 +290,73 @@ public class HttpPyramidConfiguration {
         }
     }
 
-    public static class Proxy {
+    public static class Proxy extends ConvertibleToJson {
+        private static class PyramidServer extends ConvertibleToJson {
+            private String host = "localhost";
+            private String pathRegExp = HttpPyramidConstants.CommandPrefixes.PREXIX_START_REG_EXP;
+
+            public PyramidServer(JsonObject json) {
+                if (json != null) {
+                    this.host = json.getString("host", host);
+                    this.pathRegExp = json.getString("pathRegExp", pathRegExp);
+                }
+            }
+
+            public String getHost() {
+                return host;
+            }
+
+            public String getPathRegExp() {
+                return pathRegExp;
+            }
+
+            public String toJsonString() {
+                return toJson().toString();
+            }
+
+            JsonObject toJson() {
+                final JsonObjectBuilder builder = Json.createObjectBuilder();
+                builder.add("host", host);
+                builder.add("pathRegExp", pathRegExp);
+                return builder.build();
+            }
+        }
+
+        private static class DefaultServer extends ConvertibleToJson {
+            private String host = "localhost";
+            private int port = 80;
+
+            public DefaultServer(JsonObject json) {
+                if (json != null) {
+                    this.host = json.getString("host", host);
+                    this.port = json.getInt("port", port);
+                    if (port <= 0) {
+                        throw new JsonException("Invalid configuration JSON:"
+                            + " zero or negative default server port number " + port);
+                    }
+                }
+            }
+
+            public String getHost() {
+                return host;
+            }
+
+            public int getPort() {
+                return port;
+            }
+
+            public String toJsonString() {
+                return toJson().toString();
+            }
+
+            JsonObject toJson() {
+                final JsonObjectBuilder builder = Json.createObjectBuilder();
+                builder.add("host", host);
+                builder.add("port", port);
+                return builder.build();
+            }
+        }
+
         private final int proxyPort;
         private final PyramidServer pyramidServer;
         private final DefaultServer defaultServer;
@@ -310,53 +376,21 @@ public class HttpPyramidConfiguration {
             return proxyPort;
         }
 
-        //TODO!! toJson
-
-        private static class PyramidServer {
-            private String host = "localhost";
-            private String pathRegExp = HttpPyramidConstants.CommandPrefixes.PREXIX_START_REG_EXP;
-
-            public PyramidServer(JsonObject json) {
-                if (json != null) {
-                    this.host = json.getString("host", host);
-                    this.pathRegExp = json.getString("pathRegExp", pathRegExp);
-                }
-            }
-
-            public String getHost() {
-                return host;
-            }
-
-            public String getPathRegExp() {
-                return pathRegExp;
-            }
+        public String toJsonString() {
+            return toJson().toString();
         }
 
-        private static class DefaultServer {
-            private String host = "localhost";
-            private int port = 80;
-
-            public DefaultServer(JsonObject json) {
-                if (json != null) {
-                    this.host = json.getString("host", host);
-                    this.port = json.getInt("port", port);
-                }
-            }
-
-            public String getHost() {
-                return host;
-            }
-
-            public int getPort() {
-                return port;
-            }
+        JsonObject toJson() {
+            final JsonObjectBuilder builder = Json.createObjectBuilder();
+            builder.add("proxyPort", proxyPort);
+            builder.add("pyramidServer", pyramidServer.toJson());
+            builder.add("defaultServer", defaultServer.toJson());
+            return builder.build();
         }
     }
 
     private final Map<String, Process> processes;
     private final Map<String, Service> allServices;
-    private final Proxy proxy = null;
-    // TODO!! read from JSON
     private final Path rootFolder;
     private final Path globalConfigurationFile;
     private final Set<String> commonClassPath;
@@ -366,6 +400,7 @@ public class HttpPyramidConfiguration {
     private final Long commonMemory;
     // - actual -Xmx for every process is a maximum of this value and its xmx()
     private String systemCommandsFolder;
+    private final Proxy proxy;
 
     private HttpPyramidConfiguration(
         Path rootFolder, Path globalConfigurationFile, JsonObject globalConfiguration, Map<String, Process> processes)
@@ -381,6 +416,7 @@ public class HttpPyramidConfiguration {
         for (Process process : processList) {
             process.parentConfiguration = this;
         }
+        final JsonObject proxy = globalConfiguration.getJsonObject("proxy");
         final JsonArray commonClassPath = globalConfiguration.getJsonArray(COMMON_CLASS_PATH_FIELD);
         this.commonClassPath = new TreeSet<>();
         if (commonClassPath != null) {
@@ -399,6 +435,7 @@ public class HttpPyramidConfiguration {
         this.commonMemory = commonMemory != null ? parseLongWithMetricalSuffixes(commonMemory) : null;
         this.systemCommandsFolder = globalConfiguration.getString("systemCommandsFolder",
             HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER);
+        this.proxy = proxy == null ? null : new Proxy(proxy);
         this.allServices = new LinkedHashMap<>();
         for (Process process : processList) {
             for (Service service : process.services) {
@@ -422,10 +459,6 @@ public class HttpPyramidConfiguration {
      * Returns proxy configuraion.
      * @return proxy configuraion; may be <tt>null</tt>.
      */
-    public Proxy getProxy() {
-        return proxy;
-    }
-
     public Path getRootFolder() {
         return rootFolder;
     }
@@ -448,6 +481,10 @@ public class HttpPyramidConfiguration {
 
     public String getSystemCommandsFolder() {
         return systemCommandsFolder;
+    }
+
+    public Proxy getProxy() {
+        return proxy;
     }
 
     public Path systemCommandsFolder() {
@@ -580,6 +617,9 @@ public class HttpPyramidConfiguration {
         if (commonMemory != null) {
             builder.add("commonMemory", commonMemory);
         }
+        if (proxy != null) {
+            builder.add("proxy", proxy.toJson());
+        }
         return builder.build();
     }
 
@@ -651,7 +691,7 @@ public class HttpPyramidConfiguration {
         }
     }
 
-    // Class, not interface: method toJson should be not public
+    // Class, not interface: method toJson should not be public
     private static abstract class ConvertibleToJson {
         abstract JsonObject toJson();
     }

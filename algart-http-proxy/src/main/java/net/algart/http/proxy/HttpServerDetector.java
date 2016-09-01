@@ -26,6 +26,7 @@ package net.algart.http.proxy;
 
 import org.glassfish.grizzly.http.util.Parameters;
 
+import java.io.IOException;
 import java.util.*;
 
 public interface HttpServerDetector {
@@ -37,15 +38,16 @@ public interface HttpServerDetector {
      * @param queryParameters parsed GET/POST parameters in the query string (arg1=value1 and arg2=value2)
      * @return host and port of the server, which should really process this request, for example somesite.com:9000
      */
-    HttpServerAddress getServer(String requestURI, Parameters queryParameters);
+    HttpServerAddress getServer(String requestURI, Parameters queryParameters) throws IOException;
 
     abstract class BasedOnMap implements HttpServerDetector {
         @Override
-        public HttpServerAddress getServer(String requestURI, Parameters queryParameters) {
+        public HttpServerAddress getServer(String requestURI, Parameters queryParameters) throws IOException {
             return getServer(requestURI, toMap(queryParameters));
         }
 
-        public abstract HttpServerAddress getServer(String requestURI, Map<String, String> queryParameters);
+        public abstract HttpServerAddress getServer(String requestURI, Map<String, String> queryParameters)
+            throws IOException;
 
         public static Map<String, String> toMap(Parameters queryParameters) {
             Objects.requireNonNull(queryParameters);
@@ -55,7 +57,7 @@ public interface HttpServerDetector {
                 if (values != null) {
                     for (String value : values) {
                         result.put(name, value);
-                        // - using 1st from several values
+                        // - using the first from several values
                         break;
                     }
                 }

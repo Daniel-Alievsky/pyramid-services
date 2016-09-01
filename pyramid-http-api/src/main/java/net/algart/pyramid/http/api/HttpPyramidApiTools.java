@@ -95,12 +95,12 @@ public class HttpPyramidApiTools {
         if (p == -1) {
             return null;
         }
-        p += HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME.length();
         int q = path.indexOf(HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME, p);
         if (q == -1) {
             return null;
         }
-        return path.substring(p, q);
+        q += HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME.length();
+        return extractPyramidIdFromAppendedIdForURLPath(path.substring(p, q));
     }
 
     public static String pyramidIdToConfiguration(String pyramidId) throws IOException {

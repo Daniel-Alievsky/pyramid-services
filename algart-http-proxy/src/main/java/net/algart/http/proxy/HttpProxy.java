@@ -132,7 +132,7 @@ public final class HttpProxy {
 
     private class HttpProxyHandler extends HttpHandler {
         @Override
-        public void service(Request request, Response response) throws Exception {
+        public void service(Request request, Response response) {
 //            System.out.println("Proxying " + request.getRequestURI() + " - " + request.getRequestURL());
 //            System.out.println("  port: " + request.getServerPort());
 //            System.out.println("  remote port: " + request.getRemotePort());
@@ -146,35 +146,50 @@ public final class HttpProxy {
 //                }
 //            }
 
-            final String requestURI = request.getRequestURI();
-            final HttpClientFilter httpClientFilter = new HttpClientFilter();
-            for (ContentEncoding encoding : httpClientFilter.getContentEncodings()) {
-                httpClientFilter.removeContentEncoding(encoding);
-                // - we must not decode encoded data, but need to pass them to the client
-            }
-            final Parameters queryParameters = parseQueryOnly(request);
-            final HttpServerAddress server = serverDetector.getServer(requestURI, queryParameters);
-            final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(
-                request, response, server, serverFailureHandler);
-            LOG.config("Proxying " + requestURI + " to " + server);
+            try {
+                final String requestURI = request.getRequestURI();
+                final HttpClientFilter httpClientFilter = new HttpClientFilter();
+                for (ContentEncoding encoding : httpClientFilter.getContentEncodings()) {
+                    httpClientFilter.removeContentEncoding(encoding);
+                    // - we must not decode encoded data, but need to pass them to the client
+                }
+                final Parameters queryParameters = parseQueryOnly(request);
+                final HttpServerAddress server = serverDetector.getServer(requestURI, queryParameters);
+                final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(
+                    request, response, server, serverFailureHandler);
+                LOG.config("Proxying " + requestURI + " to " + server);
 //            System.out.println("    Parameters: " + HttpServerDetector.BasedOnMap.toMap(queryParameters));
 //              - note: this call requires some resources for new Map and must be commented usually
-            final FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
-            clientFilterChainBuilder.add(new TransportFilter());
-            clientFilterChainBuilder.add(httpClientFilter);
-            clientFilterChainBuilder.add(clientProcessor);
-            final FilterChain filterChain = clientFilterChainBuilder.build();
-            final TCPNIOConnectorHandler connectorHandler =
-                TCPNIOConnectorHandler.builder(clientTransport).processor(filterChain).build();
-            response.suspend(readingFromServerTimeoutInMs, TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
-                @Override
-                public boolean onTimeout(Response responseInTimeout) {
-                    clientProcessor.closeAndReturnError("Timeout while waiting for the server response");
-                    serverFailureHandler.onServerTimeout(server, requestURI);
-                    return true;
+                final FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
+                clientFilterChainBuilder.add(new TransportFilter());
+                clientFilterChainBuilder.add(httpClientFilter);
+                clientFilterChainBuilder.add(clientProcessor);
+                final FilterChain filterChain = clientFilterChainBuilder.build();
+                final TCPNIOConnectorHandler connectorHandler =
+                    TCPNIOConnectorHandler.builder(clientTransport).processor(filterChain).build();
+                response.suspend(readingFromServerTimeoutInMs, TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
+                    @Override
+                    public boolean onTimeout(Response responseInTimeout) {
+                        clientProcessor.closeAndReturnError("Timeout while waiting for the server response");
+                        try {
+                            serverFailureHandler.onServerTimeout(server, requestURI);
+                        } catch (Throwable t) {
+                            LOG.log(Level.SEVERE, "Problem in onServerTimeout (" + this + ")", t);
+                        }
+                        return true;
+                    }
+                });
+                clientProcessor.requestConnectionToServer(connectorHandler);
+            } catch (Throwable t) {
+                response.setStatus(500, "AlgART Proxy request error");
+                response.setContentType("text/plain");
+                try {
+                    response.getWriter().write(String.format("AlgART Proxy request error%n"));
+                } catch (IOException ignored) {
                 }
-            });
-            clientProcessor.requestConnectionToServer(connectorHandler);
+                // Minimizing information about an exception
+                LOG.log(Level.SEVERE, "Problem in " + HttpProxy.this, t);
+            }
         }
     }
 
