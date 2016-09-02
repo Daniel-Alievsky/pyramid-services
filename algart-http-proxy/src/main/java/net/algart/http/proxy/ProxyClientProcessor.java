@@ -59,6 +59,7 @@ class ProxyClientProcessor extends BaseFilter {
     private volatile Connection connectionToServer = null;
     private volatile boolean firstReply = true;
     private volatile boolean connectionToServerClosed = false;
+    private volatile boolean allClosed = false;
 
     private final Object lock = new Object();
 
@@ -263,9 +264,16 @@ class ProxyClientProcessor extends BaseFilter {
 
     private void closeConnectionsAndResponse() {
         synchronized (lock) {
-            closeServerAndClientConnections();
-            response.resume();
-            HttpProxy.LOG.config("Response is resumed");
+            if (!allClosed) {
+                // This method can be called twice, for example, in the following scenario:
+                // 1) timeout occurs and HttpProxy class calls closeAndReturnError
+                // 2) AFTER this connection fails in requestConnectionToServer() method,
+                // and it's failed() method is launched
+                closeServerAndClientConnections();
+                response.resume();
+                HttpProxy.LOG.config("Response is resumed");
+                allClosed = true;
+            }
         }
     }
 

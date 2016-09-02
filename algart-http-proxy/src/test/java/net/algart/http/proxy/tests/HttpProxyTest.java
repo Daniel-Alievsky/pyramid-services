@@ -50,7 +50,7 @@ public class HttpProxyTest {
             new HttpServerDetector() {
                 @Override
                 public HttpServerAddress getServer(String requestURI, Parameters queryParameters) {
-                    System.out.printf("Test proxy forwards %s to %s%n", requestURI, serverAddress);
+                    System.out.printf("Demo proxy forwards %s to %s%n", requestURI, serverAddress);
                     return serverAddress;
                 }
 
@@ -62,7 +62,8 @@ public class HttpProxyTest {
             new HttpServerFailureHandler() {
                 @Override
                 public void onServerTimeout(HttpServerAddress address, String requestURI) throws IOException {
-                    throw new UnsupportedOperationException("Don't know how to restart server");
+                    throw new UnsupportedOperationException(
+                        "Demo proxy doesn't know how to resolve the server problem");
                 }
             });
         if (timeout != null) {
