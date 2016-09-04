@@ -53,7 +53,7 @@ public final class HttpProxy {
     static final Logger LOG = Logger.getLogger(HttpProxy.class.getName());
 
     private final int proxyPort;
-    private final HttpServerDetector serverDetector;
+    private final HttpServerResolver serverResolver;
     private final HttpServerFailureHandler serverFailureHandler;
     private final TCPNIOTransport clientTransport;
     private final HttpServer proxyServer;
@@ -66,15 +66,15 @@ public final class HttpProxy {
 
     public HttpProxy(
         int proxyPort,
-        HttpServerDetector serverDetector,
+        HttpServerResolver serverResolver,
         HttpServerFailureHandler serverFailureHandler)
     {
         if (proxyPort <= 0) {
             throw new IllegalArgumentException("Zero or negative port " + proxyPort);
         }
         this.proxyPort = proxyPort;
-        this.serverDetector = Objects.requireNonNull(serverDetector,
-            "Server detector must be specified to determine necessary server host and port");
+        this.serverResolver = Objects.requireNonNull(serverResolver,
+            "Server resolver must be specified to determine necessary server host and port");
         this.serverFailureHandler = Objects.requireNonNull(serverFailureHandler,
             "Handler of failures while working with server must be specified (may be trivial)");
         this.clientTransport = TCPNIOTransportBuilder.newInstance().build();
@@ -127,7 +127,7 @@ public final class HttpProxy {
 
     @Override
     public String toString() {
-        return "AlgART HTTP Proxy at " + localHost + ":" + proxyPort + " (server detector: " + serverDetector + ")";
+        return "AlgART HTTP Proxy at " + localHost + ":" + proxyPort + " (server detector: " + serverResolver + ")";
     }
 
     private class HttpProxyHandler extends HttpHandler {
@@ -154,7 +154,7 @@ public final class HttpProxy {
                     // - we must not decode encoded data, but need to pass them to the client
                 }
                 final Parameters queryParameters = parseQueryOnly(request);
-                final HttpServerAddress server = serverDetector.getServer(requestURI, queryParameters);
+                final HttpServerAddress server = serverResolver.findServer(requestURI, queryParameters);
                 final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(
                     request, response, server, serverFailureHandler);
                 LOG.config("Proxying " + requestURI + " to " + server);

@@ -29,7 +29,7 @@ import org.glassfish.grizzly.http.util.Parameters;
 import java.io.IOException;
 import java.util.*;
 
-public interface HttpServerDetector {
+public interface HttpServerResolver {
     /**
      * Finds and returns the server, to which the proxy should address the request.
      *
@@ -38,11 +38,11 @@ public interface HttpServerDetector {
      * @param queryParameters parsed GET/POST parameters in the query string (arg1=value1 and arg2=value2)
      * @return host and port of the server, which should really process this request, for example somesite.com:9000
      */
-    HttpServerAddress getServer(String requestURI, Parameters queryParameters) throws IOException;
+    HttpServerAddress findServer(String requestURI, Parameters queryParameters) throws IOException;
 
-    abstract class BasedOnMap implements HttpServerDetector {
+    abstract class BasedOnMap implements HttpServerResolver {
         @Override
-        public HttpServerAddress getServer(String requestURI, Parameters queryParameters) throws IOException {
+        public HttpServerAddress findServer(String requestURI, Parameters queryParameters) throws IOException {
             return getServer(requestURI, toMap(queryParameters));
         }
 

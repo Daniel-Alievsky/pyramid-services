@@ -24,8 +24,13 @@
 
 package net.algart.pyramid.http.api;
 
+import javax.json.Json;
+import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -113,5 +118,34 @@ public class HttpPyramidApiTools {
             throw new FileNotFoundException("File " + path.toAbsolutePath() + " does not exists");
         }
         return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    }
+
+    public static JsonObject configurationToJson(String pyramidConfiguration) throws IOException {
+        try {
+            return Json.createReader(new StringReader(pyramidConfiguration)).readObject();
+        } catch (JsonException e) {
+            throw new IOException("Invalid configuration json: <<<" + pyramidConfiguration + ">>>", e);
+        }
+    }
+
+    public static Path getDefaultPyramidPath(JsonObject pyramidConfigurationJson) throws IOException {
+        final String pyramidPath = pyramidConfigurationJson.getString(
+            HttpPyramidConstants.DEFAULT_PYRAMID_PATH_NAME, null);
+        if (pyramidPath == null) {
+            throw new IOException("Invalid configuration json: no " + HttpPyramidConstants.DEFAULT_PYRAMID_PATH_NAME
+                + " value <<<" + pyramidConfigurationJson + ">>>");
+        }
+        return Paths.get(pyramidPath);
+    }
+
+    public static JsonObject readDefaultPyramidConfiguration(Path pyramidPath) throws IOException {
+        final Path pyramidConfigurationFile = pyramidPath.resolve(".pp.json");
+        try (final JsonReader reader = Json.createReader(Files.newBufferedReader(
+            pyramidConfigurationFile, StandardCharsets.UTF_8)))
+        {
+            return reader.readObject();
+        } catch (JsonException e) {
+            throw new IOException("Invalid pyramid configuration json at " + pyramidConfigurationFile, e);
+        }
     }
 }

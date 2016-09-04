@@ -26,7 +26,7 @@ package net.algart.http.proxy.tests;
 
 import net.algart.http.proxy.HttpProxy;
 import net.algart.http.proxy.HttpServerAddress;
-import net.algart.http.proxy.HttpServerDetector;
+import net.algart.http.proxy.HttpServerResolver;
 import net.algart.http.proxy.HttpServerFailureHandler;
 import org.glassfish.grizzly.http.util.Parameters;
 
@@ -47,9 +47,9 @@ public class HttpProxyTest {
         final HttpServerAddress serverAddress = new HttpServerAddress(serverHost, serverPort);
 
         final HttpProxy proxy = new HttpProxy(proxyPort,
-            new HttpServerDetector() {
+            new HttpServerResolver() {
                 @Override
-                public HttpServerAddress getServer(String requestURI, Parameters queryParameters) {
+                public HttpServerAddress findServer(String requestURI, Parameters queryParameters) {
                     System.out.printf("Demo proxy forwards %s to %s%n", requestURI, serverAddress);
                     return serverAddress;
                 }

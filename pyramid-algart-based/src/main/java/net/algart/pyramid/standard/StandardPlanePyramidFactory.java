@@ -26,6 +26,7 @@ package net.algart.pyramid.standard;
 
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidFactory;
+import net.algart.pyramid.http.api.HttpPyramidApiTools;
 import net.algart.simagis.pyramid.PlanePyramidSource;
 import net.algart.simagis.pyramid.PlanePyramidSourceFactory;
 
@@ -58,23 +59,13 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
     @Override
     public PlanePyramid newPyramid(final String pyramidConfiguration) throws Exception {
         Objects.requireNonNull(pyramidConfiguration);
-        final JsonObject config;
-        try {
-            config = Json.createReader(new StringReader(pyramidConfiguration)).readObject();
-        } catch (JsonException e) {
-            throw new IOException("Invalid configuration json: <<<" + pyramidConfiguration + ">>>", e);
-        }
-        final Path path = Paths.get(config.getString("pyramidPath"));
-        final JsonObject pyramidJson;
-        try (final JsonReader reader = Json.createReader(Files.newBufferedReader(
-            path.resolve(".pp.json"), StandardCharsets.UTF_8)))
-        {
-            pyramidJson = reader.readObject();
-        }
+        final JsonObject config = HttpPyramidApiTools.configurationToJson(pyramidConfiguration);
+        final Path pyramidDir = HttpPyramidApiTools.getDefaultPyramidPath(config);
+        final JsonObject pyramidJson = HttpPyramidApiTools.readDefaultPyramidConfiguration(pyramidDir);
         final String fileName = pyramidJson.getString("fileName");
-        final Path pyramidPath = path.resolve(fileName);
-        if (!Files.exists(pyramidPath)) {
-            throw new IOException("Pyramid file at " + pyramidPath + " does not exist");
+        final Path pyramidFile = pyramidDir.resolve(fileName);
+        if (!Files.exists(pyramidFile)) {
+            throw new IOException("Pyramid file at " + pyramidFile + " does not exist");
         }
         JsonObject rendererJson = config.getJsonObject(PlanePyramid.RENDERER_KEY);
         if (rendererJson == null) {
@@ -83,7 +74,7 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
         final boolean rawBytes = config.getBoolean("rawBytes", false);
         final boolean cacheable = config.getBoolean("cacheable", true);
         final PlanePyramidSource planePyramidSource = planePyramidSourceFactory.newPlanePyramidSource(
-            pyramidPath.toAbsolutePath().toString(),
+            pyramidFile.toAbsolutePath().toString(),
             pyramidJson.toString(),
             rendererJson.toString());
         return new StandardPlanePyramid(planePyramidSource, rendererJson, rawBytes, cacheable, pyramidConfiguration);

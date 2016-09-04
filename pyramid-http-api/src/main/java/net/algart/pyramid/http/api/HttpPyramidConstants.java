@@ -35,6 +35,8 @@ public class HttpPyramidConstants {
         "net.algart.pyramid.http.configRoot", "/pp-links");
     public static final String CONFIG_FILE_NAME = System.getProperty(
         "net.algart.pyramid.http.configFile", "config.json");
+    public static final String DEFAULT_PYRAMID_PATH_NAME = System.getProperty(
+        "net.algart.pyramid.http.pyramidPathName", "pyramidPath");
     public static final int MAX_NUMBER_OF_PYRAMIDS_IN_POOL = Math.max(16, Integer.getInteger(
         "net.algart.pyramid.http.imageCachingMemory", 256));
 

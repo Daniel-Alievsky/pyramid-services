@@ -25,34 +25,44 @@
 package net.algart.pyramid.http.proxy;
 
 import net.algart.http.proxy.HttpServerAddress;
-import net.algart.http.proxy.HttpServerDetector;
+import net.algart.http.proxy.HttpServerResolver;
 import net.algart.pyramid.http.api.HttpPyramidApiTools;
 import net.algart.pyramid.http.api.HttpPyramidConfiguration;
 import net.algart.pyramid.http.api.HttpPyramidConstants;
 import org.glassfish.grizzly.http.util.Parameters;
 
+import javax.json.Json;
+import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
-class StandardPlanePyramidServerDetector implements HttpServerDetector {
+class StandardPlanePyramidServerResolver implements HttpServerResolver {
 
     private static final int POOL_SIZE = 500000;
     // - several megabytes as a maximum
-    private static final Logger LOG = Logger.getLogger(StandardPlanePyramidServerDetector.class.getName());
+    private static final Logger LOG = Logger.getLogger(StandardPlanePyramidServerResolver.class.getName());
 
     private final Map<String, HttpServerAddress> pool = new ServerAddressHashMap();
     private final HttpPyramidConfiguration configuration;
     private final Object lock = new Object();
 
-    StandardPlanePyramidServerDetector(HttpPyramidConfiguration configuration) {
+    StandardPlanePyramidServerResolver(HttpPyramidConfiguration configuration) {
         assert configuration != null;
         this.configuration = configuration;
     }
 
     @Override
-    public HttpServerAddress getServer(String requestURI, Parameters queryParameters) throws IOException {
+    public HttpServerAddress findServer(String requestURI, Parameters queryParameters) throws IOException {
         final String pyramidId = findPyramidId(requestURI, queryParameters);
         synchronized (lock) {
             HttpServerAddress result = pool.get(pyramidId);
@@ -73,7 +83,8 @@ class StandardPlanePyramidServerDetector implements HttpServerDetector {
     }
 
     private static HttpServerAddress pyramidIdToServerAddress(String pyramidId) throws IOException {
-        final String configuration = HttpPyramidApiTools.pyramidIdToConfiguration(pyramidId);
+        final String pyramidConfiguration = HttpPyramidApiTools.pyramidIdToConfiguration(pyramidId);
+        final JsonObject config = HttpPyramidApiTools.configurationToJson(pyramidConfiguration);
         throw new UnsupportedOperationException();
         //TODO!! see StandardPlanePyramidFactory
     }
