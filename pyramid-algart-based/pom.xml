@@ -26,7 +26,7 @@
         </dependency>
         <dependency>
             <groupId>net.algart.pyramid</groupId>
-            <artifactId>pyramid-http-api</artifactId>
+            <artifactId>pyramid-api</artifactId>
             <version>1.0.1</version>
         </dependency>
         <dependency>

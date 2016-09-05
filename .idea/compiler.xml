@@ -24,8 +24,8 @@
         <processorPath useClasspath="true" />
         <module name="algart-http-proxy" />
         <module name="pyramid-algart-based" />
+        <module name="pyramid-api" />
         <module name="pyramid-common" />
-        <module name="pyramid-http-api" />
         <module name="pyramid-http-control" />
         <module name="pyramid-http-proxy" />
         <module name="pyramid-http-server" />
@@ -34,8 +34,8 @@
     <bytecodeTargetLevel>
       <module name="algart-http-proxy" target="1.8" />
       <module name="pyramid-algart-based" target="1.8" />
+      <module name="pyramid-api" target="1.8" />
       <module name="pyramid-common" target="1.8" />
-      <module name="pyramid-http-api" target="1.8" />
       <module name="pyramid-http-control" target="1.8" />
       <module name="pyramid-http-proxy" target="1.8" />
       <module name="pyramid-http-server" target="1.8" />

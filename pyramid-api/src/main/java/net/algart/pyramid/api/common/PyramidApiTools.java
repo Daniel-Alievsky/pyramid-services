@@ -24,8 +24,6 @@
 
 package net.algart.pyramid.api.common;
 
-import net.algart.pyramid.api.http.HttpPyramidConstants;
-
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.JsonObject;

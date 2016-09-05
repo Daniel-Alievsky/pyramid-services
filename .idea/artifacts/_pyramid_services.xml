@@ -53,7 +53,7 @@
             <element id="artifact" artifact-name="pyramid-algart-based-with-test:jar" />
             <element id="artifact" artifact-name="pyramid-common:jar" />
             <element id="artifact" artifact-name="pyramid-http-server:jar" />
-            <element id="artifact" artifact-name="pyramid-http-api:jar" />
+            <element id="artifact" artifact-name="pyramid-api:jar" />
             <element id="artifact" artifact-name="pyramid-http-control:jar" />
           </element>
         </element>

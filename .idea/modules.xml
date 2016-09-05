@@ -4,8 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/algart-http-proxy/algart-http-proxy.iml" filepath="$PROJECT_DIR$/algart-http-proxy/algart-http-proxy.iml" />
       <module fileurl="file://$PROJECT_DIR$/pyramid-algart-based/pyramid-algart-based.iml" filepath="$PROJECT_DIR$/pyramid-algart-based/pyramid-algart-based.iml" />
+      <module fileurl="file://$PROJECT_DIR$/pyramid-api/pyramid-api.iml" filepath="$PROJECT_DIR$/pyramid-api/pyramid-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/pyramid-common/pyramid-common.iml" filepath="$PROJECT_DIR$/pyramid-common/pyramid-common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/pyramid-http-api/pyramid-http-api.iml" filepath="$PROJECT_DIR$/pyramid-http-api/pyramid-http-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/pyramid-http-control/pyramid-http-control.iml" filepath="$PROJECT_DIR$/pyramid-http-control/pyramid-http-control.iml" />
       <module fileurl="file://$PROJECT_DIR$/pyramid-http-server/pyramid-http-server.iml" filepath="$PROJECT_DIR$/pyramid-http-server/pyramid-http-server.iml" />
       <module fileurl="file://$PROJECT_DIR$/pyramid-services.iml" filepath="$PROJECT_DIR$/pyramid-services.iml" />

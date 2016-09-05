@@ -24,21 +24,11 @@
 
 package net.algart.pyramid.api.http;
 
-import javax.json.Json;
-import javax.json.JsonException;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Locale;
-import java.util.Objects;
 
 public class HttpPyramidApiTools {
     public static Path keyFile(Path systemCommandsFolder, String urlPrefix, int port) {
