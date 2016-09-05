@@ -291,11 +291,11 @@ public class HttpPyramidConfiguration {
     }
 
     public static class Proxy extends ConvertibleToJson {
-        private static class PyramidServer extends ConvertibleToJson {
+        public static class PyramidServer extends ConvertibleToJson {
             private String host = "localhost";
             private String pathRegExp = HttpPyramidConstants.CommandPrefixes.PREXIX_START_REG_EXP;
 
-            public PyramidServer(JsonObject json) {
+            private PyramidServer(JsonObject json) {
                 if (json != null) {
                     this.host = json.getString("host", host);
                     this.pathRegExp = json.getString("pathRegExp", pathRegExp);
@@ -322,11 +322,11 @@ public class HttpPyramidConfiguration {
             }
         }
 
-        private static class DefaultServer extends ConvertibleToJson {
+        public static class DefaultServer extends ConvertibleToJson {
             private String host = "localhost";
             private int port = 80;
 
-            public DefaultServer(JsonObject json) {
+            private DefaultServer(JsonObject json) {
                 if (json != null) {
                     this.host = json.getString("host", host);
                     this.port = json.getInt("port", port);
@@ -374,6 +374,14 @@ public class HttpPyramidConfiguration {
 
         public int getProxyPort() {
             return proxyPort;
+        }
+
+        public PyramidServer getPyramidServer() {
+            return pyramidServer;
+        }
+
+        public DefaultServer getDefaultServer() {
+            return defaultServer;
         }
 
         public String toJsonString() {
@@ -497,6 +505,10 @@ public class HttpPyramidConfiguration {
 
     public Map<String, Service> allServices() {
         return Collections.unmodifiableMap(allServices);
+    }
+
+    public Service findServiceByFormatName(String formatName) {
+        return allServices.get(formatName);
     }
 
     public int numberOfProcesses() {

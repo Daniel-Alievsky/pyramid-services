@@ -29,6 +29,7 @@ public class PyramidConstants {
         "net.algart.pyramid.common.pyramidPathNameInJson", "pyramidPath");
     public static final String DEFAULT_PYRAMID_CONFIGURATION_FILE_NAME = System.getProperty(
         "net.algart.pyramid.common.pyramidConfigurationFileName", ".pp.json");
+    public static final String DEFAULT_FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME = "formatName";
 
     public static final String CONFIG_ROOT_DIR = System.getProperty(
         "net.algart.pyramid.http.configRoot", "/pp-links");

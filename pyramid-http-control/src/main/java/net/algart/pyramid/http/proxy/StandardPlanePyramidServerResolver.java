@@ -34,6 +34,7 @@ import org.glassfish.grizzly.http.util.Parameters;
 
 import javax.json.JsonObject;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -56,29 +57,52 @@ class StandardPlanePyramidServerResolver implements HttpServerResolver {
     @Override
     public HttpServerAddress findServer(String requestURI, Parameters queryParameters) throws IOException {
         final String pyramidId = findPyramidId(requestURI, queryParameters);
-        synchronized (lock) {
-            HttpServerAddress result = pool.get(pyramidId);
-            if (result == null) {
-                result = pyramidIdToServerAddress(pyramidId);
-                pool.put(pyramidId, result);
+        if (pyramidId != null) {
+            synchronized (lock) {
+                HttpServerAddress result = pool.get(pyramidId);
+                if (result == null) {
+                    result = pyramidIdToServerAddress(pyramidId);
+                    pool.put(pyramidId, result);
+                }
+                return result;
             }
-            return result;
         }
+        final Integer serverPort = findServerPort(queryParameters);
+        if (serverPort != null) {
+            return new HttpServerAddress(configuration.getProxy().getDefaultServer().getHost(), serverPort);
+        }
+        throw new IllegalArgumentException("Proxy error: URL (path+query) must contain "
+            + HttpPyramidConstants.PYRAMID_ID_PARAMETER_NAME + " or "
+            + HttpPyramidConstants.SERVER_PORT_PARAMETER_NAME + " to detect the required server");
+    }
+
+    private HttpServerAddress pyramidIdToServerAddress(String pyramidId) throws IOException {
+        final String pyramidConfiguration = PyramidApiTools.pyramidIdToConfiguration(pyramidId);
+        final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
+        final Path pyramidDir = PyramidApiTools.getPyramidPath(config);
+        final JsonObject pyramidJson = PyramidApiTools.readDefaultPyramidConfiguration(pyramidDir);
+        final String pyramidFormatName = PyramidApiTools.getFormatNameFromPyramidJson(pyramidJson);
+        final HttpPyramidConfiguration.Service service = configuration.findServiceByFormatName(pyramidFormatName);
+        if (service == null) {
+            throw new IOException("Service not found for pyramid format \"" + pyramidFormatName + "\"");
+        }
+        return new HttpServerAddress(configuration.getProxy().getDefaultServer().getHost(), service.getPort());
+    }
+
+    private static Integer findServerPort(Parameters queryParameters) {
+        final String[] values = queryParameters.getParameterValues(HttpPyramidConstants.SERVER_PORT_PARAMETER_NAME);
+        if (values != null && values.length >= 1) {
+            return Integer.valueOf(values[0]);
+        }
+        return null;
     }
 
     private static String findPyramidId(String requestURI, Parameters queryParameters) {
-        final String[] values = queryParameters.getParameterValues(HttpPyramidConstants.PYRAMID_ID_ARGUMENT_NAME);
+        final String[] values = queryParameters.getParameterValues(HttpPyramidConstants.PYRAMID_ID_PARAMETER_NAME);
         if (values != null && values.length >= 1) {
             return values[0];
         }
         return HttpPyramidApiTools.tryToFindPyramidIdInURLPath(requestURI);
-    }
-
-    private static HttpServerAddress pyramidIdToServerAddress(String pyramidId) throws IOException {
-        final String pyramidConfiguration = PyramidApiTools.pyramidIdToConfiguration(pyramidId);
-        final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
-        throw new UnsupportedOperationException();
-        //TODO!! see StandardPlanePyramidFactory
     }
 
     private static class ServerAddressHashMap extends LinkedHashMap<String, HttpServerAddress> {

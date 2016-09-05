@@ -38,7 +38,7 @@ public class HttpPyramidApiTools {
 
     /**
      * Appends pyramid ID by special prefix and postfix. It is useful when the pyramid ID is not a separate
-     * argument with name {@link HttpPyramidConstants#PYRAMID_ID_ARGUMENT_NAME}, but a part of path
+     * argument with name {@link HttpPyramidConstants#PYRAMID_ID_PARAMETER_NAME}, but a part of path
      * (like in TMS request). It allows to find pyramid ID in URL by 3rd party services like proxy.
      *
      * @param pyramidId the pyramid unique identifier.
@@ -75,7 +75,8 @@ public class HttpPyramidApiTools {
         if (p == -1) {
             return null;
         }
-        int q = path.indexOf(HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME, p);
+        int q = path.indexOf(HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME,
+            p + HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME.length());
         if (q == -1) {
             return null;
         }

@@ -70,13 +70,13 @@ public class PyramidApiTools {
         }
     }
 
-    public static Path getPyramidPath(JsonObject pyramidConfigurationJson) throws IOException {
-        final String pyramidPath = pyramidConfigurationJson.getString(
+    public static Path getPyramidPath(JsonObject configurationJson) throws IOException {
+        final String pyramidPath = configurationJson.getString(
             PyramidConstants.DEFAULT_PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON, null);
         if (pyramidPath == null) {
             throw new IOException("Invalid configuration json: no "
                 + PyramidConstants.DEFAULT_PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON
-                + " value <<<" + pyramidConfigurationJson + ">>>");
+                + " value <<<" + configurationJson + ">>>");
         }
         return Paths.get(pyramidPath);
     }
@@ -91,6 +91,18 @@ public class PyramidApiTools {
         } catch (JsonException e) {
             throw new IOException("Invalid pyramid configuration json at " + pyramidConfigurationFile, e);
         }
+    }
+
+    public static String getFormatNameFromPyramidJson(JsonObject pyramidJson) throws IOException {
+        final String pyramidFormatName = pyramidJson.getString(
+            PyramidConstants.DEFAULT_FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME, null);
+        if (pyramidFormatName == null) {
+            throw new IOException("Invalid pyramid configuration json ("
+                + PyramidConstants.DEFAULT_PYRAMID_CONFIGURATION_FILE_NAME + "): no "
+                + PyramidConstants.DEFAULT_FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME
+                + " value <<<" + pyramidJson + ">>>");
+        }
+        return pyramidFormatName;
     }
 
     private PyramidApiTools() {

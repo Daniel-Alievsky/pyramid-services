@@ -75,9 +75,28 @@ public class HttpPyramidConstants {
      */
     public static final String SYSTEM_COMMANDS_FILE_PREFIX = ".command.%d.";
 
-    public static final String PYRAMID_ID_ARGUMENT_NAME = "pyramidId";
+    /**
+     * Standard name for pyramid ID parameter in GET/POST requests. Used by pyramid services and proxy,
+     * may be used by other 3rd party systems to detect the pyramid.
+     *
+     * <p>In a case of POST request, this parameter nevertheless SHOULD be passed as GET parameter (in a query):
+     * in other case proxy will not find it. Or the client must pass {@link #SERVER_PORT_PARAMETER_NAME}
+     * as an additional GET argument.</p>
+     *
+     * <p>Can be omitted, if it is passed inside URI path between {@link #PYRAMID_ID_PREFIX_IN_PATHNAME} and
+     * {@link #PYRAMID_ID_POSTFIX_IN_PATHNAME}.</p>
+     */
+    public static final String PYRAMID_ID_PARAMETER_NAME = "pyramidId";
     public static final String PYRAMID_ID_PREFIX_IN_PATHNAME = "~~~PyramidID~~~";
     public static final String PYRAMID_ID_POSTFIX_IN_PATHNAME = "~~~";
+
+    /**
+     * Specifies the server port in a case of proxy. Usually it is not necessary: if pyramid ID is available
+     * as {@link #PYRAMID_ID_PARAMETER_NAME} or inside URI path, proxy can find necessary port automatically.
+     * But can be useful for non-standard services.
+     */
+    public static final String SERVER_PORT_PARAMETER_NAME = "serverPort";
+
     public static final String ALIVE_RESPONSE = "Alive";
 
     private HttpPyramidConstants() {

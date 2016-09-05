@@ -237,7 +237,7 @@ public class HttpPyramidServerLauncher {
         }
     }
 
-    private static void printWelcomeAndWaitForEnterKey() {
+    static void printWelcomeAndWaitForEnterKey() {
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e) {
@@ -255,7 +255,7 @@ public class HttpPyramidServerLauncher {
         }
     }
 
-    private static void printExceptionWaitForEnterKeyAndExit(Throwable exception) {
+    static void printExceptionWaitForEnterKeyAndExit(Throwable exception) {
         System.err.printf("%nSome problems occured! Error message:%n%s%n%nStack trace:%n",
             exception.getMessage());
         exception.printStackTrace();

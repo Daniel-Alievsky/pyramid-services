@@ -61,8 +61,8 @@ class StandardPlanePyramid implements PlanePyramid {
 
     private final String pyramidConfiguration;
     private final ScalablePlanePyramidSource source;
-    private final String formatName;
-    private final Color backgroundColor;
+    private final String renderingFormatName;
+    private final Color renderingBackgroundColor;
     private final MatrixToBufferedImageConverter converter;
     private final MatrixToBufferedImageConverter specialImageCconverter;
     private final boolean rawBytes;
@@ -82,12 +82,12 @@ class StandardPlanePyramid implements PlanePyramid {
         Objects.requireNonNull(rendererJson, "Null renderer JSON");
         Objects.requireNonNull(pyramidConfiguration, "Null pyramid configuration");
         this.source = ScalablePlanePyramidSource.newInstance(parentSource);
-        this.formatName = rendererJson.getString("format", "png");
-        final boolean transparencySupported = transparencySupported(formatName);
+        this.renderingFormatName = rendererJson.getString("format", "png");
+        final boolean transparencySupported = transparencySupported(renderingFormatName);
         final JsonNumber opacity = rendererJson.getJsonNumber("opacity");
         final RendererType rendererType = RendererType.parse(rendererJson.getString("type", null))
             .toCompatible(source.bandCount());
-        this.backgroundColor = rendererType.getBackgroundColor(
+        this.renderingBackgroundColor = rendererType.getBackgroundColor(
             rendererJson.getString("backgroundColor", null),
             transparencySupported);
         this.converter = rendererType.getConverter(
@@ -155,7 +155,7 @@ class StandardPlanePyramid implements PlanePyramid {
             //TODO!! return RGBRGB bytes/short/... froe readImage method
         }
         BufferedImage bufferedImage = source.readBufferedImage(compression, fromX, fromY, toX, toY, converter);
-        return bufferedImageToBytes(bufferedImage, formatName);
+        return bufferedImageToBytes(bufferedImage, renderingFormatName);
     }
 
     @Override
@@ -183,7 +183,7 @@ class StandardPlanePyramid implements PlanePyramid {
             m = Matrices.asResized(Matrices.ResizingMethod.POLYLINEAR_AVERAGING, m, m.dim(0), width, height);
         }
         final BufferedImage bufferedImage = specialImageCconverter.toBufferedImage(m);
-        return bufferedImageToBytes(bufferedImage, formatName);
+        return bufferedImageToBytes(bufferedImage, renderingFormatName);
     }
 
     @Override
@@ -193,7 +193,7 @@ class StandardPlanePyramid implements PlanePyramid {
 
     @Override
     public String format() {
-        return formatName;
+        return renderingFormatName;
     }
 
     @Override
@@ -208,14 +208,14 @@ class StandardPlanePyramid implements PlanePyramid {
 
     @Override
     public String toString() {
-        return "Plane pyramid based on " + source + " (" + formatName + " format)";
+        return "Plane pyramid based on " + source + " (" + renderingFormatName + " format)";
     }
 
     private PlanePyramidImageData bufferedImageToBytes(BufferedImage bufferedImage, String formatName)
         throws IOException
     {
         if (!transparencySupported(formatName)) {
-            bufferedImage = convertARGBtoBGR(bufferedImage, backgroundColor);
+            bufferedImage = convertARGBtoBGR(bufferedImage, renderingBackgroundColor);
         }
         final ByteArrayOutputStream stream = new ByteArrayOutputStream();
         if (!ImageIO.write(bufferedImage, formatName, stream)) {

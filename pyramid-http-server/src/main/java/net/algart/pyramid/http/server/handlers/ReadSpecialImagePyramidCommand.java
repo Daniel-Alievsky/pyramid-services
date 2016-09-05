@@ -43,7 +43,7 @@ public class ReadSpecialImagePyramidCommand extends HttpPyramidCommand {
     @Override
     protected void service(Request request, Response response) throws Exception {
         final String configuration = pyramidIdToConfiguration(
-            getParameter(request, HttpPyramidConstants.PYRAMID_ID_ARGUMENT_NAME));
+            getParameter(request, HttpPyramidConstants.PYRAMID_ID_PARAMETER_NAME));
         final String specialImageName = getParameter(request, "specialImageName");
         final Integer width = request.getParameter("width") == null ? null : getIntParameter(request, "width");
         final Integer height = request.getParameter("height") == null ? null : getIntParameter(request, "height");

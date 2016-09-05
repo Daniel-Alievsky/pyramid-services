@@ -54,7 +54,8 @@ public class HttpPyramidServer {
         try {
             for (HttpPyramidConfiguration.Service serviceConfiguration : processConfiguration.getServices()) {
                 final String planePyramidFactory = serviceConfiguration.getPlanePyramidFactory();
-                final String planePyramidFactoryConfiguration = serviceConfiguration.getPlanePyramidFactoryConfiguration();
+                final String planePyramidFactoryConfiguration =
+                    serviceConfiguration.getPlanePyramidFactoryConfiguration();
                 final int port = serviceConfiguration.getPort();
                 final Class<?> factoryClass = Class.forName(planePyramidFactory);
                 final PlanePyramidFactory factory = (PlanePyramidFactory) factoryClass.newInstance();
