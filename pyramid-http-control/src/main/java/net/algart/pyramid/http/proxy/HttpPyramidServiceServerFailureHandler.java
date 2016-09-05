@@ -26,7 +26,7 @@ package net.algart.pyramid.http.proxy;
 
 import net.algart.http.proxy.HttpServerAddress;
 import net.algart.http.proxy.HttpServerFailureHandler;
-import net.algart.pyramid.http.api.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 
 class HttpPyramidServiceServerFailureHandler implements HttpServerFailureHandler {
     private final HttpPyramidConfiguration configuration;

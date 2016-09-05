@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.*;
-import net.algart.pyramid.http.api.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.WriteHandler;
 import org.glassfish.grizzly.http.io.NIOOutputStream;

@@ -26,24 +26,16 @@ package net.algart.pyramid.http.proxy;
 
 import net.algart.http.proxy.HttpServerAddress;
 import net.algart.http.proxy.HttpServerResolver;
-import net.algart.pyramid.http.api.HttpPyramidApiTools;
-import net.algart.pyramid.http.api.HttpPyramidConfiguration;
-import net.algart.pyramid.http.api.HttpPyramidConstants;
+import net.algart.pyramid.api.common.PyramidApiTools;
+import net.algart.pyramid.api.http.HttpPyramidApiTools;
+import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidConstants;
 import org.glassfish.grizzly.http.util.Parameters;
 
-import javax.json.Json;
-import javax.json.JsonException;
 import javax.json.JsonObject;
-import javax.json.JsonReader;
 import java.io.IOException;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.logging.Logger;
 
 class StandardPlanePyramidServerResolver implements HttpServerResolver {
@@ -83,8 +75,8 @@ class StandardPlanePyramidServerResolver implements HttpServerResolver {
     }
 
     private static HttpServerAddress pyramidIdToServerAddress(String pyramidId) throws IOException {
-        final String pyramidConfiguration = HttpPyramidApiTools.pyramidIdToConfiguration(pyramidId);
-        final JsonObject config = HttpPyramidApiTools.configurationToJson(pyramidConfiguration);
+        final String pyramidConfiguration = PyramidApiTools.pyramidIdToConfiguration(pyramidId);
+        final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
         throw new UnsupportedOperationException();
         //TODO!! see StandardPlanePyramidFactory
     }

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.api;
+package net.algart.pyramid.api.http;
 
 public class HttpPyramidConstants {
     public static final String HTTP_PYRAMID_SERVER_CLASS_NAME =
@@ -31,12 +31,6 @@ public class HttpPyramidConstants {
 
     public static final String LOCAL_HOST = System.getProperty(
         "net.algart.pyramid.http.localHost", "localhost");
-    public static final String CONFIG_ROOT_DIR = System.getProperty(
-        "net.algart.pyramid.http.configRoot", "/pp-links");
-    public static final String CONFIG_FILE_NAME = System.getProperty(
-        "net.algart.pyramid.http.configFile", "config.json");
-    public static final String DEFAULT_PYRAMID_PATH_NAME = System.getProperty(
-        "net.algart.pyramid.http.pyramidPathName", "pyramidPath");
     public static final int MAX_NUMBER_OF_PYRAMIDS_IN_POOL = Math.max(16, Integer.getInteger(
         "net.algart.pyramid.http.imageCachingMemory", 256));
 

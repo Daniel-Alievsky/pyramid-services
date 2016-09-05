@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.proxy;
 
 import net.algart.http.proxy.HttpProxy;
-import net.algart.pyramid.http.api.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 
 import java.util.Objects;
 

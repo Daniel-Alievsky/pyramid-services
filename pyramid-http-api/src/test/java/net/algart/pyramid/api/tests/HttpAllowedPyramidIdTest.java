@@ -22,33 +22,26 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.server;
+package net.algart.pyramid.api.tests;
 
-import net.algart.pyramid.api.http.HttpPyramidApiTools;
+import net.algart.pyramid.api.common.PyramidApiTools;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Objects;
-
-// Unlike usual commands, all system commands are executed as a reply to appearing special key files.
-abstract class SystemCommand {
-    final HttpPyramidService httpPyramidService;
-    final String urlPrefix;
-
-    SystemCommand(HttpPyramidService httpPyramidService, String urlPrefix) {
-        this.httpPyramidService = Objects.requireNonNull(httpPyramidService, "Null httpPyramidService");
-        this.urlPrefix = Objects.requireNonNull(urlPrefix, "Null urlPrefix");
-        if (urlPrefix.length() < 2 || urlPrefix.charAt(0) != '/') {
-            throw new AssertionError("Illegal URL prefix");
+public class HttpAllowedPyramidIdTest {
+    public static void main(String[] args) {
+        String[] ids = {
+            "1234-ds",
+            " s1234-ds",
+            "",
+            "\tasd",
+            "d_234-",
+            "\\sd412",
+            "asd/32",
+            "123.gif",
+        };
+        for (String id : ids) {
+            System.out.printf("\"%s\": %s pyramid id%n",
+                id,
+                PyramidApiTools.isAllowedPyramidId(id) ? "allowed" : "DISALLOWED");
         }
-    }
-
-    abstract void service() throws IOException;
-
-    Path keyFile() {
-        return HttpPyramidApiTools.keyFile(
-            httpPyramidService.getSystemCommandsFolder(),
-            urlPrefix,
-            httpPyramidService.getPort());
     }
 }

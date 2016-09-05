@@ -25,8 +25,8 @@
 package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidFactory;
-import net.algart.pyramid.http.api.HttpPyramidConfiguration;
-import net.algart.pyramid.http.api.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidConstants;
 
 import java.io.IOException;
 import java.nio.file.Path;

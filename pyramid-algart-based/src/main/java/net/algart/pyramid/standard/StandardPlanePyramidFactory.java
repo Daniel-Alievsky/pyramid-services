@@ -26,20 +26,15 @@ package net.algart.pyramid.standard;
 
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidFactory;
-import net.algart.pyramid.http.api.HttpPyramidApiTools;
+import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.simagis.pyramid.PlanePyramidSource;
 import net.algart.simagis.pyramid.PlanePyramidSourceFactory;
 
 import javax.json.Json;
-import javax.json.JsonException;
 import javax.json.JsonObject;
-import javax.json.JsonReader;
 import java.io.IOException;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
 
 public class StandardPlanePyramidFactory implements PlanePyramidFactory {
@@ -59,9 +54,9 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
     @Override
     public PlanePyramid newPyramid(final String pyramidConfiguration) throws Exception {
         Objects.requireNonNull(pyramidConfiguration);
-        final JsonObject config = HttpPyramidApiTools.configurationToJson(pyramidConfiguration);
-        final Path pyramidDir = HttpPyramidApiTools.getDefaultPyramidPath(config);
-        final JsonObject pyramidJson = HttpPyramidApiTools.readDefaultPyramidConfiguration(pyramidDir);
+        final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
+        final Path pyramidDir = PyramidApiTools.getPyramidPath(config);
+        final JsonObject pyramidJson = PyramidApiTools.readDefaultPyramidConfiguration(pyramidDir);
         final String fileName = pyramidJson.getString("fileName");
         final Path pyramidFile = pyramidDir.resolve(fileName);
         if (!Files.exists(pyramidFile)) {

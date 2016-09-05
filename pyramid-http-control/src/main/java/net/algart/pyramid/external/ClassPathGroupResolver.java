@@ -25,7 +25,7 @@
 package net.algart.pyramid.external;
 
 
-import net.algart.pyramid.http.api.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 
 import javax.json.*;
 import javax.json.stream.JsonGenerator;

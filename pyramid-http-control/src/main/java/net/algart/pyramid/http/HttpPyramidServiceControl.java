@@ -25,9 +25,9 @@
 package net.algart.pyramid.http;
 
 import net.algart.pyramid.PlanePyramidInformation;
-import net.algart.pyramid.http.api.HttpPyramidApiTools;
-import net.algart.pyramid.http.api.HttpPyramidConfiguration;
-import net.algart.pyramid.http.api.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidApiTools;
+import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidConstants;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

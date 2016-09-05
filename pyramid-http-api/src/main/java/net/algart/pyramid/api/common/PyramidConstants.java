@@ -22,23 +22,20 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.api.tests;
+package net.algart.pyramid.api.common;
 
-import net.algart.pyramid.http.api.HttpPyramidConfiguration;
+public class PyramidConstants {
+    public static final String DEFAULT_PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON = System.getProperty(
+        "net.algart.pyramid.common.pyramidPathNameInJson", "pyramidPath");
+    public static final String DEFAULT_PYRAMID_CONFIGURATION_FILE_NAME = System.getProperty(
+        "net.algart.pyramid.common.pyramidConfigurationFileName", ".pp.json");
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+    public static final String CONFIG_ROOT_DIR = System.getProperty(
+        "net.algart.pyramid.http.configRoot", "/pp-links");
+    public static final String CONFIG_FILE_NAME = System.getProperty(
+        "net.algart.pyramid.http.configFile", "config.json");
 
-public class HttpPyramidServiceConfigurationTest {
-    public static void main(String args[]) throws IOException {
-        if (args.length == 0) {
-            System.out.printf("Usage: %s configurationFolder%n", HttpPyramidServiceConfigurationTest.class.getName());
-            return;
-        }
-        final Path configurationFolder = Paths.get(args[0]);
-        final HttpPyramidConfiguration configuration =
-            HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
-        System.out.println(configuration);
+
+    private PyramidConstants() {
     }
 }

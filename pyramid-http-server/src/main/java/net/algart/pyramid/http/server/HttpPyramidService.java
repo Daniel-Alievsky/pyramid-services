@@ -26,8 +26,8 @@ package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.PlanePyramidPool;
-import net.algart.pyramid.http.api.HttpPyramidApiTools;
-import net.algart.pyramid.http.api.HttpPyramidConstants;
+import net.algart.pyramid.api.common.PyramidApiTools;
+import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.http.server.handlers.*;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.http.server.*;
@@ -36,7 +36,10 @@ import java.io.IOError;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -152,7 +155,7 @@ public class HttpPyramidService {
     }
 
     public String pyramidIdToConfiguration(String pyramidId) throws IOException {
-        return HttpPyramidApiTools.pyramidIdToConfiguration(pyramidId);
+        return PyramidApiTools.pyramidIdToConfiguration(pyramidId);
     }
 
     @Override

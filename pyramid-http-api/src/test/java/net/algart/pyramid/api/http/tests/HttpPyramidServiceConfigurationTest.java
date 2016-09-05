@@ -22,26 +22,23 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.api.tests;
+package net.algart.pyramid.api.http.tests;
 
-import net.algart.pyramid.http.api.HttpPyramidApiTools;
+import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 
-public class HttpAllowedPyramidIdTest {
-    public static void main(String[] args) {
-        String[] ids = {
-            "1234-ds",
-            " s1234-ds",
-            "",
-            "\tasd",
-            "d_234-",
-            "\\sd412",
-            "asd/32",
-            "123.gif",
-        };
-        for (String id : ids) {
-            System.out.printf("\"%s\": %s pyramid id%n",
-                id,
-                HttpPyramidApiTools.isAllowedPyramidId(id) ? "allowed" : "DISALLOWED");
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+public class HttpPyramidServiceConfigurationTest {
+    public static void main(String args[]) throws IOException {
+        if (args.length == 0) {
+            System.out.printf("Usage: %s configurationFolder%n", HttpPyramidServiceConfigurationTest.class.getName());
+            return;
         }
+        final Path configurationFolder = Paths.get(args[0]);
+        final HttpPyramidConfiguration configuration =
+            HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
+        System.out.println(configuration);
     }
 }

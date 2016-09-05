@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.tests;
 
 import net.algart.pyramid.*;
-import net.algart.pyramid.http.api.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.http.server.HttpPyramidService;
 import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
 import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;

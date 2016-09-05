@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.api;
+package net.algart.pyramid.api.http;
 
 import javax.json.*;
 import javax.json.stream.JsonGenerator;

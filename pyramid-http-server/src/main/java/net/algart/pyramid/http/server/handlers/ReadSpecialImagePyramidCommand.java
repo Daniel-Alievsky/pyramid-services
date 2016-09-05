@@ -26,7 +26,7 @@ package net.algart.pyramid.http.server.handlers;
 
 import net.algart.pyramid.http.server.HttpPyramidCommand;
 import net.algart.pyramid.http.server.HttpPyramidService;
-import net.algart.pyramid.http.api.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
 import org.glassfish.grizzly.http.server.Request;
