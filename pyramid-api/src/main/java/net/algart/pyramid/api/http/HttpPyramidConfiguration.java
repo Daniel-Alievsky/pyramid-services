@@ -310,6 +310,10 @@ public class HttpPyramidConfiguration {
                 return pathRegExp;
             }
 
+            public boolean uriMatches(String uriPath) {
+                return uriPath.matches(pathRegExp);
+            }
+
             public String toJsonString() {
                 return toJson().toString();
             }

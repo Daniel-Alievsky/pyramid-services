@@ -47,33 +47,42 @@ class StandardPlanePyramidServerResolver implements HttpServerResolver {
 
     private final Map<String, HttpServerAddress> pool = new ServerAddressHashMap();
     private final HttpPyramidConfiguration configuration;
+    private final HttpPyramidConfiguration.Proxy.DefaultServer defaultServer;
+    private final HttpPyramidConfiguration.Proxy.PyramidServer pyramidServer;
     private final Object lock = new Object();
 
     StandardPlanePyramidServerResolver(HttpPyramidConfiguration configuration) {
-        assert configuration != null;
+        assert configuration != null && configuration.getProxy() != null;
         this.configuration = configuration;
+        this.defaultServer = configuration.getProxy().getDefaultServer();
+        this.pyramidServer = configuration.getProxy().getPyramidServer();
     }
 
     @Override
     public HttpServerAddress findServer(String requestURI, Parameters queryParameters) throws IOException {
-        final String pyramidId = findPyramidId(requestURI, queryParameters);
-        if (pyramidId != null) {
-            synchronized (lock) {
-                HttpServerAddress result = pool.get(pyramidId);
-                if (result == null) {
-                    result = pyramidIdToServerAddress(pyramidId);
-                    pool.put(pyramidId, result);
+        if (pyramidServer.uriMatches(requestURI)) {
+            final String pyramidId = findPyramidId(requestURI, queryParameters);
+            if (pyramidId != null) {
+                synchronized (lock) {
+                    HttpServerAddress result = pool.get(pyramidId);
+                    if (result == null) {
+                        result = pyramidIdToServerAddress(pyramidId);
+                        pool.put(pyramidId, result);
+                    }
+                    LOG.config("Proxying " + requestURI + " to " + result + " by pyramidId=" + pyramidId);
+                    return result;
                 }
+            }
+            final Integer serverPort = findServerPort(queryParameters);
+            if (serverPort != null) {
+                HttpServerAddress result = new HttpServerAddress(pyramidServer.getHost(), serverPort);
+                LOG.config("Proxying " + requestURI + " to " + result + " by direct port parameter " + serverPort);
                 return result;
             }
         }
-        final Integer serverPort = findServerPort(queryParameters);
-        if (serverPort != null) {
-            return new HttpServerAddress(configuration.getProxy().getDefaultServer().getHost(), serverPort);
-        }
-        throw new IllegalArgumentException("Proxy error: URL (path+query) must contain "
-            + HttpPyramidConstants.PYRAMID_ID_PARAMETER_NAME + " or "
-            + HttpPyramidConstants.SERVER_PORT_PARAMETER_NAME + " to detect the required server");
+        HttpServerAddress result = new HttpServerAddress(defaultServer.getHost(), defaultServer.getPort());
+        LOG.config("Proxying " + requestURI + " to default server " + result);
+        return result;
     }
 
     private HttpServerAddress pyramidIdToServerAddress(String pyramidId) throws IOException {
@@ -86,7 +95,7 @@ class StandardPlanePyramidServerResolver implements HttpServerResolver {
         if (service == null) {
             throw new IOException("Service not found for pyramid format \"" + pyramidFormatName + "\"");
         }
-        return new HttpServerAddress(configuration.getProxy().getDefaultServer().getHost(), service.getPort());
+        return new HttpServerAddress(pyramidServer.getHost(), service.getPort());
     }
 
     private static Integer findServerPort(Parameters queryParameters) {

@@ -54,7 +54,7 @@ public class HttpPyramidConstants {
      */
     public static class CommandPrefixes {
         public static final String PREXIX_START = "/pp-";
-        public static final String PREXIX_START_REG_EXP = "^\\/pp\\-";
+        public static final String PREXIX_START_REG_EXP = "^\\/pp\\-.+";
         // - must correspond to PREFIX_START
         public static final String FINISH = PREXIX_START + "finish";
         public static final String GC = PREXIX_START + "gc";

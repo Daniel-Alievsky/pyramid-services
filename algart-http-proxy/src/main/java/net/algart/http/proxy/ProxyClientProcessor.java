@@ -174,7 +174,8 @@ class ProxyClientProcessor extends BaseFilter {
             }
         });
         HttpProxy.LOG.config("Connected to " + server
-            + "; starting sending request to server: header " + requestToServerHeaders);
+            + "; sending request to " + requestToServerHeaders.getRequestURI());
+        HttpProxy.LOG.fine("Full request header: " + requestToServerHeaders);
         return ctx.getStopAction();
     }
 

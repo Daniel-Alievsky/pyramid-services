@@ -45,8 +45,8 @@ import java.util.logging.Logger;
 
 public final class HttpProxy {
 
-    private static final String DEFAULT_LOCAL_HOST = System.getProperty(
-        "net.algart.http.proxy.localHost", "localhost");
+    private static final String DEFAULT_PROXY_HOST = System.getProperty(
+        "net.algart.http.proxy.proxyHost", "localhost");
     private static final int DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS = Integer.getInteger(
         "net.algart.http.proxy.timeout", 60000);
 
@@ -58,7 +58,7 @@ public final class HttpProxy {
     private final TCPNIOTransport clientTransport;
     private final HttpServer proxyServer;
 
-    private String localHost = DEFAULT_LOCAL_HOST;
+    private String proxyHost = DEFAULT_PROXY_HOST;
     private int readingFromServerTimeoutInMs = DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS;
     private volatile boolean firstStart = true;
 
@@ -82,12 +82,12 @@ public final class HttpProxy {
         this.proxyServer.getServerConfiguration().addHttpHandler(new HttpProxyHandler());
     }
 
-    public String getLocalHost() {
-        return localHost;
+    public String getProxyHost() {
+        return proxyHost;
     }
 
-    public void setLocalHost(String localHost) {
-        this.localHost = Objects.requireNonNull(localHost, "Null localHost argument");
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = Objects.requireNonNull(proxyHost, "Null localHost argument");
     }
 
     public int getReadingFromServerTimeoutInMs() {
@@ -104,7 +104,7 @@ public final class HttpProxy {
     public final void start() throws IOException {
         synchronized (lock) {
             if (firstStart) {
-                this.proxyServer.addListener(new NetworkListener(HttpProxy.class.getName(), localHost, proxyPort));
+                this.proxyServer.addListener(new NetworkListener(HttpProxy.class.getName(), proxyHost, proxyPort));
                 firstStart = false;
             }
             LOG.info("Starting " + this);
@@ -127,7 +127,7 @@ public final class HttpProxy {
 
     @Override
     public String toString() {
-        return "AlgART HTTP Proxy at " + localHost + ":" + proxyPort + " (server detector: " + serverResolver + ")";
+        return "AlgART HTTP Proxy at " + proxyHost + ":" + proxyPort + " (server detector: " + serverResolver + ")";
     }
 
     private class HttpProxyHandler extends HttpHandler {
@@ -155,6 +155,10 @@ public final class HttpProxy {
                 }
                 final Parameters queryParameters = parseQueryOnly(request);
                 final HttpServerAddress server = serverResolver.findServer(requestURI, queryParameters);
+                if (server.serverHost().equals(proxyHost) && server.serverPort() == proxyPort) {
+                    throw new IllegalStateException("Infinite loop: server resolver returns host:port, "
+                        + "identical to the proxy host:port " + server);
+                }
                 final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(
                     request, response, server, serverFailureHandler);
                 LOG.config("Proxying " + requestURI + " to " + server);

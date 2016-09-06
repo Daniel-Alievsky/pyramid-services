@@ -43,7 +43,7 @@ public class HttpProxyTest {
         final int serverPort = Integer.parseInt(args[1]);
         final int proxyPort = Integer.parseInt(args[2]);
         final Integer timeout = args.length > 3 ? Integer.valueOf(args[3]) : null;
-        final String localhost = args.length > 4 ? args[4] : null;
+        final String proxyHost = args.length > 4 ? args[4] : null;
         final HttpServerAddress serverAddress = new HttpServerAddress(serverHost, serverPort);
 
         final HttpProxy proxy = new HttpProxy(proxyPort,
@@ -69,8 +69,8 @@ public class HttpProxyTest {
         if (timeout != null) {
             proxy.setReadingFromServerTimeoutInMs(timeout);
         }
-        if (localhost != null) {
-            proxy.setLocalHost(localhost);
+        if (proxyHost != null) {
+            proxy.setProxyHost(proxyHost);
         }
         proxy.start();
         System.out.println("Press ENTER to stop the proxy server...");
