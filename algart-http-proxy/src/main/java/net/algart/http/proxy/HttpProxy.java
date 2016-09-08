@@ -45,6 +45,22 @@ import java.util.logging.Logger;
 
 public final class HttpProxy {
 
+    /**
+     * This URI requires the proxy service to ignore the usual work and just to return {@link #ALIVE_RESPONSE}
+     * with status code 200 (OK).
+     */
+    public static final String ALIVE_STATUS_COMMAND = "/~~~~.net.algart.http.proxy.alive-status";
+    public static final String ALIVE_RESPONSE = "Proxy-Alive";
+
+    /**
+     * The code string for command, requiring the proxy to finish. However, this implementation of proxy
+     * does not process this command in any way. We recommend specific application to use this string
+     * to inform the proxy process that it should be finished, but not through the usual HTTP protocol
+     * on the given {@link #getProxyPort() proxy port} (in is unsafe) - for example, we recommend
+     * to use some system-specific protocol based on the key files.
+     */
+    public static final String FINISH_COMMAND = "/~~~~.net.algart.http.proxy.finish";
+
     private static final String DEFAULT_PROXY_HOST = System.getProperty(
         "net.algart.http.proxy.proxyHost", "localhost");
     private static final int DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS = Integer.getInteger(
@@ -148,6 +164,13 @@ public final class HttpProxy {
 
             try {
                 final String requestURI = request.getRequestURI();
+                if (ALIVE_STATUS_COMMAND.equals(requestURI)) {
+                    response.setContentType("text/plain; charset=utf-8");
+                    response.setStatus(200, "OK");
+                    response.getWriter().write(ALIVE_RESPONSE);
+                    response.finish();
+                    return;
+                }
                 final HttpClientFilter httpClientFilter = new HttpClientFilter();
                 for (ContentEncoding encoding : httpClientFilter.getContentEncodings()) {
                     httpClientFilter.removeContentEncoding(encoding);

@@ -29,6 +29,7 @@ import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -43,7 +44,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class HttpPyramidServiceControl {
+public final class HttpPyramidServiceControl {
     private static final Logger LOG = Logger.getLogger(HttpPyramidServiceControl.class.getName());
 
     private final String host;
@@ -88,7 +89,7 @@ public class HttpPyramidServiceControl {
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
         } catch (IOException e) {
             if (logWhenFails) {
-                LOG.log(Level.INFO, "Cannot connect to " + host + ":" + port + ": " + e.getMessage());
+                LOG.log(Level.INFO, "Cannot connect to " + host + ":" + port + ": " + e);
             }
             return false;
         }
@@ -100,7 +101,7 @@ public class HttpPyramidServiceControl {
             return true;
         } catch (IOException e) {
             LOG.log(Level.INFO, "Cannot request finish command in folder "
-                + systemCommandsFolder + ": " + e.getMessage());
+                + systemCommandsFolder + ": " + e);
             return false;
         }
     }
@@ -123,6 +124,29 @@ public class HttpPyramidServiceControl {
         String requestMethod)
         throws IOException
     {
+        return openCustomConnection(pathAndQuery, requestMethod, host, port, https);
+    }
+
+    public final void requestSystemCommand(String commandPrefix) throws IOException {
+        requestSystemCommand(commandPrefix, port, systemCommandsFolder);
+    }
+
+    private void checkHttpOk(HttpURLConnection connection) throws IOException {
+        if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+            throw new IOException("Invalid response: code " + connection.getResponseCode()
+                + ", message " + connection.getResponseMessage());
+        }
+    }
+
+    static HttpURLConnection openCustomConnection(
+        String pathAndQuery,
+        String requestMethod,
+        String host,
+        int port,
+        boolean https
+    )
+        throws IOException
+    {
         final URL url = new URL(https ? "https" : "http", host, port, pathAndQuery);
         final URLConnection connection = url.openConnection();
         connection.setConnectTimeout(HttpPyramidConstants.CLIENT_CONNECTION_TIMEOUT);
@@ -137,7 +161,11 @@ public class HttpPyramidServiceControl {
         return result;
     }
 
-    public final void requestSystemCommand(String commandPrefix) throws IOException {
+    static void requestSystemCommand(String commandPrefix, int port, Path systemCommandsFolder) throws IOException {
+        if (!Files.isDirectory(systemCommandsFolder)) {
+            throw new FileNotFoundException("System command folder not found or not a directory: "
+                + systemCommandsFolder.toAbsolutePath());
+        }
         final Path keyFile = HttpPyramidApiTools.keyFile(systemCommandsFolder, commandPrefix, port);
         try {
             Files.delete(keyFile);
@@ -149,13 +177,6 @@ public class HttpPyramidServiceControl {
             Files.createFile(keyFile);
         } catch (FileAlreadyExistsException e) {
             // it is not a problem if a parallel process also created the same file
-        }
-    }
-
-    private void checkHttpOk(HttpURLConnection connection) throws IOException {
-        if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-            throw new IOException("Invalid response: code " + connection.getResponseCode()
-                + ", message " + connection.getResponseMessage());
         }
     }
 }

@@ -36,7 +36,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-public class HttpPyramidServerLauncher {
+public final class HttpPyramidServerLauncher {
     private static final Logger LOG = Logger.getLogger(HttpPyramidServerLauncher.class.getName());
 
     private static final int SUCCESS_DELAY_IN_MS = 1000;
@@ -183,10 +183,11 @@ public class HttpPyramidServerLauncher {
                 // waiting, maybe there was not enough time to finish all services
             }
             if (javaProcess == null) {
-                throw new IOException("Cannot stop process for group " + groupId + " by HTTP");
+                throw new IOException("Cannot stop process for group " + groupId + " by system command");
             } else {
                 if (javaProcess.isAlive()) {
-                    LOG.warning("Cannot finish process for group \"" + groupId + "\" by HTTP, killing it forcibly");
+                    LOG.warning("Cannot finish process for group \"" + groupId
+                        + "\" by system command, killing it forcibly");
                     javaProcess.destroyForcibly();
                     sleep(SUCCESS_DELAY_IN_MS);
                     // - waiting for better guarantee

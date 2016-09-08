@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
-public class HttpPyramidProcessControl {
+public final class HttpPyramidProcessControl {
     private static final Logger LOG = Logger.getLogger(HttpPyramidProcessControl.class.getName());
 
     private final String host;

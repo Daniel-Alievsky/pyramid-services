@@ -22,27 +22,23 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.proxy;
+package net.algart.pyramid.api.tests.http;
 
-import net.algart.http.proxy.HttpProxy;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 
-import java.util.Objects;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-public class HttpPyramidProxyFactory {
-
-    private final HttpPyramidConfiguration configuration;
-
-    public HttpPyramidProxyFactory(HttpPyramidConfiguration configuration) {
-        Objects.requireNonNull(configuration, "Null configuration");
-        Objects.requireNonNull(configuration.getProxy(), "Proxy configuration not present");
-        this.configuration = configuration;
-    }
-
-    public HttpProxy newProxy() {
-        return new HttpProxy(
-            configuration.getProxy().getProxyPort(),
-            new StandardPlanePyramidServerResolver(configuration),
-            new HttpPyramidServiceServerFailureHandler(configuration));
+public class HttpPyramidServiceConfigurationTest {
+    public static void main(String args[]) throws IOException {
+        if (args.length == 0) {
+            System.out.printf("Usage: %s configurationFolder%n", HttpPyramidServiceConfigurationTest.class.getName());
+            return;
+        }
+        final Path configurationFolder = Paths.get(args[0]);
+        final HttpPyramidConfiguration configuration =
+            HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
+        System.out.println(configuration);
     }
 }

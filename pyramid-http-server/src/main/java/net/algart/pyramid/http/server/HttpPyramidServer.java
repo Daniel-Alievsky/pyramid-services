@@ -111,7 +111,7 @@ public class HttpPyramidServer {
                     System.out.printf("%nThe server successfully started on ports %s%n",
                         processConfiguration.allPorts());
                     System.out.printf("Press \"Ctrl+C\" or \"ENTER\" to kill the server, "
-                        + "or wait when it will be finished normally by HTTP command...%n%n");
+                        + "or wait when it will be finished normally by the system command...%n%n");
                     System.in.read();
                 } catch (Exception e) {
                     // should not occur

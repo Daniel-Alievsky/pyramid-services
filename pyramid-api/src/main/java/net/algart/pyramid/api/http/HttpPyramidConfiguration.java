@@ -364,16 +364,20 @@ public class HttpPyramidConfiguration {
         private final int proxyPort;
         private final PyramidServer pyramidServer;
         private final DefaultServer defaultServer;
+        private final HttpPyramidConfiguration parentConfiguration;
 
-        private Proxy(JsonObject json) {
+        private Proxy(JsonObject json, HttpPyramidConfiguration parentConfiguration) {
             Objects.requireNonNull(json);
+            Objects.requireNonNull(parentConfiguration);
             this.proxyPort = getRequiredInt(json, "proxyPort");
-            if (proxyPort <= 0) {
+            if (proxyPort <= 0 || proxyPort > HttpPyramidConstants.MAX_ALLOWED_PORT) {
                 throw new JsonException("Invalid configuration JSON:"
-                    + " zero or negative proxy port number " + proxyPort);
+                    + " invalid proxy port number " + proxyPort
+                    + " (must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT + ")");
             }
             this.pyramidServer = new PyramidServer(json.getJsonObject("pyramidServer"));
             this.defaultServer = new DefaultServer(json.getJsonObject("defaultServer"));
+            this.parentConfiguration = parentConfiguration;
         }
 
         public int getProxyPort() {
@@ -386,6 +390,10 @@ public class HttpPyramidConfiguration {
 
         public DefaultServer getDefaultServer() {
             return defaultServer;
+        }
+
+        public HttpPyramidConfiguration parentConfiguration() {
+            return parentConfiguration;
         }
 
         public String toJsonString() {
@@ -447,7 +455,7 @@ public class HttpPyramidConfiguration {
         this.commonMemory = commonMemory != null ? parseLongWithMetricalSuffixes(commonMemory) : null;
         this.systemCommandsFolder = globalConfiguration.getString("systemCommandsFolder",
             HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER);
-        this.proxy = proxy == null ? null : new Proxy(proxy);
+        this.proxy = proxy == null ? null : new Proxy(proxy, this);
         this.allServices = new LinkedHashMap<>();
         for (Process process : processList) {
             for (Service service : process.services) {
