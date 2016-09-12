@@ -55,6 +55,7 @@
             <element id="artifact" artifact-name="pyramid-http-server:jar" />
             <element id="artifact" artifact-name="pyramid-api:jar" />
             <element id="artifact" artifact-name="pyramid-http-control:jar" />
+            <element id="artifact" artifact-name="algart-http-proxy:jar" />
           </element>
         </element>
         <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-config/.users.json" />

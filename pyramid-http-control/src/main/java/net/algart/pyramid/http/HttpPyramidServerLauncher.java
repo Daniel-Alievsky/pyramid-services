@@ -114,18 +114,18 @@ public final class HttpPyramidServerLauncher {
             final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
             final HttpPyramidProcessControl control = new HttpPyramidProcessControl(
                 HttpPyramidConstants.LOCAL_HOST, processConfiguration);
-            if (skipIfAlive && control.areAllServicesAlive(true)) {
+            if (skipIfAlive && control.areAllHttpServicesAlive(true)) {
                 return false;
             }
-            if (runningProcesses.get(processConfiguration.getGroupId()) != null) {
+            if (runningProcesses.get(control.getProcessId()) != null) {
                 throw new IllegalStateException("The process with groupId="
-                    + processConfiguration.getGroupId() + " is already started");
+                    + control.getProcessId() + " is already started");
             }
             Process javaProcess = null;
             boolean exited = false;
             for (int attempt = 0; ; attempt++) {
                 if (attempt == 0 || exited) {
-                    javaProcess = control.startAllServicesOnLocalhost();
+                    javaProcess = control.startOnLocalhost();
                     // - try to start again if exited; maybe, the port was not released quickly enough
                     exited = waitFor(javaProcess, SUCCESS_DELAY_IN_MS);
                     // - waiting to allow the process to really start Web servers
@@ -142,7 +142,7 @@ public final class HttpPyramidServerLauncher {
                 if (attempt >= SLOW_START_NUMBER_OF_ATTEMPTS) {
                     break;
                 }
-                if (control.areAllServicesAlive(true)) {
+                if (control.areAllHttpServicesAlive(true)) {
                     // All O'k
                     runningProcesses.put(groupId, javaProcess);
                     return true;
@@ -166,16 +166,16 @@ public final class HttpPyramidServerLauncher {
             final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
             final HttpPyramidProcessControl control = new HttpPyramidProcessControl(
                 HttpPyramidConstants.LOCAL_HOST, processConfiguration);
-            if (skipIfNotAlive && !control.isAtLeastOneServiceAlive(true)) {
+            if (skipIfNotAlive && !control.isAtLeastSomeHttpServiceAlive(true)) {
                 return false;
             }
-            final Process javaProcess = runningProcesses.get(processConfiguration.getGroupId());
+            final Process javaProcess = runningProcesses.get(control.getProcessId());
             for (int attempt = 0; attempt < PROBLEM_NUMBER_OF_ATTEMPTS; attempt++) {
-                control.finishAllServices();
+                control.stopOnLocalhost();
                 sleep(SUCCESS_DELAY_IN_MS);
                 if (javaProcess != null ?
                     !javaProcess.isAlive() :
-                    !control.isAtLeastOneServiceAlive(false))
+                    !control.isAtLeastSomeHttpServiceAlive(false))
                 {
                     return true;
                 }
@@ -204,7 +204,7 @@ public final class HttpPyramidServerLauncher {
             final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
             final HttpPyramidProcessControl control = new HttpPyramidProcessControl(
                 HttpPyramidConstants.LOCAL_HOST, processConfiguration);
-            if (skipIfAlive && control.areAllServicesAlive(true)) {
+            if (skipIfAlive && control.areAllHttpServicesAlive(true)) {
                 return false;
             }
             stopProcess(groupId, false);

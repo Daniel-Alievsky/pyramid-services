@@ -95,7 +95,7 @@ public final class HttpPyramidServiceControl {
         }
     }
 
-    public final boolean finishService() {
+    public final boolean stopServiceOnLocalhost() {
         try {
             requestSystemCommand(HttpPyramidConstants.CommandPrefixes.FINISH);
             return true;

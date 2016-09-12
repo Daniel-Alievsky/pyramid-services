@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
-public final class HttpPyramidProcessControl {
+public final class HttpPyramidProcessControl implements JavaProcessControlWithHttpCheckingAliveStatus {
     private static final Logger LOG = Logger.getLogger(HttpPyramidProcessControl.class.getName());
 
     private final String host;
@@ -59,7 +59,13 @@ public final class HttpPyramidProcessControl {
         return processConfiguration;
     }
 
-    public final boolean areAllServicesAlive(boolean logWhenFails) {
+    @Override
+    public String getProcessId() {
+        return processConfiguration.getGroupId();
+    }
+
+    @Override
+    public final boolean areAllHttpServicesAlive(boolean logWhenFails) {
         for (HttpPyramidServiceControl serviceControl : serviceControls) {
             if (!serviceControl.isServiceAlive(logWhenFails)) {
                 return false;
@@ -68,7 +74,8 @@ public final class HttpPyramidProcessControl {
         return true;
     }
 
-    public final boolean isAtLeastOneServiceAlive(boolean logWhenFails) {
+    @Override
+    public final boolean isAtLeastSomeHttpServiceAlive(boolean logWhenFails) {
         for (HttpPyramidServiceControl serviceControl : serviceControls) {
             if (serviceControl.isServiceAlive(logWhenFails)) {
                 return true;
@@ -77,15 +84,8 @@ public final class HttpPyramidProcessControl {
         return false;
     }
 
-
-    /**
-     * Starts this process with all its services on the current computer.
-     * This method is not relevant when {@link #getHost()} is not a localhost or its alias.
-     *
-     * @return OS process with newly started JVM
-     * @throws IOException in a case of I/O errors
-     */
-    public Process startAllServicesOnLocalhost() throws IOException {
+    @Override
+    public Process startOnLocalhost() throws IOException {
         final HttpPyramidConfiguration configuration = processConfiguration.parentConfiguration();
         final Path javaPath = HttpPyramidConfiguration.getJavaExecutable(HttpPyramidConfiguration.getCurrentJREHome());
         List<String> command = new ArrayList<>();
@@ -116,26 +116,17 @@ public final class HttpPyramidProcessControl {
         processBuilder.directory(processConfiguration.workingDirectory().toFile());
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        LOG.info(commandLineToString(processBuilder));
+        LOG.info(JavaProcessControlWithHttpCheckingAliveStatus.commandLineToString(processBuilder));
         return processBuilder.start();
     }
 
-    public void finishAllServices() throws IOException {
-        for (HttpPyramidServiceControl serviceControl : serviceControls) {
-            serviceControl.finishService();
-        }
-    }
 
-    private static String commandLineToString(ProcessBuilder processBuilder) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(processBuilder.directory() + "> ");
-        for (final String command : processBuilder.command()) {
-            if (command.contains(" ") || command.length() == 0) {
-                sb.append("\"" + command + "\" ");
-            } else {
-                sb.append(command + " ");
-            }
+    @Override
+    public boolean stopOnLocalhost() throws IOException {
+        boolean success = true;
+        for (HttpPyramidServiceControl serviceControl : serviceControls) {
+            success &= serviceControl.stopServiceOnLocalhost();
         }
-        return sb.toString();
+        return success;
     }
 }

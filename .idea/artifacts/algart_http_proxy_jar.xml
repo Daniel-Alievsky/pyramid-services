@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="algart-http-proxy:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/algart_http_proxy_jar</output-path>
+    <root id="archive" name="algart-http-proxy.jar">
+      <element id="module-output" name="algart-http-proxy" />
+    </root>
+  </artifact>
+</component>

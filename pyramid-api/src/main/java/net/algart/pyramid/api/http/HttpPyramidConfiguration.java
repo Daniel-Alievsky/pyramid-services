@@ -224,11 +224,11 @@ public class HttpPyramidConfiguration {
             final Set<String> result = new TreeSet<>();
             for (Service service : services) {
                 for (String p : service.classPath) {
-                    result.add(resolve ? resolveClassPath(p) : p);
+                    result.add(resolve ? parentConfiguration.resolveClassPath(p) : p);
                 }
             }
             for (String p : parentConfiguration.commonClassPath) {
-                result.add(resolve ? resolveClassPath(p) : p);
+                result.add(resolve ? parentConfiguration.resolveClassPath(p) : p);
             }
             return result;
         }
@@ -249,18 +249,7 @@ public class HttpPyramidConfiguration {
         }
 
         public String xmxOption() {
-            final Long xmx = xmx();
-            if (xmx == null) {
-                return null;
-            } else if (xmx % (1024 * 1024 * 1024) == 0) {
-                return "-Xmx" + xmx / (1024 * 1024 * 1024) + "g";
-            } else if (xmx % (1024 * 1024) == 0) {
-                return "-Xmx" + xmx / (1024 * 1024) + "m";
-            } else if (xmx % 1024 == 0) {
-                return "-Xmx" + xmx / 1024 + "k";
-            } else {
-                return "-Xmx" + xmx;
-            }
+            return HttpPyramidConfiguration.xmxOption(xmx());
         }
 
         public HttpPyramidConfiguration parentConfiguration() {
@@ -283,10 +272,6 @@ public class HttpPyramidConfiguration {
                 builder.add("xmx", xmx);
             }
             return builder.build();
-        }
-
-        private String resolveClassPath(String p) {
-            return parentConfiguration.rootFolder.resolve(p).toAbsolutePath().normalize().toString();
         }
     }
 
@@ -392,8 +377,37 @@ public class HttpPyramidConfiguration {
             return defaultServer;
         }
 
+        public boolean hasWorkingDirectory() {
+            // Maybe in future version we will allow proxy to specify own working directory
+            return false;
+        }
+
+        public Path workingDirectory() {
+            return parentConfiguration.rootFolder.toAbsolutePath();
+        }
+
+        public Collection<String> classPath(boolean resolve) {
+            final Set<String> result = new TreeSet<>();
+            for (String p : parentConfiguration.commonClassPath) {
+                result.add(resolve ? parentConfiguration.resolveClassPath(p) : p);
+            }
+            return result;
+        }
+
+        public Collection<String> vmOptions() {
+            return parentConfiguration.getCommonVmOptions();
+        }
+
         public HttpPyramidConfiguration parentConfiguration() {
             return parentConfiguration;
+        }
+
+        public Long xmx() {
+            return parentConfiguration.getCommonMemory();
+        }
+
+        public String xmxOption() {
+            return HttpPyramidConfiguration.xmxOption(xmx());
         }
 
         public String toJsonString() {
@@ -631,6 +645,10 @@ public class HttpPyramidConfiguration {
         return javaFile;
     }
 
+    private String resolveClassPath(String p) {
+        return rootFolder.resolve(p).toAbsolutePath().normalize().toString();
+    }
+
     private JsonObject toJson(boolean includeServices) {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
         if (includeServices) {
@@ -645,6 +663,20 @@ public class HttpPyramidConfiguration {
             builder.add("proxy", proxy.toJson());
         }
         return builder.build();
+    }
+
+    private static String xmxOption(Long xmx) {
+        if (xmx == null) {
+            return null;
+        } else if (xmx % (1024 * 1024 * 1024) == 0) {
+            return "-Xmx" + xmx / (1024 * 1024 * 1024) + "g";
+        } else if (xmx % (1024 * 1024) == 0) {
+            return "-Xmx" + xmx / (1024 * 1024) + "m";
+        } else if (xmx % 1024 == 0) {
+            return "-Xmx" + xmx / 1024 + "k";
+        } else {
+            return "-Xmx" + xmx;
+        }
     }
 
     private static long parseLongWithMetricalSuffixes(String s) {

@@ -24,37 +24,46 @@
 
 package net.algart.pyramid.http.tests;
 
-import net.algart.pyramid.api.http.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.http.HttpPyramidProxyControl;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class HttpPyramidProxyClientTest {
     public static void main(String[] args) throws IOException {
         if (args.length < 3) {
-            System.out.printf("Usage: %s host port CHECK|FINISH%n", HttpPyramidProxyClientTest.class.getName());
+            System.out.printf("Usage: %s host start|check|stop configurationFolder%n",
+                HttpPyramidProxyClientTest.class.getName());
             return;
         }
         final String host = args[0];
-        final int port = Integer.parseInt(args[1]);
-        final String command = args[2];
+        final String command = args[1].toLowerCase();
+        final Path configurationFolder = Paths.get(args[2]);
+        final HttpPyramidConfiguration configuration =
+            HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
 
         HttpPyramidProxyControl client = new HttpPyramidProxyControl(
             host,
-            port,
-            Paths.get(HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER),
+            configuration.getProxy(),
             false);
         long t1 = System.nanoTime();
         try {
-            switch (command.toLowerCase()) {
+            switch (command) {
+                case "start": {
+                    client.startOnLocalhost();
+                    System.out.println("Proxy is started");
+                    break;
+                }
                 case "check": {
                     final boolean alive = client.isProxyAlive(true);
                     System.out.println("Proxy is " + (alive ? "" : "not ") + "active");
                     break;
                 }
-                case "finish": {
-                    client.finishService();
+                case "stop": {
+                    client.stopOnLocalhost();
+                    System.out.println("Proxy is finished");
                     break;
                 }
                 default: {
