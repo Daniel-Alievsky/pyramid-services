@@ -39,11 +39,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-class StandardPlanePyramidServerResolver implements HttpServerResolver {
+class StandardPyramidServerResolver implements HttpServerResolver {
 
     private static final int POOL_SIZE = 500000;
     // - several megabytes as a maximum
-    private static final Logger LOG = Logger.getLogger(StandardPlanePyramidServerResolver.class.getName());
+    private static final Logger LOG = Logger.getLogger(StandardPyramidServerResolver.class.getName());
 
     private final Map<String, HttpServerAddress> pool = new ServerAddressHashMap();
     private final HttpPyramidConfiguration configuration;
@@ -51,7 +51,7 @@ class StandardPlanePyramidServerResolver implements HttpServerResolver {
     private final HttpPyramidConfiguration.Proxy.PyramidServer pyramidServer;
     private final Object lock = new Object();
 
-    StandardPlanePyramidServerResolver(HttpPyramidConfiguration configuration) {
+    StandardPyramidServerResolver(HttpPyramidConfiguration configuration) {
         assert configuration != null && configuration.getProxy() != null;
         this.configuration = configuration;
         this.defaultServer = configuration.getProxy().getDefaultServer();
@@ -83,6 +83,11 @@ class StandardPlanePyramidServerResolver implements HttpServerResolver {
         HttpServerAddress result = new HttpServerAddress(defaultServer.getHost(), defaultServer.getPort());
         LOG.config("Proxying " + requestURI + " to default server " + result);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "standard pyramid server resolver";
     }
 
     private HttpServerAddress pyramidIdToServerAddress(String pyramidId) throws IOException {

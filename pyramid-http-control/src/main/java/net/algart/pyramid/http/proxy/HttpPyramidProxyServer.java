@@ -35,8 +35,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 public final class HttpPyramidProxyServer {
+
+    private static final Logger LOG = Logger.getLogger(HttpPyramidProxyServer.class.getName());
 
     private final HttpPyramidConfiguration configuration;
     private final HttpProxy proxy;
@@ -47,7 +50,7 @@ public final class HttpPyramidProxyServer {
         this.configuration = configuration;
         this.proxy = new HttpProxy(
             configuration.getProxy().getProxyPort(),
-            new StandardPlanePyramidServerResolver(configuration),
+            new StandardPyramidServerResolver(configuration),
             new HttpPyramidServiceServerFailureHandler(configuration));
 
     }
@@ -70,7 +73,7 @@ public final class HttpPyramidProxyServer {
         } catch (IOException e) {
             throw new IOError(e);
         }
-        System.out.println("Finishing " + proxy);
+        LOG.info("Finishing " + proxy);
     }
 
     private Path finishKeyFile() {

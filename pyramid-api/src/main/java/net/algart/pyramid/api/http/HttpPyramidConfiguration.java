@@ -517,6 +517,10 @@ public class HttpPyramidConfiguration {
         return systemCommandsFolder;
     }
 
+    public boolean hasProxy() {
+        return proxy != null;
+    }
+
     public Proxy getProxy() {
         return proxy;
     }

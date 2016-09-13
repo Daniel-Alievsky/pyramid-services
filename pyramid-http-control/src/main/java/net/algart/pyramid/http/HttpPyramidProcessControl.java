@@ -60,8 +60,13 @@ public final class HttpPyramidProcessControl implements JavaProcessControlWithHt
     }
 
     @Override
-    public String getProcessId() {
+    public String processId() {
         return processConfiguration.getGroupId();
+    }
+
+    @Override
+    public String processName() {
+        return "services group \"" + processId() + "\"";
     }
 
     @Override

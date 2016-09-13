@@ -27,7 +27,9 @@ package net.algart.pyramid.http;
 import java.io.IOException;
 
 interface JavaProcessControlWithHttpCheckingAliveStatus {
-    String getProcessId();
+    String processId();
+
+    String processName();
 
     boolean areAllHttpServicesAlive(boolean logWhenFails);
 

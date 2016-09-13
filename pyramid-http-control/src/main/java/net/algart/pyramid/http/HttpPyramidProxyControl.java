@@ -74,8 +74,13 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
     }
 
     @Override
-    public String getProcessId() {
+    public String processId() {
         return PROXY_PROCESS_ID;
+    }
+
+    @Override
+    public String processName() {
+        return "\"Pyramid Proxy \"";
     }
 
     @Override

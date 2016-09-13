@@ -10,10 +10,10 @@
   ],
   "commonMemory" : "1g",
   "proxy" : {
-    "proxyPort" : 80,
+    "proxyPort" : 100,
     "defaultServer" : {
       "host" : "localhost",
-      "port" : 88
+      "port" : 80
     }
   }
 }
