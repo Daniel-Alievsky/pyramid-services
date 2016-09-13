@@ -121,7 +121,7 @@ public final class HttpPyramidServersLauncher {
             proxy = restartPyramidProxy(skipAlreadyAlive);
         }
         LOG.info(String.format("%n%d services in %d processes restarted, proxy %s",
-            serviceCount, processCount, proxy ? "restarted" : configuration.hasProxy() ? "FAILED" : "absent"));
+            serviceCount, processCount, proxy ? "restarted" : configuration.hasProxy() ? "not restarted" : "absent"));
     }
 
     public boolean startPyramidServicesGroup(String groupId, boolean skipIfAlive) throws IOException {
@@ -254,7 +254,10 @@ public final class HttpPyramidServersLauncher {
             if (skipIfAlive && control.areAllHttpServicesAlive(true)) {
                 return false;
             }
-            stopProcess(control, false);
+            stopProcess(control, skipIfAlive);
+            // - skipIfAlive is a "smart" mode; in this case, if we will pass "false" to stopProcess
+            // and the process is really not alive, stopProcess will create signal file
+            // and the following startProcess will be enforced to start the process TWICE!
             startProcess(control, false);
             return true;
         }

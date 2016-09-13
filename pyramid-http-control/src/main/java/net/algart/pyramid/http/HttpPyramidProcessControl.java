@@ -132,6 +132,7 @@ public final class HttpPyramidProcessControl implements JavaProcessControlWithHt
         for (HttpPyramidServiceControl serviceControl : serviceControls) {
             success &= serviceControl.stopServiceOnLocalhost();
         }
+        LOG.info("Stopping " + processName() + " on localhost");
         return success;
     }
 }

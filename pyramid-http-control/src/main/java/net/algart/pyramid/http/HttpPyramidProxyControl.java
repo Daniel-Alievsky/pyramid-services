@@ -128,6 +128,7 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
     public final boolean stopOnLocalhost() {
         try {
             HttpPyramidServiceControl.requestSystemCommand(HttpProxy.FINISH_COMMAND, port, systemCommandsFolder);
+            LOG.info("Stopping " + processName() + " on localhost");
             return true;
         } catch (IOException e) {
             LOG.log(Level.INFO, "Cannot request finish proxy command in folder "
