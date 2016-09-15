@@ -80,7 +80,7 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
 
     @Override
     public String processName() {
-        return "\"Pyramid Proxy \"";
+        return "\"Pyramid Proxy\"";
     }
 
     @Override

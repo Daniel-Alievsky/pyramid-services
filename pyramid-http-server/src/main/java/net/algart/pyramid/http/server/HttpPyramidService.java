@@ -232,6 +232,12 @@ public class HttpPyramidService {
 //            System.out.println("path info: " + request.getPathInfo());
 //            System.out.println("context: " + request.getContextPath());
 //            System.out.println("query:" + request.getQueryString());
+//            System.out.println("  headers:");
+//            for (String headerName : request.getHeaderNames()) {
+//                for (String headerValue : request.getHeaders(headerName)) {
+//                    System.out.printf("    %s=%s%n", headerName, headerValue);
+//                }
+//            }
 //            for (String name : request.getParameterNames()) {
 //                System.out.printf("%s: %s%n", name, request.getParameter(name));
 //            }
