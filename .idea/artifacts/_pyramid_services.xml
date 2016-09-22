@@ -63,6 +63,7 @@
         <element id="directory" name="logging">
           <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/logging" />
         </element>
+        <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-config/proxy-settings-example.json" />
       </element>
       <element id="directory" name="pp-images">
         <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-images" />

@@ -36,6 +36,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+/**
+ * Configuration of the set of services. Usually created on the compilation stage
+ * and copied to the server without changes.
+ */
 public class HttpPyramidConfiguration {
     public static final String GLOBAL_CONFIGURATION_FILE_NAME = ".global-configuration.json";
     public static final String CONFIGURATION_FILE_MASK = ".*.json";
@@ -525,6 +529,14 @@ public class HttpPyramidConfiguration {
         return proxy;
     }
 
+    public Collection<String> classPath(boolean resolve) {
+        final Set<String> result = new TreeSet<>();
+        for (String p : commonClassPath) {
+            result.add(resolve ? resolveClassPath(p) : p);
+        }
+        return result;
+    }
+
     public Path systemCommandsFolder() {
         return rootFolder.resolve(systemCommandsFolder).toAbsolutePath();
     }
@@ -558,16 +570,10 @@ public class HttpPyramidConfiguration {
     }
 
     public String toString() {
-        JsonWriterFactory jsonWriterFactory = Json.createWriterFactory(
-            Collections.singletonMap(JsonGenerator.PRETTY_PRINTING, true));
-        StringWriter stringWriter = new StringWriter();
-        try (JsonWriter jsonWriter = jsonWriterFactory.createWriter(stringWriter)) {
-            jsonWriter.writeObject(toJson(true));
-            return stringWriter.toString();
-        }
+        return jsonToPrettyString(toJson(true));
     }
 
-    public static HttpPyramidConfiguration readConfigurationFromFolder(Path configurationFolder)
+    public static HttpPyramidConfiguration readFromFolder(Path configurationFolder)
         throws IOException
     {
         Objects.requireNonNull(configurationFolder, "Null configurationFolder");
@@ -575,11 +581,11 @@ public class HttpPyramidConfiguration {
         try (final DirectoryStream<Path> files = Files.newDirectoryStream(
             configurationFolder, CONFIGURATION_FILE_MASK))
         {
-            return readConfigurationFromFiles(configurationFolder, globalConfigurationFile, files);
+            return readFromFiles(configurationFolder, globalConfigurationFile, files);
         }
     }
 
-    public static HttpPyramidConfiguration readConfigurationFromFiles(
+    public static HttpPyramidConfiguration readFromFiles(
         Path configurationFolder,
         Path globalConfigurationFile,
         Iterable<Path> configurationFiles)
@@ -649,6 +655,58 @@ public class HttpPyramidConfiguration {
         return javaFile;
     }
 
+    static String getRequiredString(JsonObject json, String name) {
+        final JsonString result = json.getJsonString(name);
+        if (result == null) {
+            throw new JsonException("Invalid configuration JSON: \"" + name + "\" value required");
+        }
+        return result.getString();
+    }
+
+    static int getRequiredInt(JsonObject json, String name) {
+        final JsonNumber result = json.getJsonNumber(name);
+        if (result == null) {
+            throw new JsonException("Invalid configuration JSON: \"" + name + "\" value required");
+        }
+        return result.intValueExact();
+    }
+
+    static JsonArray getRequiredJsonArray(JsonObject json, String name) {
+        final JsonArray result = json.getJsonArray(name);
+        if (result == null) {
+            throw new JsonException("Invalid configuration JSON: \"" + name + "\" value required");
+        }
+        return result;
+    }
+
+    static JsonArray toJsonArray(Collection<?> collection) {
+        final JsonArrayBuilder builder = Json.createArrayBuilder();
+        for (Object o : collection) {
+            if (o instanceof ConvertibleToJson) {
+                builder.add(((ConvertibleToJson) o).toJson());
+            } else {
+                builder.add(String.valueOf(o));
+            }
+        }
+        return builder.build();
+    }
+
+    static JsonObject readJson(Path path) throws IOException {
+        try (final JsonReader reader = Json.createReader(Files.newBufferedReader(path, StandardCharsets.UTF_8))) {
+            return reader.readObject();
+        }
+    }
+
+    static String jsonToPrettyString(JsonObject json) {
+        JsonWriterFactory jsonWriterFactory = Json.createWriterFactory(
+            Collections.singletonMap(JsonGenerator.PRETTY_PRINTING, true));
+        StringWriter stringWriter = new StringWriter();
+        try (JsonWriter jsonWriter = jsonWriterFactory.createWriter(stringWriter)) {
+            jsonWriter.writeObject(json);
+            return stringWriter.toString();
+        }
+    }
+
     private String resolveClassPath(String p) {
         return rootFolder.resolve(p).toAbsolutePath().normalize().toString();
     }
@@ -707,52 +765,5 @@ public class HttpPyramidConfiguration {
             throw new NumberFormatException("Too large 64-bit long integer value");
         }
         return result << sh;
-    }
-
-    private static String getRequiredString(JsonObject json, String name) {
-        final JsonString result = json.getJsonString(name);
-        if (result == null) {
-            throw new JsonException("Invalid pyramid service configuration JSON: \"" + name + "\" value required");
-        }
-        return result.getString();
-    }
-
-    private static int getRequiredInt(JsonObject json, String name) {
-        final JsonNumber result = json.getJsonNumber(name);
-        if (result == null) {
-            throw new JsonException("Invalid pyramid service configuration JSON: \"" + name + "\" value required");
-        }
-        return result.intValueExact();
-    }
-
-    private static JsonArray getRequiredJsonArray(JsonObject json, String name) {
-        final JsonArray result = json.getJsonArray(name);
-        if (result == null) {
-            throw new JsonException("Invalid pyramid service configuration JSON: \"" + name + "\" value required");
-        }
-        return result;
-    }
-
-    private static JsonArray toJsonArray(Collection<?> collection) {
-        final JsonArrayBuilder builder = Json.createArrayBuilder();
-        for (Object o : collection) {
-            if (o instanceof ConvertibleToJson) {
-                builder.add(((ConvertibleToJson) o).toJson());
-            } else {
-                builder.add(String.valueOf(o));
-            }
-        }
-        return builder.build();
-    }
-
-    private static JsonObject readJson(Path path) throws IOException {
-        try (final JsonReader reader = Json.createReader(Files.newBufferedReader(path, StandardCharsets.UTF_8))) {
-            return reader.readObject();
-        }
-    }
-
-    // Class, not interface: method toJson should not be public
-    private static abstract class ConvertibleToJson {
-        abstract JsonObject toJson();
     }
 }

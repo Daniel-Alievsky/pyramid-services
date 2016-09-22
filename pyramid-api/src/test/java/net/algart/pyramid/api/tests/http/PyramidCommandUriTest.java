@@ -24,25 +24,19 @@
 
 package net.algart.pyramid.api.tests.http;
 
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidApiTools;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
-public class PathRegExpTest {
+public class PyramidCommandUriTest {
     public static void main(String args[]) throws IOException {
-        if (args.length < 2) {
-            System.out.printf("Usage: %s configurationFolder URI%n", PathRegExpTest.class.getName());
+        if (args.length < 1) {
+            System.out.printf("Usage: %s URI%n", PyramidCommandUriTest.class.getName());
             return;
         }
-        final Path configurationFolder = Paths.get(args[0]);
-        final HttpPyramidConfiguration configuration =
-            HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
-        final String uri = args[1];
-        System.out.printf("%s %s %s%n", 
+        final String uri = args[0];
+        System.out.printf("%s %s%n",
             uri,
-            configuration.getProxy().getPyramidServer().uriMatches(uri) ? "matches" : "DOESN'T match",
-            configuration.getProxy().getPyramidServer().getPathRegExp());
+            HttpPyramidApiTools.isUriPyramidCommand(uri) ? "matches" : "DOESN'T match");
     }
 }

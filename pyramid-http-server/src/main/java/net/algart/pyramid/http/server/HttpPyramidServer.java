@@ -185,10 +185,10 @@ public class HttpPyramidServer {
                 for (int index = startArgIndex + 2; index < args.length; index++) {
                     files.add(Paths.get(args[index]));
                 }
-                configuration = HttpPyramidConfiguration.readConfigurationFromFiles(
+                configuration = HttpPyramidConfiguration.readFromFiles(
                     configurationFolder, globalConfigurationFile, files);
             } else {
-                configuration = HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
+                configuration = HttpPyramidConfiguration.readFromFolder(configurationFolder);
             }
             final HttpPyramidConfiguration.Process process = configuration.getProcess(groupId);
             if (process == null) {

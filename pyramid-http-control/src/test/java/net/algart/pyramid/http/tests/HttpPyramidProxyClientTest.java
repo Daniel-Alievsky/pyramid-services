@@ -42,7 +42,7 @@ public class HttpPyramidProxyClientTest {
         final String command = args[1].toLowerCase();
         final Path configurationFolder = Paths.get(args[2]);
         final HttpPyramidConfiguration configuration =
-            HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
+            HttpPyramidConfiguration.readFromFolder(configurationFolder);
 
         HttpPyramidProxyControl client = new HttpPyramidProxyControl(
             host,

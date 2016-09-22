@@ -165,7 +165,7 @@ public class ClassPathGroupResolver {
         }
         final Path configurationFolder = Paths.get(args[startIndex]);
         final HttpPyramidConfiguration configuration =
-            HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
+            HttpPyramidConfiguration.readFromFolder(configurationFolder);
         final Map<Path, JsonObject> correctedJsons = new ClassPathGroupResolver(configuration).resolveAllClassPaths();
         if (correctedJsons.isEmpty()) {
             System.out.printf("Nothing to do%n");

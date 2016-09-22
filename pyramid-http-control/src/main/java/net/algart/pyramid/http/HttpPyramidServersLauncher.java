@@ -346,7 +346,7 @@ public final class HttpPyramidServersLauncher {
         final String command = args[startArgIndex].toLowerCase();
         final Path configurationFolder = Paths.get(args[startArgIndex + 1]);
         final HttpPyramidServersLauncher launcher = new HttpPyramidServersLauncher(
-            HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder));
+            HttpPyramidConfiguration.readFromFolder(configurationFolder));
         try {
             switch (command) {
                 case "start": {

@@ -84,6 +84,10 @@ public class HttpPyramidApiTools {
         return extractPyramidIdFromAppendedIdForURLPath(path.substring(p, q));
     }
 
+    public static boolean isUriPyramidCommand(String uriPath) {
+        return uriPath.matches(HttpPyramidConstants.CommandPrefixes.PREXIX_START_REG_EXP);
+    }
+
     private HttpPyramidApiTools() {
     }
 }

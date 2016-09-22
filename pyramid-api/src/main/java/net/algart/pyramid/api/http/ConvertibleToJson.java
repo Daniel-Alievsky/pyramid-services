@@ -22,23 +22,11 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.api.tests.http;
+package net.algart.pyramid.api.http;
 
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import javax.json.JsonObject;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-public class HttpPyramidServiceConfigurationTest {
-    public static void main(String args[]) throws IOException {
-        if (args.length == 0) {
-            System.out.printf("Usage: %s configurationFolder%n", HttpPyramidServiceConfigurationTest.class.getName());
-            return;
-        }
-        final Path configurationFolder = Paths.get(args[0]);
-        final HttpPyramidConfiguration configuration =
-            HttpPyramidConfiguration.readFromFolder(configurationFolder);
-        System.out.println(configuration);
-    }
+// Class, not interface: method toJson should not be public, to avoid extra dependency from JsonObject
+abstract class ConvertibleToJson {
+    abstract JsonObject toJson();
 }

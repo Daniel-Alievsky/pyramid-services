@@ -137,7 +137,7 @@ public final class HttpPyramidProxyServer {
         final HttpPyramidProxyServer server;
         try {
             final HttpPyramidConfiguration configuration =
-                HttpPyramidConfiguration.readConfigurationFromFolder(configurationFolder);
+                HttpPyramidConfiguration.readFromFolder(configurationFolder);
             server = new HttpPyramidProxyServer(configuration);
             server.start();
         } catch (Exception e) {
