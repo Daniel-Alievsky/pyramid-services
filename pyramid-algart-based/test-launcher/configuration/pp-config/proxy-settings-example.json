@@ -1,9 +1,0 @@
-{
-  "proxyPort": 100,
-  "defaultHost": "localhost",
-  "https": true,
-  "sslSettings": {
-    "keystoreFile": "/simagis/simagis-tests/grizzly-tests/src/test/resources/ssl-test-keystore.jks",
-    "keystorePassword": "changeit"
-  }
-}

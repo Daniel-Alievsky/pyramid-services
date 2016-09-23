@@ -24,21 +24,22 @@
 
 package net.algart.pyramid.api.tests.http;
 
-import net.algart.pyramid.api.http.HttpPyramidProxyConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class HttpPyramidProxyConfigurationTest {
+public class HttpPyramidSpecificServerConfigurationTest {
     public static void main(String args[]) throws IOException {
         if (args.length == 0) {
-            System.out.printf("Usage: %s proxyConfigurationFile%n", HttpPyramidProxyConfigurationTest.class.getName());
+            System.out.printf("Usage: %s proxyConfigurationFile%n",
+                HttpPyramidSpecificServerConfigurationTest.class.getName());
             return;
         }
         final Path configurationFile = Paths.get(args[0]);
-        final HttpPyramidProxyConfiguration configuration =
-            HttpPyramidProxyConfiguration.readFromFile(configurationFile);
+        final HttpPyramidSpecificServerConfiguration configuration =
+            HttpPyramidSpecificServerConfiguration.readFromFile(configurationFile);
         System.out.println(configuration);
     }
 }
