@@ -279,154 +279,6 @@ public class HttpPyramidConfiguration {
         }
     }
 
-    public static class Proxy extends ConvertibleToJson {
-        public static class PyramidServer extends ConvertibleToJson {
-            private String host = "localhost";
-            private String pathRegExp = HttpPyramidConstants.CommandPrefixes.PREXIX_START_REG_EXP;
-
-            private PyramidServer(JsonObject json) {
-                if (json != null) {
-                    this.host = json.getString("host", host);
-                    this.pathRegExp = json.getString("pathRegExp", pathRegExp);
-                }
-            }
-
-            public String getHost() {
-                return host;
-            }
-
-            public String getPathRegExp() {
-                return pathRegExp;
-            }
-
-            public boolean uriMatches(String uriPath) {
-                return uriPath.matches(pathRegExp);
-            }
-
-            public String toJsonString() {
-                return toJson().toString();
-            }
-
-            JsonObject toJson() {
-                final JsonObjectBuilder builder = Json.createObjectBuilder();
-                builder.add("host", host);
-                builder.add("pathRegExp", pathRegExp);
-                return builder.build();
-            }
-        }
-
-        public static class DefaultServer extends ConvertibleToJson {
-            private String host = "localhost";
-            private int port = 80;
-
-            private DefaultServer(JsonObject json) {
-                if (json != null) {
-                    this.host = json.getString("host", host);
-                    this.port = json.getInt("port", port);
-                    if (port <= 0) {
-                        throw new JsonException("Invalid configuration JSON:"
-                            + " zero or negative default server port number " + port);
-                    }
-                }
-            }
-
-            public String getHost() {
-                return host;
-            }
-
-            public int getPort() {
-                return port;
-            }
-
-            public String toJsonString() {
-                return toJson().toString();
-            }
-
-            JsonObject toJson() {
-                final JsonObjectBuilder builder = Json.createObjectBuilder();
-                builder.add("host", host);
-                builder.add("port", port);
-                return builder.build();
-            }
-        }
-
-        private final int proxyPort;
-        private final PyramidServer pyramidServer;
-        private final DefaultServer defaultServer;
-        private final HttpPyramidConfiguration parentConfiguration;
-
-        private Proxy(JsonObject json, HttpPyramidConfiguration parentConfiguration) {
-            Objects.requireNonNull(json);
-            Objects.requireNonNull(parentConfiguration);
-            this.proxyPort = getRequiredInt(json, "proxyPort");
-            if (proxyPort <= 0 || proxyPort > HttpPyramidConstants.MAX_ALLOWED_PORT) {
-                throw new JsonException("Invalid configuration JSON:"
-                    + " invalid proxy port number " + proxyPort
-                    + " (must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT + ")");
-            }
-            this.pyramidServer = new PyramidServer(json.getJsonObject("pyramidServer"));
-            this.defaultServer = new DefaultServer(json.getJsonObject("defaultServer"));
-            this.parentConfiguration = parentConfiguration;
-        }
-
-        public int getProxyPort() {
-            return proxyPort;
-        }
-
-        public PyramidServer getPyramidServer() {
-            return pyramidServer;
-        }
-
-        public DefaultServer getDefaultServer() {
-            return defaultServer;
-        }
-
-        public boolean hasWorkingDirectory() {
-            // Maybe in future version we will allow proxy to specify own working directory
-            return false;
-        }
-
-        public Path workingDirectory() {
-            return parentConfiguration.rootFolder.toAbsolutePath();
-        }
-
-        public Collection<String> classPath(boolean resolve) {
-            final Set<String> result = new TreeSet<>();
-            for (String p : parentConfiguration.commonClassPath) {
-                result.add(resolve ? parentConfiguration.resolveClassPath(p) : p);
-            }
-            return result;
-        }
-
-        public Collection<String> vmOptions() {
-            return parentConfiguration.getCommonVmOptions();
-        }
-
-        public HttpPyramidConfiguration parentConfiguration() {
-            return parentConfiguration;
-        }
-
-        public Long xmx() {
-            return parentConfiguration.getCommonMemory();
-        }
-
-        public String xmxOption() {
-            return HttpPyramidConfiguration.xmxOption(xmx());
-        }
-
-        public String toJsonString() {
-            return toJson().toString();
-        }
-
-        JsonObject toJson() {
-            final JsonObjectBuilder builder = Json.createObjectBuilder();
-            builder.add("proxyPort", proxyPort);
-            builder.add("pyramidServer", pyramidServer.toJson());
-            builder.add("defaultServer", defaultServer.toJson());
-            return builder.build();
-        }
-    }
-
     private final Map<String, Process> processes;
     private final Map<String, Service> allServices;
     private final Path rootFolder;
@@ -438,7 +290,6 @@ public class HttpPyramidConfiguration {
     private final Long commonMemory;
     // - actual -Xmx for every process is a maximum of this value and its xmx()
     private String systemCommandsFolder;
-    private final Proxy proxy;
 
     private HttpPyramidConfiguration(
         Path rootFolder, Path globalConfigurationFile, JsonObject globalConfiguration, Map<String, Process> processes)
@@ -454,7 +305,6 @@ public class HttpPyramidConfiguration {
         for (Process process : processList) {
             process.parentConfiguration = this;
         }
-        final JsonObject proxy = globalConfiguration.getJsonObject("proxy");
         final JsonArray commonClassPath = globalConfiguration.getJsonArray(COMMON_CLASS_PATH_FIELD);
         this.commonClassPath = new TreeSet<>();
         if (commonClassPath != null) {
@@ -473,7 +323,6 @@ public class HttpPyramidConfiguration {
         this.commonMemory = commonMemory != null ? parseLongWithMetricalSuffixes(commonMemory) : null;
         this.systemCommandsFolder = globalConfiguration.getString("systemCommandsFolder",
             HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER);
-        this.proxy = proxy == null ? null : new Proxy(proxy, this);
         this.allServices = new LinkedHashMap<>();
         for (Process process : processList) {
             for (Service service : process.services) {
@@ -521,14 +370,6 @@ public class HttpPyramidConfiguration {
         return systemCommandsFolder;
     }
 
-    public boolean hasProxy() {
-        return proxy != null;
-    }
-
-    public Proxy getProxy() {
-        return proxy;
-    }
-
     public Collection<String> classPath(boolean resolve) {
         final Set<String> result = new TreeSet<>();
         for (String p : commonClassPath) {
@@ -539,6 +380,10 @@ public class HttpPyramidConfiguration {
 
     public Path systemCommandsFolder() {
         return rootFolder.resolve(systemCommandsFolder).toAbsolutePath();
+    }
+
+    public String xmxOption() {
+        return xmxOption(commonMemory);
     }
 
     public Collection<String> allGroupId() {
@@ -720,9 +565,6 @@ public class HttpPyramidConfiguration {
         builder.add("commonVmOptions", toJsonArray(commonVmOptions));
         if (commonMemory != null) {
             builder.add("commonMemory", commonMemory);
-        }
-        if (proxy != null) {
-            builder.add("proxy", proxy.toJson());
         }
         return builder.build();
     }

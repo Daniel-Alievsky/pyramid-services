@@ -165,7 +165,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         this.proxy = proxyJson == null ? null : new Proxy(proxyJson);
     }
 
-    public boolean isUseProxy() {
+    public boolean hasProxy() {
         return useProxy;
     }
 

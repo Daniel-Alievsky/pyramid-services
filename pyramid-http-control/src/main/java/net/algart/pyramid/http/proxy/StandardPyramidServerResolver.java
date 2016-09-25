@@ -30,6 +30,7 @@ import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import org.glassfish.grizzly.http.util.Parameters;
 
 import javax.json.JsonObject;
@@ -47,20 +48,22 @@ class StandardPyramidServerResolver implements HttpServerResolver {
 
     private final Map<String, HttpServerAddress> pool = new ServerAddressHashMap();
     private final HttpPyramidConfiguration configuration;
-    private final HttpPyramidConfiguration.Proxy.DefaultServer defaultServer;
-    private final HttpPyramidConfiguration.Proxy.PyramidServer pyramidServer;
+    private final HttpPyramidSpecificServerConfiguration.Proxy proxyConfiguration;
     private final Object lock = new Object();
 
-    StandardPyramidServerResolver(HttpPyramidConfiguration configuration) {
-        assert configuration != null && configuration.getProxy() != null;
+    StandardPyramidServerResolver(
+        HttpPyramidConfiguration configuration,
+        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+    {
+        assert configuration != null && specificServerConfiguration != null;
+        assert specificServerConfiguration.getProxy() != null;
         this.configuration = configuration;
-        this.defaultServer = configuration.getProxy().getDefaultServer();
-        this.pyramidServer = configuration.getProxy().getPyramidServer();
+        this.proxyConfiguration = specificServerConfiguration.getProxy();
     }
 
     @Override
     public HttpServerAddress findServer(String requestURI, Parameters queryParameters) throws IOException {
-        if (pyramidServer.uriMatches(requestURI)) {
+        if (HttpPyramidApiTools.isUriPyramidCommand(requestURI)) {
             final String pyramidId = findPyramidId(requestURI, queryParameters);
             if (pyramidId != null) {
                 synchronized (lock) {
@@ -75,12 +78,13 @@ class StandardPyramidServerResolver implements HttpServerResolver {
             }
             final Integer serverPort = findServerPort(queryParameters);
             if (serverPort != null) {
-                HttpServerAddress result = new HttpServerAddress(pyramidServer.getHost(), serverPort);
+                HttpServerAddress result = new HttpServerAddress(proxyConfiguration.getPyramidHost(), serverPort);
                 LOG.config("Proxying " + requestURI + " to " + result + " by direct port parameter " + serverPort);
                 return result;
             }
         }
-        HttpServerAddress result = new HttpServerAddress(defaultServer.getHost(), defaultServer.getPort());
+        HttpServerAddress result = new HttpServerAddress(
+            proxyConfiguration.getDefaultHost(), proxyConfiguration.getDefaultPort());
         LOG.config("Proxying " + requestURI + " to default server " + result);
         return result;
     }
@@ -100,7 +104,7 @@ class StandardPyramidServerResolver implements HttpServerResolver {
         if (service == null) {
             throw new IOException("Service not found for pyramid format \"" + pyramidFormatName + "\"");
         }
-        return new HttpServerAddress(pyramidServer.getHost(), service.getPort());
+        return new HttpServerAddress(proxyConfiguration.getPyramidHost(), service.getPort());
     }
 
     private static Integer findServerPort(Parameters queryParameters) {

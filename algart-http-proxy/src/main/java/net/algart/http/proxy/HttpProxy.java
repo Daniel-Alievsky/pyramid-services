@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+//TODO!! support HTTPS
 public final class HttpProxy {
 
     /**

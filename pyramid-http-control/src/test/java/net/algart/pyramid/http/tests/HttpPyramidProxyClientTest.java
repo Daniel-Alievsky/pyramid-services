@@ -25,6 +25,7 @@
 package net.algart.pyramid.http.tests;
 
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import net.algart.pyramid.http.HttpPyramidProxyControl;
 
 import java.io.IOException;
@@ -33,21 +34,24 @@ import java.nio.file.Paths;
 
 public class HttpPyramidProxyClientTest {
     public static void main(String[] args) throws IOException {
-        if (args.length < 3) {
-            System.out.printf("Usage: %s host start|check|stop configurationFolder%n",
+        if (args.length < 4) {
+            System.out.printf("Usage: %s host start|check|stop configurationFolder specificServerConfigurationFile%n",
                 HttpPyramidProxyClientTest.class.getName());
             return;
         }
         final String host = args[0];
         final String command = args[1].toLowerCase();
         final Path configurationFolder = Paths.get(args[2]);
+        final Path specificServerConfigurationFile = Paths.get(args[3]);
         final HttpPyramidConfiguration configuration =
             HttpPyramidConfiguration.readFromFolder(configurationFolder);
+        final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
+            HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
 
         HttpPyramidProxyControl client = new HttpPyramidProxyControl(
             host,
-            configuration.getProxy(),
-            false);
+            configuration,
+            specificServerConfiguration.getProxy());
         long t1 = System.nanoTime();
         try {
             switch (command) {

@@ -25,9 +25,12 @@
 package net.algart.pyramid.http.proxy;
 
 import net.algart.http.proxy.HttpProxy;
+import net.algart.http.proxy.HttpServerAddress;
+import net.algart.http.proxy.HttpServerFailureHandler;
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
 import java.io.IOError;
 import java.io.IOException;
@@ -39,19 +42,38 @@ import java.util.logging.Logger;
 
 public final class HttpPyramidProxyServer {
 
-    private static final Logger LOG = Logger.getLogger(HttpPyramidProxyServer.class.getName());
+    static final Logger LOG = Logger.getLogger(HttpPyramidProxyServer.class.getName());
 
-    private final HttpPyramidConfiguration configuration;
+    private final HttpPyramidConfiguration serviceConfiguration;
+    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final HttpProxy proxy;
 
-    public HttpPyramidProxyServer(HttpPyramidConfiguration configuration) {
-        Objects.requireNonNull(configuration, "Null configuration");
-        Objects.requireNonNull(configuration.getProxy(), "Proxy configuration not present");
-        this.configuration = configuration;
+    public HttpPyramidProxyServer(
+        HttpPyramidConfiguration configuration,
+        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+    {
+        Objects.requireNonNull(configuration, "Null configuration of pyramid services");
+        Objects.requireNonNull(specificServerConfiguration, "Null configuration for specific server");
+        if (!specificServerConfiguration.hasProxy()) {
+            throw new IllegalArgumentException("Proxy is not used in this configuration");
+        }
+        this.serviceConfiguration = configuration;
+        this.specificServerConfiguration = specificServerConfiguration;
         this.proxy = new HttpProxy(
-            configuration.getProxy().getProxyPort(),
-            new StandardPyramidServerResolver(configuration),
-            new HttpPyramidServiceServerFailureHandler(configuration));
+            specificServerConfiguration.getProxy().getProxyPort(),
+            new StandardPyramidServerResolver(configuration, specificServerConfiguration),
+            new HttpServerFailureHandler() {
+                @Override
+                public void onConnectionFailed(HttpServerAddress address, Throwable throwable) {
+                    //In future, it can restart the server, reserving 2nd instance to be on the safe side
+                    LOG.warning("Cannot connect to " + address + ": maybe the service crashed");
+                }
+
+                @Override
+                public void onServerTimeout(HttpServerAddress address, String requestURI) {
+                    LOG.warning("Timeout while accessing " + address + ": maybe the service crashed");
+                }
+            });
 
     }
 
@@ -78,7 +100,7 @@ public final class HttpPyramidProxyServer {
 
     private Path finishKeyFile() {
         return HttpPyramidApiTools.keyFile(
-            configuration.systemCommandsFolder(),
+            serviceConfiguration.systemCommandsFolder(),
             HttpProxy.FINISH_COMMAND,
             proxy.getProxyPort());
     }
@@ -128,17 +150,21 @@ public final class HttpPyramidProxyServer {
             serviceMode = true;
             startArgIndex++;
         }
-        if (args.length < startArgIndex + 1) {
+        if (args.length < startArgIndex + 2) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s configurationFolder%n", HttpPyramidProxyServer.class.getName());
+            System.out.printf("    %s configurationFolder specificServerConfigurationFile%n",
+                HttpPyramidProxyServer.class.getName());
             return;
         }
         final Path configurationFolder = Paths.get(args[startArgIndex]);
+        final Path specificServerConfigurationFile = Paths.get(args[startArgIndex]);
         final HttpPyramidProxyServer server;
         try {
-            final HttpPyramidConfiguration configuration =
+            final HttpPyramidConfiguration serviceConfiguration =
                 HttpPyramidConfiguration.readFromFolder(configurationFolder);
-            server = new HttpPyramidProxyServer(configuration);
+            final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
+                HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
+            server = new HttpPyramidProxyServer(serviceConfiguration, specificServerConfiguration);
             server.start();
         } catch (Exception e) {
             if (serviceMode) {

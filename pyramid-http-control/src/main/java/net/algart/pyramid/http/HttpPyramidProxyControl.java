@@ -27,6 +27,7 @@ package net.algart.pyramid.http;
 import net.algart.http.proxy.HttpProxy;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import net.algart.pyramid.http.proxy.HttpPyramidProxyServer;
 
 import java.io.File;
@@ -45,28 +46,21 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
     private static final Logger LOG = Logger.getLogger(HttpPyramidProxyControl.class.getName());
 
     private final String host;
-    private final HttpPyramidConfiguration.Proxy proxyConfiguration;
+    private final HttpPyramidConfiguration configuration;
+    private final HttpPyramidSpecificServerConfiguration.Proxy proxyConfiguration;
     private final int port;
     private final Path systemCommandsFolder;
-    private final boolean https;
 
     public HttpPyramidProxyControl(
         String host,
-        HttpPyramidConfiguration.Proxy proxyConfiguration)
-    {
-        this(host, proxyConfiguration, false);
-    }
-
-    public HttpPyramidProxyControl(
-        String host,
-        HttpPyramidConfiguration.Proxy proxyConfiguration,
-        boolean https)
+        HttpPyramidConfiguration configuration,
+        HttpPyramidSpecificServerConfiguration.Proxy proxyConfiguration)
     {
         this.host = Objects.requireNonNull(host, "Null host");
+        this.configuration = Objects.requireNonNull(configuration, "Null configuration");
         this.proxyConfiguration = Objects.requireNonNull(proxyConfiguration, "Null proxyConfiguration");
         this.port = proxyConfiguration.getProxyPort();
-        this.systemCommandsFolder = proxyConfiguration.parentConfiguration().systemCommandsFolder();
-        this.https = https;
+        this.systemCommandsFolder = configuration.systemCommandsFolder();
     }
 
     public String getHost() {
@@ -95,17 +89,16 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
 
     @Override
     public Process startOnLocalhost() throws IOException {
-        final HttpPyramidConfiguration configuration = proxyConfiguration.parentConfiguration();
         final Path javaPath = HttpPyramidConfiguration.getJavaExecutable(HttpPyramidConfiguration.getCurrentJREHome());
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
-        command.addAll(proxyConfiguration.vmOptions());
-        final String xmxOption = proxyConfiguration.xmxOption();
+        command.addAll(configuration.getCommonVmOptions());
+        final String xmxOption = configuration.xmxOption();
         if (xmxOption != null) {
             command.add(xmxOption);
         }
         StringBuilder cp = new StringBuilder();
-        for (String p : proxyConfiguration.classPath(proxyConfiguration.hasWorkingDirectory())) {
+        for (String p : configuration.classPath(false)) {
             if (cp.length() > 0) {
                 cp.append(File.pathSeparatorChar);
             }
@@ -117,7 +110,7 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
         command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG);
         command.add(configuration.getRootFolder().toAbsolutePath().toString());
         ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.directory(proxyConfiguration.workingDirectory().toFile());
+        processBuilder.directory(configuration.getRootFolder().toAbsolutePath().toFile());
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         LOG.info(JavaProcessControlWithHttpCheckingAliveStatus.commandLineToString(processBuilder));
@@ -140,7 +133,7 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
     public final boolean isProxyAlive(boolean logWhenFails) {
         try {
             final HttpURLConnection connection = HttpPyramidServiceControl.openCustomConnection(
-                HttpProxy.ALIVE_STATUS_COMMAND, "GET", host, port, https);
+                HttpProxy.ALIVE_STATUS_COMMAND, "GET", host, port, proxyConfiguration.isUseSSL());
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
         } catch (IOException e) {
             if (logWhenFails) {

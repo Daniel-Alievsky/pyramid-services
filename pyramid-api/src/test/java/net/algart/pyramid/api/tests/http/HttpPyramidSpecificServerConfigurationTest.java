@@ -33,7 +33,7 @@ import java.nio.file.Paths;
 public class HttpPyramidSpecificServerConfigurationTest {
     public static void main(String args[]) throws IOException {
         if (args.length == 0) {
-            System.out.printf("Usage: %s proxyConfigurationFile%n",
+            System.out.printf("Usage: %s specificServerConfigurationFile%n",
                 HttpPyramidSpecificServerConfigurationTest.class.getName());
             return;
         }
