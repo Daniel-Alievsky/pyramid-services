@@ -5,4 +5,4 @@ rem "C:\Program Files\Java\jre1.8.0_77\bin\java.exe"
 rem Note: you must use 64-bit Java, not 32-bit!
 
 set CP=pp-config/lib/sdk/*;pp-config/lib/maven/json/*
-%java% -classpath %CP% net.algart.pyramid.http.HttpPyramidServersLauncher %1 %2 %3 pp-config/services
+%java% -classpath %CP% net.algart.pyramid.http.HttpPyramidServersLauncher %1 %2 %3 pp-config/services pp-config/specific-server-settings-example.json

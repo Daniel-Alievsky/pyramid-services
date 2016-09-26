@@ -45,26 +45,30 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
 
     private static final Logger LOG = Logger.getLogger(HttpPyramidProxyControl.class.getName());
 
-    private final String host;
+    private final String proxyHost;
+    private final int proxyPort;
     private final HttpPyramidConfiguration configuration;
-    private final HttpPyramidSpecificServerConfiguration.Proxy proxyConfiguration;
-    private final int port;
+    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final Path systemCommandsFolder;
 
     public HttpPyramidProxyControl(
-        String host,
+        String proxyHost,
         HttpPyramidConfiguration configuration,
-        HttpPyramidSpecificServerConfiguration.Proxy proxyConfiguration)
+        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
     {
-        this.host = Objects.requireNonNull(host, "Null host");
+        this.proxyHost = Objects.requireNonNull(proxyHost, "Null proxyHost");
         this.configuration = Objects.requireNonNull(configuration, "Null configuration");
-        this.proxyConfiguration = Objects.requireNonNull(proxyConfiguration, "Null proxyConfiguration");
-        this.port = proxyConfiguration.getProxyPort();
+        this.specificServerConfiguration = Objects.requireNonNull(specificServerConfiguration,
+            "Null specificServerConfiguration");
+        if (!specificServerConfiguration.hasProxy()) {
+            throw new IllegalArgumentException("Proxy is not used in this configuration");
+        }
+        this.proxyPort = specificServerConfiguration.getProxy().getProxyPort();
         this.systemCommandsFolder = configuration.systemCommandsFolder();
     }
 
-    public String getHost() {
-        return host;
+    public String getProxyHost() {
+        return proxyHost;
     }
 
     @Override
@@ -93,7 +97,7 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
         command.addAll(configuration.getCommonVmOptions());
-        final String xmxOption = configuration.xmxOption();
+        final String xmxOption = configuration.commonXmxOption();
         if (xmxOption != null) {
             command.add(xmxOption);
         }
@@ -109,6 +113,7 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
         command.add(HttpPyramidProxyServer.class.getName());
         command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG);
         command.add(configuration.getRootFolder().toAbsolutePath().toString());
+        command.add(specificServerConfiguration.getSpecificServerConfigurationFile().toAbsolutePath().toString());
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilder.directory(configuration.getRootFolder().toAbsolutePath().toFile());
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
@@ -120,7 +125,7 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
     @Override
     public final boolean stopOnLocalhost() {
         try {
-            HttpPyramidServiceControl.requestSystemCommand(HttpProxy.FINISH_COMMAND, port, systemCommandsFolder);
+            HttpPyramidServiceControl.requestSystemCommand(HttpProxy.FINISH_COMMAND, proxyPort, systemCommandsFolder);
             LOG.info("Stopping " + processName() + " on localhost");
             return true;
         } catch (IOException e) {
@@ -131,13 +136,16 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
     }
 
     public final boolean isProxyAlive(boolean logWhenFails) {
+        final boolean useSSL = specificServerConfiguration.getProxy().isUseSSL();
         try {
             final HttpURLConnection connection = HttpPyramidServiceControl.openCustomConnection(
-                HttpProxy.ALIVE_STATUS_COMMAND, "GET", host, port, proxyConfiguration.isUseSSL());
+                HttpProxy.ALIVE_STATUS_COMMAND, "GET", proxyHost, proxyPort, useSSL);
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
+            // getResponseCode() actually waits for results
         } catch (IOException e) {
             if (logWhenFails) {
-                LOG.log(Level.INFO, "Cannot connect to proxy " + host + ":" + port + ": " + e);
+                LOG.log(Level.INFO, "Cannot connect to proxy " +
+                    HttpPyramidServiceControl.protocol(useSSL) + "://" + proxyHost + ":" + proxyPort + ": " + e);
             }
             return false;
         }

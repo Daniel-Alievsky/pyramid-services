@@ -45,7 +45,6 @@ public final class HttpPyramidProxyServer {
     static final Logger LOG = Logger.getLogger(HttpPyramidProxyServer.class.getName());
 
     private final HttpPyramidConfiguration serviceConfiguration;
-    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final HttpProxy proxy;
 
     public HttpPyramidProxyServer(
@@ -58,7 +57,6 @@ public final class HttpPyramidProxyServer {
             throw new IllegalArgumentException("Proxy is not used in this configuration");
         }
         this.serviceConfiguration = configuration;
-        this.specificServerConfiguration = specificServerConfiguration;
         this.proxy = new HttpProxy(
             specificServerConfiguration.getProxy().getProxyPort(),
             new StandardPyramidServerResolver(configuration, specificServerConfiguration),
@@ -84,14 +82,14 @@ public final class HttpPyramidProxyServer {
     public void waitForFinish() throws InterruptedException {
         try {
             for (; ;) {
-                Thread.sleep(HttpPyramidConstants.SYSTEM_CONNANDS_DELAY);
+                Thread.sleep(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY);
                 if (Files.deleteIfExists(finishKeyFile())) {
                     proxy.finish();
                     break;
                 }
             }
-            Thread.sleep(1000);
-            // - additional delay 1000 is to be on the safe side: allow all tasks to be correctly finished
+            Thread.sleep(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH);
+            // - additional delay is to be on the safe side: allow all tasks to be correctly finished
         } catch (IOException e) {
             throw new IOError(e);
         }
@@ -157,7 +155,7 @@ public final class HttpPyramidProxyServer {
             return;
         }
         final Path configurationFolder = Paths.get(args[startArgIndex]);
-        final Path specificServerConfigurationFile = Paths.get(args[startArgIndex]);
+        final Path specificServerConfigurationFile = Paths.get(args[startArgIndex + 1]);
         final HttpPyramidProxyServer server;
         try {
             final HttpPyramidConfiguration serviceConfiguration =

@@ -382,7 +382,7 @@ public class HttpPyramidConfiguration {
         return rootFolder.resolve(systemCommandsFolder).toAbsolutePath();
     }
 
-    public String xmxOption() {
+    public String commonXmxOption() {
         return xmxOption(commonMemory);
     }
 

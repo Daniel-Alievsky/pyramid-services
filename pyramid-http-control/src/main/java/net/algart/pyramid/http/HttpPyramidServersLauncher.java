@@ -40,7 +40,14 @@ import java.util.logging.Logger;
 public final class HttpPyramidServersLauncher {
     private static final Logger LOG = Logger.getLogger(HttpPyramidServersLauncher.class.getName());
 
-    private static final int SUCCESS_DELAY_IN_MS = 1000;
+    private static final int SUCCESS_START_DELAY_IN_MS = 1000;
+    private static final int SUCCESS_STOP_DELAY_IN_MS =
+        HttpPyramidConstants.SYSTEM_COMMANDS_DELAY
+        + HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH
+        + 500;
+    // - note that services and the proxy don't stop immediately, but may delay exiting during
+    // someTime + SYSTEM_COMMANDS_DELAY_AFTER_FINISH ms, where someTime <= SYSTEM_COMMANDS_DELAY
+
     private static final int PROBLEM_DELAY_IN_MS = 3000;
     private static final int PROBLEM_NUMBER_OF_ATTEMPTS = 3;
     private static final int SLOW_START_NUMBER_OF_ATTEMPTS = 15;
@@ -91,9 +98,9 @@ public final class HttpPyramidServersLauncher {
         if (specificServerConfiguration.hasProxy()) {
             proxy = startPyramidProxy(skipAlreadyAlive);
         }
-        LOG.info(String.format("%n%d services in %d processes started, proxy %s",
-            serviceCount, processCount, proxy ? "started" :
-                specificServerConfiguration.hasProxy() ? "FAILED" : "absent"));
+        LOG.info(String.format("%n%d services in %d processes started, %s",
+            serviceCount, processCount, proxy ? "1 proxy started" :
+                specificServerConfiguration.hasProxy() ? "1 proxy FAILED" : "proxy absent"));
     }
 
     public void stopAll(boolean skipNotAlive) throws IOException {
@@ -110,9 +117,9 @@ public final class HttpPyramidServersLauncher {
         if (specificServerConfiguration.hasProxy()) {
             proxy = stopPyramidProxy(skipNotAlive);
         }
-        LOG.info(String.format("%n%d services in %d processes stopped, proxy %s",
-            serviceCount, processCount, proxy ? "stopped" :
-                specificServerConfiguration.hasProxy() ? "FAILED to stop" : "absent"));
+        LOG.info(String.format("%n%d services in %d processes stopped, %s",
+            serviceCount, processCount, proxy ? "1 proxy stopped" :
+                specificServerConfiguration.hasProxy() ? "1 proxy FAILED to stop" : "proxy absent"));
     }
 
     public void restartAll(boolean skipAlreadyAlive) throws IOException {
@@ -129,45 +136,45 @@ public final class HttpPyramidServersLauncher {
         if (specificServerConfiguration.hasProxy()) {
             proxy = restartPyramidProxy(skipAlreadyAlive);
         }
-        LOG.info(String.format("%n%d services in %d processes restarted, proxy %s",
-            serviceCount, processCount, proxy ? "restarted" :
-                specificServerConfiguration.hasProxy() ? "not restarted" : "absent"));
+        LOG.info(String.format("%n%d services in %d processes restarted, %s",
+            serviceCount, processCount, proxy ? "1 proxy restarted" :
+                specificServerConfiguration.hasProxy() ? "1 proxy not restarted" : "proxy absent"));
     }
 
     public boolean startPyramidServicesGroup(String groupId, boolean skipIfAlive) throws IOException {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return startProcess(new HttpPyramidProcessControl(
-            HttpPyramidConstants.LOCAL_HOST, processConfiguration), skipIfAlive);
+            HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
     }
 
     public boolean stopPyramidServicesGroup(String groupId, boolean skipIfNotAlive) throws IOException {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return stopProcess(new HttpPyramidProcessControl(
-            HttpPyramidConstants.LOCAL_HOST, processConfiguration), skipIfNotAlive);
+            HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfNotAlive);
     }
 
     public boolean restartPyramidServicesGroup(String groupId, boolean skipIfAlive) throws IOException {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return restartProcess(new HttpPyramidProcessControl(
-            HttpPyramidConstants.LOCAL_HOST, processConfiguration), skipIfAlive);
+            HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
     }
 
     public boolean startPyramidProxy(boolean skipIfAlive) throws IOException {
         return startProcess(new HttpPyramidProxyControl(
-            HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration.getProxy()), skipIfAlive);
+            HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
     }
 
     public boolean stopPyramidProxy(boolean skipIfNotAlive) throws IOException {
         return stopProcess(new HttpPyramidProxyControl(
-            HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration.getProxy()), skipIfNotAlive);
+            HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfNotAlive);
     }
 
     public boolean restartPyramidProxy(boolean skipIfAlive) throws IOException {
         return restartProcess(new HttpPyramidProxyControl(
-            HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration.getProxy()), skipIfAlive);
+            HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
     }
 
-    boolean startProcess(JavaProcessControlWithHttpCheckingAliveStatus control, boolean skipIfAlive)
+    private boolean startProcess(JavaProcessControlWithHttpCheckingAliveStatus control, boolean skipIfAlive)
         throws IOException
     {
         synchronized (lock) {
@@ -183,7 +190,7 @@ public final class HttpPyramidServersLauncher {
                 if (attempt == 0 || exited) {
                     javaProcess = control.startOnLocalhost();
                     // - try to start again if exited; maybe, the port was not released quickly enough
-                    exited = waitFor(javaProcess, SUCCESS_DELAY_IN_MS);
+                    exited = waitFor(javaProcess, SUCCESS_START_DELAY_IN_MS);
                     // - waiting to allow the process to really start Web servers
                 }
                 if (exited) {
@@ -217,7 +224,7 @@ public final class HttpPyramidServersLauncher {
         }
     }
 
-    boolean stopProcess(JavaProcessControlWithHttpCheckingAliveStatus control, boolean skipIfNotAlive)
+    private boolean stopProcess(JavaProcessControlWithHttpCheckingAliveStatus control, boolean skipIfNotAlive)
         throws IOException
     {
         synchronized (lock) {
@@ -227,7 +234,7 @@ public final class HttpPyramidServersLauncher {
             final Process javaProcess = runningProcesses.get(control.processId());
             for (int attempt = 0; attempt < PROBLEM_NUMBER_OF_ATTEMPTS; attempt++) {
                 control.stopOnLocalhost();
-                sleep(SUCCESS_DELAY_IN_MS);
+                sleep(SUCCESS_STOP_DELAY_IN_MS);
                 if (javaProcess != null ?
                     !javaProcess.isAlive() :
                     !control.isAtLeastSomeHttpServiceAlive(false))
@@ -244,7 +251,7 @@ public final class HttpPyramidServersLauncher {
                     LOG.warning("Cannot finish process " + control.processName()
                         + " by system command, killing it forcibly");
                     javaProcess.destroyForcibly();
-                    sleep(SUCCESS_DELAY_IN_MS);
+                    sleep(SUCCESS_STOP_DELAY_IN_MS);
                     // - waiting for better guarantee
                     return true;
                 } else {
@@ -386,7 +393,7 @@ public final class HttpPyramidServersLauncher {
             return;
             // - this operator will never executed
         }
-        if (debuggingWait) {
+        if (debuggingWait && !command.equals("stop")) {
             printWelcomeAndWaitForEnterKey();
             launcher.stopAll(false);
         }

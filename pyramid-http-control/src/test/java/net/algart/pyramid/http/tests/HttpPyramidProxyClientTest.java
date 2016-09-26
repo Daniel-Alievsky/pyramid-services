@@ -51,7 +51,7 @@ public class HttpPyramidProxyClientTest {
         HttpPyramidProxyControl client = new HttpPyramidProxyControl(
             host,
             configuration,
-            specificServerConfiguration.getProxy());
+            specificServerConfiguration);
         long t1 = System.nanoTime();
         try {
             switch (command) {

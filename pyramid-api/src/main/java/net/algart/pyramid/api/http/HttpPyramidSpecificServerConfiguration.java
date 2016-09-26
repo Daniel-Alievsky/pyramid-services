@@ -37,49 +37,48 @@ import java.util.Objects;
  * Customized by system administrator for each server.
  */
 public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
-    public static class Proxy extends ConvertibleToJson {
-        public static class SSLSettings extends ConvertibleToJson {
-            private final String keystoreFile;
-            private final String keystorePassword;
-            private final String keyPassword;
+    public static class SSLSettings extends ConvertibleToJson {
+        private final String keystoreFile;
+        private final String keystorePassword;
+        private final String keyPassword;
 
-            private SSLSettings(JsonObject json) {
-                this.keystoreFile = HttpPyramidConfiguration.getRequiredString(json, "keystoreFile");
-                this.keystorePassword = HttpPyramidConfiguration.getRequiredString(json, "keystorePassword");
-                this.keyPassword = json.getString("keyPassword", keystorePassword);
-            }
-
-            public String getKeystoreFile() {
-                return keystoreFile;
-            }
-
-            public String getKeystorePassword() {
-                return keystorePassword;
-            }
-
-            public String getKeyPassword() {
-                return keyPassword;
-            }
-
-            public String toJsonString() {
-                return toJson().toString();
-            }
-
-            JsonObject toJson() {
-                final JsonObjectBuilder builder = Json.createObjectBuilder();
-                builder.add("keystoreFile", keystoreFile);
-                builder.add("keystorePassword", keystorePassword);
-                builder.add("keyPassword", keyPassword);
-                return builder.build();
-            }
+        private SSLSettings(JsonObject json) {
+            this.keystoreFile = HttpPyramidConfiguration.getRequiredString(json, "keystoreFile");
+            this.keystorePassword = HttpPyramidConfiguration.getRequiredString(json, "keystorePassword");
+            this.keyPassword = json.getString("keyPassword", keystorePassword);
         }
 
+        public String getKeystoreFile() {
+            return keystoreFile;
+        }
+
+        public String getKeystorePassword() {
+            return keystorePassword;
+        }
+
+        public String getKeyPassword() {
+            return keyPassword;
+        }
+
+        public String toJsonString() {
+            return toJson().toString();
+        }
+
+        JsonObject toJson() {
+            final JsonObjectBuilder builder = Json.createObjectBuilder();
+            builder.add("keystoreFile", keystoreFile);
+            builder.add("keystorePassword", keystorePassword);
+            builder.add("keyPassword", keyPassword);
+            return builder.build();
+        }
+    }
+
+    public static class Proxy extends ConvertibleToJson {
         private final int proxyPort;
         private final String pyramidHost;
         private final String defaultHost;
         private final int defaultPort;
         private final boolean useSSL;
-        private final SSLSettings sslSettings;
 
         private Proxy(JsonObject json) {
             Objects.requireNonNull(json);
@@ -97,12 +96,6 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
                     + " zero or negative default server port number " + defaultPort);
             }
             this.useSSL = json.getBoolean("useSSL", false);
-            final JsonObject sslSettingsJson = json.getJsonObject("sslSettings");
-            if (useSSL && sslSettingsJson == null) {
-                throw new JsonException("Invalid configuration JSON: "
-                    + "\"sslSettings\" value required when \"useSSL\" mode is used");
-            }
-            this.sslSettings = sslSettingsJson == null ? null : new SSLSettings(sslSettingsJson);
         }
 
         public int getProxyPort() {
@@ -125,10 +118,6 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             return useSSL;
         }
 
-        public SSLSettings getSslSettings() {
-            return sslSettings;
-        }
-
         public String toJsonString() {
             return toJson().toString();
         }
@@ -144,17 +133,17 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             builder.add("defaultHost", defaultHost);
             builder.add("defaultPort", defaultPort);
             builder.add("useSSL", useSSL);
-            if (sslSettings != null) {
-                builder.add("sslSettings", sslSettings.toJson());
-            }
             return builder.build();
         }
     }
 
     private final boolean useProxy;
     private final Proxy proxy;
+    private final SSLSettings sslSettings;
+    private final Path specificServerConfigurationFile;
 
-    public HttpPyramidSpecificServerConfiguration(JsonObject json) {
+    private HttpPyramidSpecificServerConfiguration(Path specificServerConfigurationFile, JsonObject json) {
+        Objects.requireNonNull(specificServerConfigurationFile);
         Objects.requireNonNull(json);
         this.useProxy = json.getBoolean("useProxy", false);
         final JsonObject proxyJson = json.getJsonObject("proxy");
@@ -163,6 +152,13 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
                 + "\"proxy\" value required when \"useProxy\" mode is used");
         }
         this.proxy = proxyJson == null ? null : new Proxy(proxyJson);
+        final JsonObject sslSettingsJson = json.getJsonObject("sslSettings");
+        if (proxy != null && proxy.useSSL && sslSettingsJson == null) {
+            throw new JsonException("Invalid configuration JSON: "
+                + "\"sslSettings\" value required when \"proxy\".\"useSSL\" mode is used");
+        }
+        this.sslSettings = sslSettingsJson == null ? null : new SSLSettings(sslSettingsJson);
+        this.specificServerConfigurationFile = specificServerConfigurationFile;
     }
 
     public boolean hasProxy() {
@@ -173,6 +169,14 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         return proxy;
     }
 
+    public SSLSettings getSslSettings() {
+        return sslSettings;
+    }
+
+    public Path getSpecificServerConfigurationFile() {
+        return specificServerConfigurationFile;
+    }
+
     public String toJsonString() {
         return toJson().toString();
     }
@@ -181,9 +185,13 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         return HttpPyramidConfiguration.jsonToPrettyString(toJson());
     }
 
-    public static HttpPyramidSpecificServerConfiguration readFromFile(Path proxyConfigurationFile) throws IOException {
-        Objects.requireNonNull(proxyConfigurationFile, "Null proxyConfigurationFile");
-        return new HttpPyramidSpecificServerConfiguration(HttpPyramidConfiguration.readJson(proxyConfigurationFile));
+    public static HttpPyramidSpecificServerConfiguration readFromFile(Path specificServerConfigurationFile)
+        throws IOException
+    {
+        Objects.requireNonNull(specificServerConfigurationFile, "Null specificServerConfigurationFile");
+        return new HttpPyramidSpecificServerConfiguration(
+            specificServerConfigurationFile,
+            HttpPyramidConfiguration.readJson(specificServerConfigurationFile));
     }
 
     JsonObject toJson() {
@@ -191,6 +199,9 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         builder.add("useProxy", useProxy);
         if (proxy != null) {
             builder.add("proxy", proxy.toJson());
+        }
+        if (sslSettings != null) {
+            builder.add("sslSettings", sslSettings.toJson());
         }
         return builder.build();
     }

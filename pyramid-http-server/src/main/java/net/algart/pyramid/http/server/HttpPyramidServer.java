@@ -163,12 +163,13 @@ public class HttpPyramidServer {
             groupId = args[startArgIndex].substring("--groupId=".length());
             startArgIndex++;
         }
-        if (args.length < startArgIndex + 1 || groupId == null) {
+        if (args.length < startArgIndex + 2 || groupId == null) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s --groupId=com.xxxxxxx configurationFolder%n", HttpPyramidServer.class.getName());
+            System.out.printf("    %s --groupId=com.xxxxxxx configurationFolder specificServerConfigurationFile%n"
+                , HttpPyramidServer.class.getName());
             System.out.printf("or%n");
             System.out.printf("    %s --groupId=com.xxxxxxx configurationFolder somePath/.global-configuration.json "
-                + "somePath/.format1.json somePath/.format2.json ...%n",
+                + "somePath/.format1.json somePath/.format2.json ... specificServerConfigurationFile%n",
                 HttpPyramidServer.class.getName());
             if (groupId == null) {
                 System.out.printf("--groupId is not specified%n");
@@ -176,13 +177,15 @@ public class HttpPyramidServer {
             return;
         }
         final Path configurationFolder = Paths.get(args[startArgIndex]);
+        final Path specificServerConfigurationFile = Paths.get(args[args.length - 1]);
+        // Note: current version of HttpPyramidServer does not use specificServerConfigurationFile.
         final HttpPyramidConfiguration configuration;
         final HttpPyramidServer server;
         try {
-            if (args.length > startArgIndex + 1) {
+            if (args.length > startArgIndex + 2) {
                 final Path globalConfigurationFile = Paths.get(args[startArgIndex + 1]);
                 final List<Path> files = new ArrayList<>();
-                for (int index = startArgIndex + 2; index < args.length; index++) {
+                for (int index = startArgIndex + 2; index < args.length - 1; index++) {
                     files.add(Paths.get(args[index]));
                 }
                 configuration = HttpPyramidConfiguration.readFromFiles(

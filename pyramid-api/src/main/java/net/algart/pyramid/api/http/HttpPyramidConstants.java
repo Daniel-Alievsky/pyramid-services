@@ -46,7 +46,8 @@ public class HttpPyramidConstants {
 
     public static final int MAX_ALLOWED_PORT = 30000;
 
-    public static final int SYSTEM_CONNANDS_DELAY = 500;
+    public static final int SYSTEM_COMMANDS_DELAY = 300;
+    public static final int SYSTEM_COMMANDS_DELAY_AFTER_FINISH = 500;
 
     /**
      * Note: all command prexies start with '/' character and contains only alphanumeric characters after this

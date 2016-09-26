@@ -109,7 +109,7 @@ public class HttpPyramidService {
     public final void waitForFinishAndProcessSystemCommands() {
         try {
             while (!shutdown) {
-                Thread.sleep(HttpPyramidConstants.SYSTEM_CONNANDS_DELAY);
+                Thread.sleep(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY);
                 for (SystemCommand systemCommand : systemHandlers) {
                     if (Files.deleteIfExists(systemCommand.keyFile())) {
                         //TODO!! more guaranteed atomic operation
@@ -117,8 +117,8 @@ public class HttpPyramidService {
                     }
                 }
             }
-            Thread.sleep(1000);
-            // - additional delay 1000 is to be on the safe side: allow all tasks to be correctly finished
+            Thread.sleep(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH);
+            // - additional delay is to be on the safe side: allow all tasks to be correctly finished
         } catch (InterruptedException e) {
             LOG.log(Level.SEVERE, "Unexpected interrupted exception", e);
         } catch (IOException e) {

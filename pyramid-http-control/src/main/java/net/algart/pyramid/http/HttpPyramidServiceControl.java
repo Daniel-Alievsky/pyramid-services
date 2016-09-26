@@ -138,6 +138,10 @@ public final class HttpPyramidServiceControl {
         }
     }
 
+    static String protocol(boolean https) {
+        return https ? "https" : "http";
+    }
+
     static HttpURLConnection openCustomConnection(
         String pathAndQuery,
         String requestMethod,
@@ -147,7 +151,7 @@ public final class HttpPyramidServiceControl {
     )
         throws IOException
     {
-        final URL url = new URL(https ? "https" : "http", host, port, pathAndQuery);
+        final URL url = new URL(protocol(https), host, port, pathAndQuery);
         final URLConnection connection = url.openConnection();
         connection.setConnectTimeout(HttpPyramidConstants.CLIENT_CONNECTION_TIMEOUT);
         connection.setReadTimeout(HttpPyramidConstants.CLIENT_READ_TIMEOUT);

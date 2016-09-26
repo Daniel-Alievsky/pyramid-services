@@ -26,6 +26,7 @@ package net.algart.pyramid.http;
 
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,11 +41,18 @@ public final class HttpPyramidProcessControl implements JavaProcessControlWithHt
 
     private final String host;
     private final HttpPyramidConfiguration.Process processConfiguration;
+    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final List<HttpPyramidServiceControl> serviceControls;
 
-    public HttpPyramidProcessControl(String host, HttpPyramidConfiguration.Process processConfiguration) {
+    public HttpPyramidProcessControl(
+        String host,
+        HttpPyramidConfiguration.Process processConfiguration,
+        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+    {
         this.host = Objects.requireNonNull(host, "Null host");
         this.processConfiguration = Objects.requireNonNull(processConfiguration, "Null processConfiguration");
+        this.specificServerConfiguration = Objects.requireNonNull(
+            specificServerConfiguration, "Null specificServerConfiguration");
         this.serviceControls = new ArrayList<>();
         for (HttpPyramidConfiguration.Service service : processConfiguration.getServices()) {
             this.serviceControls.add(new HttpPyramidServiceControl(host, service));
@@ -117,6 +125,7 @@ public final class HttpPyramidProcessControl implements JavaProcessControlWithHt
         for (HttpPyramidConfiguration.Service service : processConfiguration.getServices()) {
             command.add(service.getConfigurationFile().toAbsolutePath().toString());
         }
+        command.add(specificServerConfiguration.getSpecificServerConfigurationFile().toAbsolutePath().toString());
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilder.directory(processConfiguration.workingDirectory().toFile());
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
