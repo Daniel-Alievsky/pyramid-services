@@ -176,6 +176,7 @@ public class HttpPyramidService {
         }
         @Override
         void service() throws IOException {
+            LOG.info("Finish system command received for " + HttpPyramidService.this);
             finish();
         }
     }

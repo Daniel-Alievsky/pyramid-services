@@ -40,11 +40,17 @@ import java.util.logging.Logger;
 public final class HttpPyramidServersLauncher {
     private static final Logger LOG = Logger.getLogger(HttpPyramidServersLauncher.class.getName());
 
-    private static final int SUCCESS_START_DELAY_IN_MS = 1000;
+    private static final int SUCCESS_START_DELAY_IN_MS =
+        HttpPyramidConstants.SYSTEM_COMMANDS_DELAY
+            + HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH
+            + 1000;
+    // - note that the 1st command, that newly started server can receive, will be system command "finish"
+    // (from some old file); in this case, it will be stopped, but too short delay will lead that we shall
+    // not detect this
     private static final int SUCCESS_STOP_DELAY_IN_MS =
         HttpPyramidConstants.SYSTEM_COMMANDS_DELAY
-        + HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH
-        + 500;
+            + HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH
+            + 500;
     // - note that services and the proxy don't stop immediately, but may delay exiting during
     // someTime + SYSTEM_COMMANDS_DELAY_AFTER_FINISH ms, where someTime <= SYSTEM_COMMANDS_DELAY
 
@@ -66,9 +72,6 @@ public final class HttpPyramidServersLauncher {
         this.specificServerConfiguration = Objects.requireNonNull(specificServerConfiguration,
             "Null specificServerConfiguration");
         this.runningProcesses = new LinkedHashMap<>();
-        for (String groupId : configuration.getProcesses().keySet()) {
-            runningProcesses.put(groupId, null);
-        }
     }
 
     public HttpPyramidConfiguration getProcessConfiguration() {
@@ -207,6 +210,7 @@ public final class HttpPyramidServersLauncher {
                 }
                 if (control.areAllHttpServicesAlive(true)) {
                     // All O'k
+                    assert javaProcess != null;
                     runningProcesses.put(control.processId(), javaProcess);
                     return true;
                 }
@@ -231,7 +235,11 @@ public final class HttpPyramidServersLauncher {
             if (skipIfNotAlive && !control.isAtLeastSomeHttpServiceAlive(true)) {
                 return false;
             }
-            final Process javaProcess = runningProcesses.get(control.processId());
+//            System.out.println("!!!" + runningProcesses);
+            final Process javaProcess = runningProcesses.remove(control.processId());
+//            System.out.println(">>>" + runningProcesses);
+            // - Removing is necessary for correct behaviour of the daemon thread in printWelcomeAndWaitForEnterKey
+            // method. Note that we need to remove it BEFORE attempts to stop it.
             for (int attempt = 0; attempt < PROBLEM_NUMBER_OF_ATTEMPTS; attempt++) {
                 control.stopOnLocalhost();
                 sleep(SUCCESS_STOP_DELAY_IN_MS);
@@ -261,7 +269,7 @@ public final class HttpPyramidServersLauncher {
         }
     }
 
-    boolean restartProcess(JavaProcessControlWithHttpCheckingAliveStatus control, boolean skipIfAlive)
+    private boolean restartProcess(JavaProcessControlWithHttpCheckingAliveStatus control, boolean skipIfAlive)
         throws IOException
     {
         synchronized (lock) {
@@ -272,8 +280,7 @@ public final class HttpPyramidServersLauncher {
             // - skipIfAlive is a "smart" mode; in this case, if we will pass "false" to stopProcess
             // and the process is really not alive, stopProcess will create signal file
             // and the following startProcess will be enforced to start the process TWICE!
-            startProcess(control, false);
-            return true;
+            return startProcess(control, false);
         }
     }
 
@@ -283,6 +290,66 @@ public final class HttpPyramidServersLauncher {
             throw new IllegalArgumentException("Service group " + groupId + " not found");
         }
         return result;
+    }
+
+    private void printWelcomeAndWaitForEnterKey() {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            // should not occur
+        }
+        // - to be on the side: little pause to allow services to show their logging messages
+        System.out.printf("%nThe servers successfully started%n");
+        System.out.printf("Press \"Ctrl+C\" or \"ENTER\" to kill the server, "
+            + "or wait when it will be finished normally by HTTP command...%n%n");
+        final Thread thread = new Thread() {
+            @Override
+            public void run() {
+                for (; ; ) {
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException ignored) {
+                    }
+                    boolean hasAliveProcesses;
+                    synchronized (lock) {
+//                        System.out.println(runningProcesses);
+                        hasAliveProcesses = runningProcesses.isEmpty();
+                        // runningProcess can become empty as a result of direct call of stopAll
+                        for (Process process : runningProcesses.values()) {
+                            hasAliveProcesses |= process.isAlive();
+                        }
+                    }
+                    if (!hasAliveProcesses) {
+                        System.out.printf("%nAll servers ware stopped by external means%n");
+                        System.exit(0);
+                    }
+                }
+            }
+        };
+        thread.setDaemon(true);
+        // - this thred must not prevent normal exiting
+        thread.start();
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            // should not occur
+            e.printStackTrace();
+        }
+    }
+
+    private static void printExceptionWaitForEnterKeyAndExit(Throwable exception) {
+        System.err.printf("%nSome problems occured! Error message:%n%s%n%nStack trace:%n",
+            exception.getMessage());
+        exception.printStackTrace();
+        System.err.printf("%nPress \"ENTER\" to exit...%n");
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            // should not occur
+            e.printStackTrace();
+        }
+
+        System.exit(1);
     }
 
     private static boolean waitFor(Process javaProcess, int timeoutInMilliseconds) {
@@ -300,39 +367,6 @@ public final class HttpPyramidServersLauncher {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-    }
-
-    static void printWelcomeAndWaitForEnterKey() {
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            // should not occur
-        }
-        // - to be on the side: little pause to allow services to show their logging messages
-        System.out.printf("%nThe servers successfully started%n");
-        System.out.printf("Press \"Ctrl+C\" or \"ENTER\" to kill the server, "
-            + "or wait when it will be finished normally by HTTP command...%n%n");
-        try {
-            System.in.read();
-        } catch (IOException e) {
-            // should not occur
-            e.printStackTrace();
-        }
-    }
-
-    static void printExceptionWaitForEnterKeyAndExit(Throwable exception) {
-        System.err.printf("%nSome problems occured! Error message:%n%s%n%nStack trace:%n",
-            exception.getMessage());
-        exception.printStackTrace();
-        System.err.printf("%nPress \"ENTER\" to exit...%n");
-        try {
-            System.in.read();
-        } catch (IOException e) {
-            // should not occur
-            e.printStackTrace();
-        }
-
-        System.exit(1);
     }
 
     public static void main(String[] args) throws InterruptedException, IOException {
@@ -394,7 +428,7 @@ public final class HttpPyramidServersLauncher {
             // - this operator will never executed
         }
         if (debuggingWait && !command.equals("stop")) {
-            printWelcomeAndWaitForEnterKey();
+            launcher.printWelcomeAndWaitForEnterKey();
             launcher.stopAll(false);
         }
     }
