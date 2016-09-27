@@ -73,14 +73,14 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         }
     }
 
-    public static class Proxy extends ConvertibleToJson {
+    public static class ProxySettings extends ConvertibleToJson {
         private final int proxyPort;
         private final String pyramidHost;
         private final String defaultHost;
         private final int defaultPort;
-        private final boolean useSSL;
+        private final boolean ssl;
 
-        private Proxy(JsonObject json) {
+        private ProxySettings(JsonObject json) {
             Objects.requireNonNull(json);
             this.proxyPort = HttpPyramidConfiguration.getRequiredInt(json, "proxyPort");
             if (proxyPort <= 0 || proxyPort > HttpPyramidConstants.MAX_ALLOWED_PORT) {
@@ -95,7 +95,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
                 throw new JsonException("Invalid proxy configuration JSON:"
                     + " zero or negative default server port number " + defaultPort);
             }
-            this.useSSL = json.getBoolean("useSSL", false);
+            this.ssl = json.getBoolean("ssl", false);
         }
 
         public int getProxyPort() {
@@ -114,8 +114,8 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             return defaultPort;
         }
 
-        public boolean isUseSSL() {
-            return useSSL;
+        public boolean isSsl() {
+            return ssl;
         }
 
         public String toJsonString() {
@@ -132,41 +132,41 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             builder.add("pyramidHost", pyramidHost);
             builder.add("defaultHost", defaultHost);
             builder.add("defaultPort", defaultPort);
-            builder.add("useSSL", useSSL);
+            builder.add("ssl", ssl);
             return builder.build();
         }
     }
 
-    private final boolean useProxy;
-    private final Proxy proxy;
+    private final boolean proxy;
+    private final ProxySettings proxySettings;
     private final SSLSettings sslSettings;
     private final Path specificServerConfigurationFile;
 
     private HttpPyramidSpecificServerConfiguration(Path specificServerConfigurationFile, JsonObject json) {
         Objects.requireNonNull(specificServerConfigurationFile);
         Objects.requireNonNull(json);
-        this.useProxy = json.getBoolean("useProxy", false);
-        final JsonObject proxyJson = json.getJsonObject("proxy");
-        if (useProxy && proxyJson == null) {
+        this.proxy = json.getBoolean("proxy", false);
+        final JsonObject proxySettingsJson = json.getJsonObject("proxySettings");
+        if (proxy && proxySettingsJson == null) {
             throw new JsonException("Invalid configuration JSON: "
-                + "\"proxy\" value required when \"useProxy\" mode is used");
+                + "\"proxySettings\" value required when \"proxy\" mode is used");
         }
-        this.proxy = proxyJson == null ? null : new Proxy(proxyJson);
+        this.proxySettings = proxySettingsJson == null ? null : new ProxySettings(proxySettingsJson);
         final JsonObject sslSettingsJson = json.getJsonObject("sslSettings");
-        if (proxy != null && proxy.useSSL && sslSettingsJson == null) {
+        if (proxySettings != null && proxySettings.ssl && sslSettingsJson == null) {
             throw new JsonException("Invalid configuration JSON: "
-                + "\"sslSettings\" value required when \"proxy\".\"useSSL\" mode is used");
+                + "\"sslSettings\" value required when \"proxySettings\".\"ssl\" mode is used");
         }
         this.sslSettings = sslSettingsJson == null ? null : new SSLSettings(sslSettingsJson);
         this.specificServerConfigurationFile = specificServerConfigurationFile;
     }
 
     public boolean hasProxy() {
-        return useProxy;
+        return proxy;
     }
 
-    public Proxy getProxy() {
-        return proxy;
+    public ProxySettings getProxySettings() {
+        return proxySettings;
     }
 
     public SSLSettings getSslSettings() {
@@ -196,9 +196,9 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
 
     JsonObject toJson() {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
-        builder.add("useProxy", useProxy);
-        if (proxy != null) {
-            builder.add("proxy", proxy.toJson());
+        builder.add("proxy", proxy);
+        if (proxySettings != null) {
+            builder.add("proxySettings", proxySettings.toJson());
         }
         if (sslSettings != null) {
             builder.add("sslSettings", sslSettings.toJson());

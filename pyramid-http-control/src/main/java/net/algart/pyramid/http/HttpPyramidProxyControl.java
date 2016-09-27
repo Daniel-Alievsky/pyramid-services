@@ -63,7 +63,7 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
         if (!specificServerConfiguration.hasProxy()) {
             throw new IllegalArgumentException("Proxy is not used in this configuration");
         }
-        this.proxyPort = specificServerConfiguration.getProxy().getProxyPort();
+        this.proxyPort = specificServerConfiguration.getProxySettings().getProxyPort();
         this.systemCommandsFolder = configuration.systemCommandsFolder();
     }
 
@@ -136,7 +136,7 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
     }
 
     public final boolean isProxyAlive(boolean logWhenFails) {
-        final boolean useSSL = specificServerConfiguration.getProxy().isUseSSL();
+        final boolean useSSL = specificServerConfiguration.getProxySettings().isSsl();
         try {
             final HttpURLConnection connection = HttpPyramidServiceControl.openCustomConnection(
                 HttpProxy.ALIVE_STATUS_COMMAND, "GET", proxyHost, proxyPort, useSSL);

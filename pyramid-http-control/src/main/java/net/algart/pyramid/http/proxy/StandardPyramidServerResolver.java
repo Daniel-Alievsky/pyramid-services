@@ -48,7 +48,7 @@ class StandardPyramidServerResolver implements HttpServerResolver {
 
     private final Map<String, HttpServerAddress> pool = new ServerAddressHashMap();
     private final HttpPyramidConfiguration configuration;
-    private final HttpPyramidSpecificServerConfiguration.Proxy proxyConfiguration;
+    private final HttpPyramidSpecificServerConfiguration.ProxySettings proxyConfiguration;
     private final Object lock = new Object();
 
     StandardPyramidServerResolver(
@@ -56,9 +56,9 @@ class StandardPyramidServerResolver implements HttpServerResolver {
         HttpPyramidSpecificServerConfiguration specificServerConfiguration)
     {
         assert configuration != null && specificServerConfiguration != null;
-        assert specificServerConfiguration.getProxy() != null;
+        assert specificServerConfiguration.getProxySettings() != null;
         this.configuration = configuration;
-        this.proxyConfiguration = specificServerConfiguration.getProxy();
+        this.proxyConfiguration = specificServerConfiguration.getProxySettings();
     }
 
     @Override

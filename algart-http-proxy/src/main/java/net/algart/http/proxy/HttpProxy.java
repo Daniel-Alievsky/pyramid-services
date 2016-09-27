@@ -76,7 +76,12 @@ public final class HttpProxy {
     private final HttpServer proxyServer;
 
     private String proxyHost = DEFAULT_PROXY_HOST;
+    private boolean ssl = false;
+    private String keystoreFile;
+    private String keystorePassword;
+    private String keyPassword;
     private int readingFromServerTimeoutInMs = DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS;
+
     private volatile boolean firstStart = true;
 
     private final Object lock = new Object();
@@ -105,6 +110,36 @@ public final class HttpProxy {
 
     public void setProxyHost(String proxyHost) {
         this.proxyHost = Objects.requireNonNull(proxyHost, "Null localHost argument");
+    }
+
+    public boolean isSsl() {
+        return ssl;
+    }
+
+    public String getKeystoreFile() {
+        return keystoreFile;
+    }
+
+    public String getKeystorePassword() {
+        return keystorePassword;
+    }
+
+    public String getKeyPassword() {
+        return keyPassword;
+    }
+
+    public void enableSsl(String keystoreFile, String keystorePassword, String keyPassword) {
+        Objects.requireNonNull(keystoreFile);
+        Objects.requireNonNull(keystorePassword);
+        Objects.requireNonNull(keyPassword);
+        this.keystoreFile = keystoreFile;
+        this.keystorePassword = keystorePassword;
+        this.keyPassword = keyPassword;
+        this.ssl = true;
+    }
+
+    public void disableSsl() {
+        this.ssl = false;
     }
 
     public int getReadingFromServerTimeoutInMs() {

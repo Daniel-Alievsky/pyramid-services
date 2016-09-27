@@ -298,7 +298,6 @@ class ProxyClientProcessor extends BaseFilter {
         public void onWritePossible() throws Exception {
             synchronized (lock) {
                 outputStreamToClient.write(contentBuffer);
-                outputStreamToClient.flush(); // - necessary to avoid a bug in Grizzly 2.3.22!
                 if (last) {
                     closeConnectionsAndResponse();
                 }

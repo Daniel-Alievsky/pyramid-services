@@ -58,7 +58,7 @@ public final class HttpPyramidProxyServer {
         }
         this.serviceConfiguration = configuration;
         this.proxy = new HttpProxy(
-            specificServerConfiguration.getProxy().getProxyPort(),
+            specificServerConfiguration.getProxySettings().getProxyPort(),
             new StandardPyramidServerResolver(configuration, specificServerConfiguration),
             new HttpServerFailureHandler() {
                 @Override

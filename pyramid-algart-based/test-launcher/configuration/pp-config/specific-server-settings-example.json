@@ -1,9 +1,9 @@
 {
-  "useProxy": true,
-  "proxy": {
+  "proxy": true,
+  "proxySettings": {
     "proxyPort": 100,
     "defaultHost": "localhost",
-    "useSSL": false
+    "ssl": false
   },
   "sslSettings": {
     "keystoreFile": "/simagis/simagis-tests/grizzly-tests/src/test/resources/ssl-test-keystore.jks",
