@@ -35,7 +35,7 @@ import java.nio.file.Paths;
 public class HttpPyramidProxyClientTest {
     public static void main(String[] args) throws IOException {
         if (args.length < 4) {
-            System.out.printf("Usage: %s host start|check|stop configurationFolder specificServerConfigurationFile%n",
+            System.out.printf("Usage: %s host start|alive|stop configurationFolder specificServerConfigurationFile%n",
                 HttpPyramidProxyClientTest.class.getName());
             return;
         }
@@ -60,14 +60,14 @@ public class HttpPyramidProxyClientTest {
                     System.out.println("Proxy is started");
                     break;
                 }
-                case "check": {
+                case "alive": {
                     final boolean alive = client.isProxyAlive(true);
                     System.out.println("Proxy is " + (alive ? "" : "not ") + "active");
                     break;
                 }
                 case "stop": {
-                    client.stopOnLocalhost();
-                    System.out.println("Proxy is finished");
+                    final boolean result = client.stopOnLocalhost(1000);
+                    System.out.println("Proxy " + (result ? "is finished": "DOES NOT REACT"));
                     break;
                 }
                 default: {

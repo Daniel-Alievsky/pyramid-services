@@ -81,10 +81,14 @@ public final class HttpPyramidProxyServer {
 
     public void waitForFinish() throws InterruptedException {
         try {
-            for (; ;) {
+            for (; ; ) {
                 Thread.sleep(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY);
-                if (Files.deleteIfExists(finishKeyFile())) {
-                    proxy.finish();
+                if (Files.exists(finishKeyFile())) {
+                    try {
+                        proxy.finish();
+                    } finally {
+                        Files.deleteIfExists(finishKeyFile());
+                    }
                     break;
                 }
             }

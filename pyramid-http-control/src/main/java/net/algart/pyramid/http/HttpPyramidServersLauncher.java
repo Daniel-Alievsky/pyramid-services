@@ -40,19 +40,14 @@ import java.util.logging.Logger;
 public final class HttpPyramidServersLauncher {
     private static final Logger LOG = Logger.getLogger(HttpPyramidServersLauncher.class.getName());
 
-    private static final int SUCCESS_START_DELAY_IN_MS =
-        HttpPyramidConstants.SYSTEM_COMMANDS_DELAY
-            + HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH
-            + 1000;
-    // - note that the 1st command, that newly started server can receive, will be system command "finish"
-    // (from some old file); in this case, it will be stopped, but too short delay will lead that we shall
-    // not detect this
-    private static final int SUCCESS_STOP_DELAY_IN_MS =
-        HttpPyramidConstants.SYSTEM_COMMANDS_DELAY
-            + HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH
-            + 500;
+    private static final int SUCCESS_START_DELAY_IN_MS = 1000;
+    private static final int SUCCESS_STOP_TIMEOUT_IN_MS =
+        HttpPyramidConstants.SYSTEM_COMMANDS_DELAY +
+            HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH +
+            100;
     // - note that services and the proxy don't stop immediately, but may delay exiting during
     // someTime + SYSTEM_COMMANDS_DELAY_AFTER_FINISH ms, where someTime <= SYSTEM_COMMANDS_DELAY
+    private static final int FORCIBLE_STOP_DELAY_IN_MS = 500;
 
     private static final int PROBLEM_DELAY_IN_MS = 3000;
     private static final int PROBLEM_NUMBER_OF_ATTEMPTS = 3;
@@ -240,9 +235,8 @@ public final class HttpPyramidServersLauncher {
 //            System.out.println(">>>" + runningProcesses);
             // - Removing is necessary for correct behaviour of the daemon thread in printWelcomeAndWaitForEnterKey
             // method. Note that we need to remove it BEFORE attempts to stop it.
-            for (int attempt = 0; attempt < PROBLEM_NUMBER_OF_ATTEMPTS; attempt++) {
-                control.stopOnLocalhost();
-                sleep(SUCCESS_STOP_DELAY_IN_MS);
+            for (int attempt = 0; attempt < (javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1); attempt++) {
+                control.stopOnLocalhost(SUCCESS_STOP_TIMEOUT_IN_MS);
                 if (javaProcess != null ?
                     !javaProcess.isAlive() :
                     !control.isAtLeastSomeHttpServiceAlive(false))
@@ -253,18 +247,17 @@ public final class HttpPyramidServersLauncher {
                 // waiting, maybe there was not enough time to finish all services
             }
             if (javaProcess == null) {
-                throw new IOException("Cannot stop process " + control.processName() + " by system command");
+                LOG.warning("Cannot stop process " + control.processName() + " by system command");
+                return false;
             } else {
                 if (javaProcess.isAlive()) {
                     LOG.warning("Cannot finish process " + control.processName()
-                        + " by system command, killing it forcibly");
+                        + " by system command, killing it FORCIBLY");
                     javaProcess.destroyForcibly();
-                    sleep(SUCCESS_STOP_DELAY_IN_MS);
+                    sleep(FORCIBLE_STOP_DELAY_IN_MS);
                     // - waiting for better guarantee
-                    return true;
-                } else {
-                    return false;
                 }
+                return true;
             }
         }
     }

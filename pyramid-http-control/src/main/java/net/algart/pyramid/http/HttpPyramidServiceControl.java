@@ -95,10 +95,9 @@ public final class HttpPyramidServiceControl {
         }
     }
 
-    public final boolean stopServiceOnLocalhost() {
+    public final boolean stopServiceOnLocalhost(int timeoutInMilliseconds) {
         try {
-            requestSystemCommand(HttpPyramidConstants.CommandPrefixes.FINISH);
-            return true;
+            return requestSystemCommand(HttpPyramidConstants.CommandPrefixes.FINISH, timeoutInMilliseconds);
         } catch (IOException e) {
             LOG.log(Level.INFO, "Cannot request finish command in folder "
                 + systemCommandsFolder + ": " + e);
@@ -127,8 +126,9 @@ public final class HttpPyramidServiceControl {
         return openCustomConnection(pathAndQuery, requestMethod, host, port, https);
     }
 
-    public final void requestSystemCommand(String commandPrefix) throws IOException {
-        requestSystemCommand(commandPrefix, port, systemCommandsFolder);
+    public final boolean requestSystemCommand(String commandPrefix, int timeoutInMilliseconds) throws IOException {
+        return JavaProcessControlWithHttpCheckingAliveStatus.requestSystemCommand(
+            commandPrefix, port, systemCommandsFolder, timeoutInMilliseconds);
     }
 
     private void checkHttpOk(HttpURLConnection connection) throws IOException {
@@ -165,22 +165,4 @@ public final class HttpPyramidServiceControl {
         return result;
     }
 
-    static void requestSystemCommand(String commandPrefix, int port, Path systemCommandsFolder) throws IOException {
-        if (!Files.isDirectory(systemCommandsFolder)) {
-            throw new FileNotFoundException("System command folder not found or not a directory: "
-                + systemCommandsFolder.toAbsolutePath());
-        }
-        final Path keyFile = HttpPyramidApiTools.keyFile(systemCommandsFolder, commandPrefix, port);
-        try {
-            Files.delete(keyFile);
-            // - to be on the safe side; removing key file does not affect services
-        } catch (IOException e) {
-            // it is not a problem
-        }
-        try {
-            Files.createFile(keyFile);
-        } catch (FileAlreadyExistsException e) {
-            // it is not a problem if a parallel process also created the same file
-        }
-    }
 }

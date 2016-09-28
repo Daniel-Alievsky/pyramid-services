@@ -111,9 +111,12 @@ public class HttpPyramidService {
             while (!shutdown) {
                 Thread.sleep(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY);
                 for (SystemCommand systemCommand : systemHandlers) {
-                    if (Files.deleteIfExists(systemCommand.keyFile())) {
-                        //TODO!! more guaranteed atomic operation
-                        systemCommand.service();
+                    if (Files.exists(systemCommand.keyFile())) {
+                        try {
+                            systemCommand.service();
+                        } finally {
+                            Files.deleteIfExists(systemCommand.keyFile());
+                        }
                     }
                 }
             }

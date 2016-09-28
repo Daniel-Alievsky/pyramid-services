@@ -136,12 +136,14 @@ public final class HttpPyramidProcessControl implements JavaProcessControlWithHt
 
 
     @Override
-    public boolean stopOnLocalhost() throws IOException {
+    public boolean stopOnLocalhost(int timeoutInMilliseconds) throws IOException {
+        LOG.info("Stopping " + processName() + " on localhost...");
         boolean success = true;
         for (HttpPyramidServiceControl serviceControl : serviceControls) {
-            success &= serviceControl.stopServiceOnLocalhost();
+            success &= serviceControl.stopServiceOnLocalhost(timeoutInMilliseconds);
         }
-        LOG.info("Stopping " + processName() + " on localhost");
+        LOG.info("Stopping " + processName() + " on localhost: command was "
+            + (success ? "accepted" : "IGNORED (at least by 1 of services)"));
         return success;
     }
 }
