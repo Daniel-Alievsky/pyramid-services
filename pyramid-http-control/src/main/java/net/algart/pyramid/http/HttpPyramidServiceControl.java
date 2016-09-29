@@ -158,7 +158,7 @@ public final class HttpPyramidServiceControl {
         // In future, if necessary, we will maybe provide better timeouts:
         // http://stackoverflow.com/questions/3163693/java-urlconnection-timeout
         if (!(connection instanceof HttpURLConnection)) {
-            throw new AssertionError("Invalid type of openCustomConnection (not HttpURLConnection)");
+            throw new AssertionError("Invalid type of URL connection (not HttpURLConnection)");
         }
         final HttpURLConnection result = (HttpURLConnection) connection;
         result.setRequestMethod(requestMethod);
