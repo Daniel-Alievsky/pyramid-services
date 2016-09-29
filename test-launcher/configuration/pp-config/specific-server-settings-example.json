@@ -6,7 +6,7 @@
     "ssl": false
   },
   "sslSettings": {
-    "keystoreFile": "/simagis/simagis-tests/grizzly-tests/src/test/resources/ssl-test-keystore.jks",
+    "keystoreFile": "ssl/ssl-test-keystore.jks",
     "keystorePassword": "changeit"
   }
 }

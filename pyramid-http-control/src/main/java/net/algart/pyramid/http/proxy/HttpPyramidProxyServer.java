@@ -72,7 +72,12 @@ public final class HttpPyramidProxyServer {
                     LOG.warning("Timeout while accessing " + address + ": maybe the service crashed");
                 }
             });
-
+        if (specificServerConfiguration.getProxySettings().isSsl()) {
+            this.proxy.enableSsl(
+                specificServerConfiguration.getSslSettings().keystoreFile(),
+                specificServerConfiguration.getSslSettings().getKeystorePassword(),
+                specificServerConfiguration.getSslSettings().getKeyPassword());
+        }
     }
 
     public void start() throws IOException {

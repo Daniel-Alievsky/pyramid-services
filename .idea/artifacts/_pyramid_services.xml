@@ -8,18 +8,18 @@
       </options>
     </properties>
     <root id="root">
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/welcome.html" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/AddImage.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/LaunchJavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/pyramids.html" />
+      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/welcome.html" />
+      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/AddImage.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/LaunchJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/pyramids.html" />
       <element id="directory" name="html">
-        <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/html" />
+        <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/html" />
       </element>
       <element id="directory" name="pp-config">
         <element id="directory" name="services">
-          <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-config/services" />
+          <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/services" />
           <element id="directory" name="for-key-files">
-            <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/for-key-files.readme.txt" output-file-name="readme.txt" />
+            <element id="file-copy" path="$PROJECT_DIR$/test-launcher/for-key-files.readme.txt" output-file-name="readme.txt" />
           </element>
         </element>
         <element id="directory" name="lib">
@@ -43,10 +43,10 @@
               <element id="library" level="project" name="Maven: net.simagis.ext:json:0.1" />
             </element>
             <element id="directory" name="loci">
-              <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/readme.loci.txt" output-file-name="readme.txt" />
+              <element id="file-copy" path="$PROJECT_DIR$/test-launcher/readme.loci.txt" output-file-name="readme.txt" />
             </element>
             <element id="directory" name="openslide">
-              <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/readme.openslide.txt" output-file-name="readme.txt" />
+              <element id="file-copy" path="$PROJECT_DIR$/test-launcher/readme.openslide.txt" output-file-name="readme.txt" />
             </element>
           </element>
           <element id="directory" name="sdk">
@@ -58,25 +58,28 @@
             <element id="artifact" artifact-name="algart-http-proxy:jar" />
           </element>
         </element>
-        <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-config/.users.json" />
-        <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-config/.upload.json" />
+        <element id="file-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/.users.json" />
+        <element id="file-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/.upload.json" />
         <element id="directory" name="logging">
-          <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/logging" />
+          <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/logging" />
         </element>
-        <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-config/specific-server-settings-example.json" />
+        <element id="file-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/specific-server-settings-example.json" />
+        <element id="directory" name="ssl">
+          <element id="file-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/ssl/ssl-test-keystore.jks" />
+        </element>
       </element>
       <element id="directory" name="pp-images">
-        <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-images" />
+        <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-images" />
       </element>
       <element id="directory" name="pp-links">
-        <element id="dir-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/configuration/pp-links" />
+        <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-links" />
       </element>
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/CopyDemoFiles.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/JavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/FindJava.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/StartJavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/StopJavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/pyramid-algart-based/test-launcher/RestartJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/CopyDemoFiles.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/JavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/FindJava.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/StartJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/StopJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/RestartJavaServers.cmd" />
     </root>
   </artifact>
 </component>

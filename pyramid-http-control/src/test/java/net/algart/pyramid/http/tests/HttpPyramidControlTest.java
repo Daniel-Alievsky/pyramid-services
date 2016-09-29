@@ -31,10 +31,10 @@ import net.algart.pyramid.api.http.HttpPyramidConstants;
 import java.io.IOException;
 import java.nio.file.Paths;
 
-public class HttpPyramidClientTest {
+public class HttpPyramidControlTest {
     public static void main(String[] args) throws IOException {
         if (args.length < 2) {
-            System.out.printf("Usage: %s host port [pyramidId]%n", HttpPyramidClientTest.class.getName());
+            System.out.printf("Usage: %s host port [pyramidId]%n", HttpPyramidControlTest.class.getName());
             return;
         }
         final String host = args[0];

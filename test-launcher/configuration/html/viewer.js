@@ -22,6 +22,12 @@
  * SOFTWARE.
  */
 
+/**
+ * The next variable should be set to true at the very beginning
+ * if the pyramid services work via https protocol.
+ */
+var useSSL = false;
+
 var host = null;
 var mapTagName = null;
 var macroTagName = null;
@@ -147,7 +153,7 @@ function requestPyramid(newPyramidId, newPort) {
     if (onSetPyramid != null) {
         onSetPyramid();
     }
-    urlStart = 'http://' + host + ':' + newPort + '/pp-';
+    urlStart = (useSSL ? 'https://' : 'http://') + host + ':' + newPort + '/pp-';
     xhr.open('GET', urlStart + 'information?pyramidId=' + newPyramidId, true);
     xhr.send();
     xhr.onreadystatechange = function () {
@@ -194,7 +200,7 @@ function initOpenLayers() {
     });
 
     var source = new ol.source.Zoomify({
-        url: "http://" + host + ":" + currentPort
+        url: (useSSL ? "https://" : "http://") + host + ":" + currentPort
         + "/pp-zoomify/" + PYRAMID_ID_PREFIX_IN_PATHNAME + currentPyramidId + PYRAMID_ID_POSTFIX_IN_PATHNAME + "/",
         size: [imgWidth, imgHeight],
         crossOrigin: 'anonymous'
@@ -241,7 +247,7 @@ function initOpenLayers() {
     if (macroTagName != null) {
         var macroTag = document.getElementById(macroTagName);
         macroTag.style.visibility = "visible";
-        macroTag.innerHTML = '<img src="http://'
+        macroTag.innerHTML = '<img src="' + (useSSL ? 'https://' : 'http://')
             + host + ':' + currentPort + '/pp-read-special-image?pyramidId=' + currentPyramidId
             + '&specialImageName=WHOLE_SLIDE&width=' + macroTag.offsetWidth + '"/>';
     }

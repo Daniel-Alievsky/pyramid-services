@@ -34,16 +34,18 @@ import org.glassfish.grizzly.http.util.Parameters;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
+import org.glassfish.grizzly.ssl.SSLContextConfigurator;
+import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-//TODO!! support HTTPS
 public final class HttpProxy {
 
     /**
@@ -77,7 +79,7 @@ public final class HttpProxy {
 
     private String proxyHost = DEFAULT_PROXY_HOST;
     private boolean ssl = false;
-    private String keystoreFile;
+    private Path keystoreFile;
     private String keystorePassword;
     private String keyPassword;
     private int readingFromServerTimeoutInMs = DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS;
@@ -116,7 +118,7 @@ public final class HttpProxy {
         return ssl;
     }
 
-    public String getKeystoreFile() {
+    public Path getKeystoreFile() {
         return keystoreFile;
     }
 
@@ -128,7 +130,11 @@ public final class HttpProxy {
         return keyPassword;
     }
 
-    public void enableSsl(String keystoreFile, String keystorePassword, String keyPassword) {
+    public void enableSsl(Path keystoreFile, String keystorePassword) {
+        enableSsl(keystoreFile, keystorePassword, keystorePassword);
+    }
+
+    public void enableSsl(Path keystoreFile, String keystorePassword, String keyPassword) {
         Objects.requireNonNull(keystoreFile);
         Objects.requireNonNull(keystorePassword);
         Objects.requireNonNull(keyPassword);
@@ -156,7 +162,18 @@ public final class HttpProxy {
     public final void start() throws IOException {
         synchronized (lock) {
             if (firstStart) {
-                this.proxyServer.addListener(new NetworkListener(HttpProxy.class.getName(), proxyHost, proxyPort));
+                final NetworkListener listener = new NetworkListener(HttpProxy.class.getName(), proxyHost, proxyPort);
+                if (ssl) {
+                    final SSLContextConfigurator sslContextConfigurator = new SSLContextConfigurator();
+                    sslContextConfigurator.setKeyStoreFile(keystoreFile.toString());
+                    sslContextConfigurator.setKeyStorePass(keystorePassword);
+                    sslContextConfigurator.setKeyPass(keyPassword);
+                    final SSLEngineConfigurator sslEngineConfig = new SSLEngineConfigurator(
+                        sslContextConfigurator.createSSLContext(true), false, false, false);
+                    listener.setSecure(true);
+                    listener.setSSLEngineConfig(sslEngineConfig);
+                }
+                this.proxyServer.addListener(listener);
                 firstStart = false;
             }
             LOG.info("Starting " + this);
@@ -179,7 +196,8 @@ public final class HttpProxy {
 
     @Override
     public String toString() {
-        return "AlgART HTTP Proxy at " + proxyHost + ":" + proxyPort + " (server detector: " + serverResolver + ")";
+        return "AlgART HTTP Proxy" + (ssl ? " (SSL)" : "")
+            + " at " + proxyHost + ":" + proxyPort + " (server detector: " + serverResolver + ")";
     }
 
     private class HttpProxyHandler extends HttpHandler {
@@ -266,7 +284,6 @@ public final class HttpProxy {
         parameters.handleQueryParameters();
         return parameters;
     }
-
 
     private static Charset lookupCharset(final String enc) {
         Charset charset = Charsets.UTF8_CHARSET;

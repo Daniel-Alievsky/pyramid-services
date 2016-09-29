@@ -32,11 +32,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class HttpPyramidProxyClientTest {
+public class HttpPyramidProxyControlTest {
     public static void main(String[] args) throws IOException {
         if (args.length < 4) {
             System.out.printf("Usage: %s host start|alive|stop configurationFolder specificServerConfigurationFile%n",
-                HttpPyramidProxyClientTest.class.getName());
+                HttpPyramidProxyControlTest.class.getName());
             return;
         }
         final String host = args[0];
@@ -57,7 +57,7 @@ public class HttpPyramidProxyClientTest {
             switch (command) {
                 case "start": {
                     client.startOnLocalhost();
-                    System.out.println("Proxy is started");
+                    System.out.println("Proxy is launched");
                     break;
                 }
                 case "alive": {
@@ -77,6 +77,15 @@ public class HttpPyramidProxyClientTest {
         } finally {
             long t2 = System.nanoTime();
             System.out.printf("Operation performed in %.5f seconds%n", (t2 - t1) * 1e-9);
+        }
+        if (command.equals("start")) {
+            // Don't exit immediately: necessary to show the output of the process
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ignored) {
+            }
+            System.out.printf("%nPress ENTER to exit...%n");
+            System.in.read();
         }
     }
 }

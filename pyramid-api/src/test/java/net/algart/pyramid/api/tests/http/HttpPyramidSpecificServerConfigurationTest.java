@@ -41,5 +41,8 @@ public class HttpPyramidSpecificServerConfigurationTest {
         final HttpPyramidSpecificServerConfiguration configuration =
             HttpPyramidSpecificServerConfiguration.readFromFile(configurationFile);
         System.out.println(configuration);
+        if (configuration.getSslSettings() != null) {
+            System.out.println("SSL keystore absolute path: " + configuration.getSslSettings().keystoreFile());
+        }
     }
 }
