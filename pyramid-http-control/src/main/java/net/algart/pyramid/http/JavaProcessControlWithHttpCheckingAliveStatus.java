@@ -39,6 +39,20 @@ interface JavaProcessControlWithHttpCheckingAliveStatus {
 
     String processName();
 
+    /**
+     * <p>If this method returns <tt>true</tt>, the process should be considered as potentially <i>unstable</i>
+     * (maybe due to using native code or too complex and resource-intensive algorithms).
+     * In this case, if you call {@link #startOnLocalhost()} or {@link #stopOnLocalhost(int)} methods,
+     * after this you should use HTTP checks to be sure that the process is really started or stopped.</p>
+     *
+     * <p>For simple and stable processes, like lightweight
+     * {@link net.algart.pyramid.http.proxy.HttpPyramidProxyServer HttpPyramidProxyServer},
+     * this method should return <tt>false</tt>.</p>
+     *
+     * @return whether additional check via HTTP is recommended after starting and stopping the process.
+     */
+    boolean isStabilityHttpCheckAfterStartOrStopRecommended();
+
     boolean areAllHttpServicesAlive(boolean logWhenFails);
 
     boolean isAtLeastSomeHttpServiceAlive(boolean logWhenFails);

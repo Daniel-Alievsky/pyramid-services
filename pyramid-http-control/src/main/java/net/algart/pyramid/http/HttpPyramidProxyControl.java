@@ -82,6 +82,11 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
     }
 
     @Override
+    public boolean isStabilityHttpCheckAfterStartOrStopRecommended() {
+        return false;
+    }
+
+    @Override
     public boolean areAllHttpServicesAlive(boolean logWhenFails) {
         return isProxyAlive(logWhenFails);
     }

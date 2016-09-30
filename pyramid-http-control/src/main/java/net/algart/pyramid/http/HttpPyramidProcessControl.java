@@ -78,6 +78,11 @@ public final class HttpPyramidProcessControl implements JavaProcessControlWithHt
     }
 
     @Override
+    public boolean isStabilityHttpCheckAfterStartOrStopRecommended() {
+        return true;
+    }
+
+    @Override
     public final boolean areAllHttpServicesAlive(boolean logWhenFails) {
         for (HttpPyramidServiceControl serviceControl : serviceControls) {
             if (!serviceControl.isServiceAlive(logWhenFails)) {

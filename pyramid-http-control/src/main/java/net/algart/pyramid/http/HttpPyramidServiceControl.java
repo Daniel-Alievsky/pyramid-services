@@ -25,11 +25,9 @@
 package net.algart.pyramid.http;
 
 import net.algart.pyramid.PlanePyramidInformation;
-import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -37,8 +35,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -161,6 +157,14 @@ public final class HttpPyramidServiceControl {
             throw new AssertionError("Invalid type of URL connection (not HttpURLConnection)");
         }
         final HttpURLConnection result = (HttpURLConnection) connection;
+//        if (result instanceof HttpsURLConnection) {
+//            ((HttpsURLConnection)result).setHostnameVerifier(new HostnameVerifier() {
+//                @Override
+//                public boolean verify(String s, SSLSession sslSession) {
+//                    return true;
+//                }
+//            });
+//        }
         result.setRequestMethod(requestMethod);
         return result;
     }

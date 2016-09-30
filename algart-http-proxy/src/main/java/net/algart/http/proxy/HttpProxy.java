@@ -196,7 +196,7 @@ public final class HttpProxy {
 
     @Override
     public String toString() {
-        return "AlgART HTTP Proxy" + (ssl ? " (SSL)" : "")
+        return "AlgART HTTP Proxy" + (ssl ? " (SSL)" : " (not SSL)")
             + " at " + proxyHost + ":" + proxyPort + " (server detector: " + serverResolver + ")";
     }
 

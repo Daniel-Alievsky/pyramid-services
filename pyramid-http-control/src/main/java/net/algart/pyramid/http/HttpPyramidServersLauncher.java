@@ -51,7 +51,7 @@ public final class HttpPyramidServersLauncher {
 
     private static final int PROBLEM_DELAY_IN_MS = 3000;
     private static final int PROBLEM_NUMBER_OF_ATTEMPTS = 3;
-    private static final int SLOW_START_NUMBER_OF_ATTEMPTS = 15;
+    private static final int SLOW_START_NUMBER_OF_ATTEMPTS = 10;
 
     private final HttpPyramidConfiguration configuration;
     private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
@@ -203,7 +203,9 @@ public final class HttpPyramidServersLauncher {
                 if (attempt >= SLOW_START_NUMBER_OF_ATTEMPTS) {
                     break;
                 }
-                if (control.areAllHttpServicesAlive(true)) {
+                if (!control.isStabilityHttpCheckAfterStartOrStopRecommended()
+                    || control.areAllHttpServicesAlive(true))
+                {
                     // All O'k
                     assert javaProcess != null;
                     runningProcesses.put(control.processId(), javaProcess);
@@ -236,10 +238,12 @@ public final class HttpPyramidServersLauncher {
             // - Removing is necessary for correct behaviour of the daemon thread in printWelcomeAndWaitForEnterKey
             // method. Note that we need to remove it BEFORE attempts to stop it.
             for (int attempt = 0; attempt < (javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1); attempt++) {
-                control.stopOnLocalhost(SUCCESS_STOP_TIMEOUT_IN_MS);
+                final boolean commandAccepted = control.stopOnLocalhost(SUCCESS_STOP_TIMEOUT_IN_MS);
                 if (javaProcess != null ?
                     !javaProcess.isAlive() :
-                    !control.isAtLeastSomeHttpServiceAlive(false))
+                    control.isStabilityHttpCheckAfterStartOrStopRecommended() ?
+                        !control.isAtLeastSomeHttpServiceAlive(false) :
+                        commandAccepted)
                 {
                     return true;
                 }
