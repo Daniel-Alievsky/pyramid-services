@@ -38,6 +38,7 @@ public class HttpPyramidConstants {
         "net.algart.pyramid.http.imageCachingMemory", 256L * 1024L * 1024L));
 
     public static final int SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT = 60000;
+    // - must be less than HttpProxy.DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS
     public static final int SERVER_SENDING_TIMEOUT = 120000;
 
     public static final int CLIENT_CONNECTION_TIMEOUT = 30000;

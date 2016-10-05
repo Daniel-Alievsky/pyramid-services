@@ -34,6 +34,6 @@ public interface HttpServerFailureHandler {
     }
 
 
-    default void onServerTimeout(HttpServerAddress address, String requestURI) throws IOException {
+    default void onServerTimeout(HttpServerAddress address, String requestURL) throws IOException {
     }
 }

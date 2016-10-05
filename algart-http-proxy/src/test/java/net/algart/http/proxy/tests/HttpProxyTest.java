@@ -61,7 +61,7 @@ public class HttpProxyTest {
             },
             new HttpServerFailureHandler() {
                 @Override
-                public void onServerTimeout(HttpServerAddress address, String requestURI) throws IOException {
+                public void onServerTimeout(HttpServerAddress address, String requestURL) throws IOException {
                     throw new UnsupportedOperationException(
                         "Demo proxy doesn't know how to resolve the server problem");
                 }

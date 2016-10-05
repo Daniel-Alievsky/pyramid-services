@@ -88,7 +88,7 @@ final class ReadTask implements Comparable<ReadTask> {
             LOG.info("Not modified (304): " + this);
             response.setStatus(304, "Not modified");
         } else {
-            refreshTimeout();
+            resetTimeout();
             this.response.suspend();
             this.activeTaskSet.addTask(this);
         }
@@ -180,7 +180,7 @@ final class ReadTask implements Comparable<ReadTask> {
         }
         this.responseBytes = data.getBytes();
         this.sendingDataStarted = true;
-        this.refreshTimeout();
+        this.resetTimeout();
         LOG.fine("Sending " + responseBytes.length + " bytes...");
         this.responseBytesCurrentOffset = 0;
         response.setContentLength(responseBytes.length);
@@ -232,7 +232,7 @@ final class ReadTask implements Comparable<ReadTask> {
         closed = true;
     }
 
-    private void refreshTimeout() {
+    private void resetTimeout() {
         this.lastAccessTime = System.currentTimeMillis();
     }
 
@@ -248,7 +248,7 @@ final class ReadTask implements Comparable<ReadTask> {
             if (checkCancellingDueToTimeout() || checkCancellingDueToResponseState()) {
                 return;
             }
-            refreshTimeout();
+            resetTimeout();
 //                    try {Thread.sleep(1000);} catch (InterruptedException e) {}
             final int len = Math.min(responseBytes.length - responseBytesCurrentOffset, CHUNK_SIZE);
 //                    System.out.printf("%d/%d bytes sending...%n", responseBytesCurrentOffset, responseBytes.length);

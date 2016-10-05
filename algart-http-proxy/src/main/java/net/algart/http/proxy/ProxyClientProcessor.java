@@ -36,26 +36,29 @@ import org.glassfish.grizzly.http.io.NIOInputStream;
 import org.glassfish.grizzly.http.io.NIOOutputStream;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
+import org.glassfish.grizzly.http.server.SuspendContext;
+import org.glassfish.grizzly.http.server.TimeoutHandler;
 import org.glassfish.grizzly.http.util.MimeHeaders;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 class ProxyClientProcessor extends BaseFilter {
+    private final HttpProxy proxy;
     private final String requestURL;
     // - for logging needs
-    private final HttpServerFailureHandler serverFailureHandler;
     private final HttpRequestPacket requestToServerHeaders;
     private final Response response;
-    private final HttpServerAddress server;
+    private final HttpServerAddress serverAddress;
     private final NIOInputStream inputStreamFromClient;
     // - usually for POST requests
     private final NIOOutputStream outputStreamToClient;
     private final Connection connectionToClient;
+    private final SuspendContext suspendContext;
     private volatile Connection connectionToServer = null;
     private volatile boolean firstReply = true;
     private volatile boolean connectionToServerClosed = false;
@@ -64,20 +67,23 @@ class ProxyClientProcessor extends BaseFilter {
     private final Object lock = new Object();
 
     ProxyClientProcessor(
+        HttpProxy proxy,
         Request request,
         Response response,
-        HttpServerAddress server,
-        HttpServerFailureHandler serverFailureHandler)
+        HttpServerAddress serverAddress)
     {
-        assert server != null;
-        assert serverFailureHandler != null;
+        assert proxy != null;
+        assert request != null;
+        assert response != null;
+        assert serverAddress != null;
+        this.proxy = proxy;
         this.requestURL = String.valueOf(request.getRequestURL());
         this.response = response;
         this.inputStreamFromClient = request.getNIOInputStream();
         this.connectionToClient = request.getRequest().getConnection();
         this.outputStreamToClient = response.getNIOOutputStream();
-        this.serverFailureHandler = serverFailureHandler;
-        this.server = server;
+        this.serverAddress = serverAddress;
+        this.suspendContext = response.getSuspendContext();
 
         final HttpRequestPacket.Builder builder = HttpRequestPacket.builder();
         builder.protocol(Protocol.HTTP_1_1);
@@ -92,14 +98,31 @@ class ProxyClientProcessor extends BaseFilter {
             }
         }
         builder.removeHeader("Host");
-        builder.header("Host", server.canonicalHTTPHostHeader());
+        builder.header("Host", serverAddress.canonicalHTTPHostHeader());
         this.requestToServerHeaders = builder.build();
     }
 
+    public void suspendResponse() {
+        response.suspend(proxy.getReadingFromServerTimeoutInMs(), TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
+            @Override
+            public boolean onTimeout(Response responseInTimeout) {
+                closeAndReturnError("Timeout while waiting for the server response");
+                try {
+                    proxy.getServerFailureHandler().onServerTimeout(serverAddress, requestURL);
+                } catch (Throwable t) {
+                    HttpProxy.LOG.log(Level.SEVERE, "Problem in onServerTimeout (" + proxy + ")", t);
+                }
+                return true;
+            }
+        });
+
+    }
+
     public void requestConnectionToServer(TCPNIOConnectorHandler connectorToServer) throws InterruptedException {
-        HttpProxy.LOG.config("Requesting connection to " + server + "...");
+        HttpProxy.LOG.config("Requesting connection to " + serverAddress + "...");
         connectorToServer.connect(
-            new InetSocketAddress(server.serverHost(), server.serverPort()), new CompletionHandler<Connection>() {
+            new InetSocketAddress(serverAddress.serverHost(), serverAddress.serverPort()),
+            new CompletionHandler<Connection>() {
                 @Override
                 public void cancelled() {
                 }
@@ -108,11 +131,11 @@ class ProxyClientProcessor extends BaseFilter {
                 public void failed(Throwable throwable) {
                     synchronized (lock) {
                         HttpProxy.LOG.log(Level.WARNING,
-                            "Connection to server " + server + " failed (" + requestURL + "): " + throwable);
+                            "Connection to server " + serverAddress + " failed (" + requestURL + "): " + throwable);
                         // - possible situation, no sense to print stack trace
                         closeAndReturnError("Cannot connect to the server");
                         try {
-                            serverFailureHandler.onConnectionFailed(server, throwable);
+                            proxy.getServerFailureHandler().onConnectionFailed(serverAddress, throwable);
                         } catch (Throwable t) {
                             HttpProxy.LOG.log(Level.SEVERE, "Problem in onConnectionFailed (" + requestURL + ")", t);
                         }
@@ -162,6 +185,7 @@ class ProxyClientProcessor extends BaseFilter {
             }
 
             private void sendData() {
+                resetTimeout();
                 final Buffer buffer = inputStreamFromClient.readBuffer();
                 final boolean finished = inputStreamFromClient.isFinished();
                 HttpProxy.LOG.config("Data ready, sending request to server: buffer " + buffer);
@@ -173,7 +197,7 @@ class ProxyClientProcessor extends BaseFilter {
                 // - note: buffer will be destroyed by this call
             }
         });
-        HttpProxy.LOG.config("Connected to " + server
+        HttpProxy.LOG.config("Connected to " + serverAddress
             + "; sending request to " + requestToServerHeaders.getRequestURI());
         HttpProxy.LOG.fine("Full request header: " + requestToServerHeaders);
         return ctx.getStopAction();
@@ -211,7 +235,7 @@ class ProxyClientProcessor extends BaseFilter {
 
     @Override
     public void exceptionOccurred(FilterChainContext ctx, Throwable error) {
-        HttpProxy.LOG.log(Level.SEVERE, "Error while reading data from " + server + " (" + requestURL + ")", error);
+        HttpProxy.LOG.log(Level.SEVERE, "Error while reading data from " + serverAddress + " (" + requestURL + ")", error);
     }
 
     @Override
@@ -223,7 +247,7 @@ class ProxyClientProcessor extends BaseFilter {
         }
 
         HttpProxy.LOG.log(Level.INFO, "Unexpected connection close while reading from "
-            + server + " (" + requestURL + ")");
+            + serverAddress + " (" + requestURL + ")");
         closeConnectionsAndResponse();
         return ctx.getStopAction();
     }
@@ -238,8 +262,12 @@ class ProxyClientProcessor extends BaseFilter {
                 final Buffer contentBuffer = Buffers.wrap(null, "AlgART Proxy: " + message);
                 outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, true));
             }
-            HttpProxy.LOG.warning("Error: " + message + " (" + requestURL + ", forwarded to " + server + ")");
+            HttpProxy.LOG.warning("Error: " + message + " (" + requestURL + ", forwarded to " + serverAddress + ")");
         }
+    }
+
+    private void resetTimeout() {
+        suspendContext.setTimeout(proxy.getReadingFromServerTimeoutInMs(), TimeUnit.MILLISECONDS);
     }
 
     private void closeServerAndClientConnections() {
@@ -297,7 +325,10 @@ class ProxyClientProcessor extends BaseFilter {
         @Override
         public void onWritePossible() throws Exception {
             synchronized (lock) {
+                resetTimeout();
                 outputStreamToClient.write(contentBuffer);
+//                for (long t = System.currentTimeMillis(); System.currentTimeMillis() - t < 5500; ) ;
+//                System.out.println("!!!DELAY!! " + contentBuffer + "; " + last + "; " + new java.util.Date());
                 if (last) {
                     closeConnectionsAndResponse();
                 }

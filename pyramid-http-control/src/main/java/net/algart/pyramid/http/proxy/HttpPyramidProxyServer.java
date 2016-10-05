@@ -68,7 +68,7 @@ public final class HttpPyramidProxyServer {
                 }
 
                 @Override
-                public void onServerTimeout(HttpServerAddress address, String requestURI) {
+                public void onServerTimeout(HttpServerAddress address, String requestURL) {
                     LOG.warning("Timeout while accessing " + address + ": maybe the service crashed");
                 }
             });

@@ -67,7 +67,8 @@ public final class HttpProxy {
     private static final String DEFAULT_PROXY_HOST = System.getProperty(
         "net.algart.http.proxy.proxyHost", "localhost");
     private static final int DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS = Integer.getInteger(
-        "net.algart.http.proxy.timeout", 60000);
+        "net.algart.http.proxy.timeout", 120000);
+    // - 2 minutes: some complex services can require essential time for first access to the data
 
     static final Logger LOG = Logger.getLogger(HttpProxy.class.getName());
 
@@ -104,6 +105,18 @@ public final class HttpProxy {
         this.clientTransport = TCPNIOTransportBuilder.newInstance().build();
         this.proxyServer = new HttpServer();
         this.proxyServer.getServerConfiguration().addHttpHandler(new HttpProxyHandler());
+    }
+
+    public final int getProxyPort() {
+        return proxyPort;
+    }
+
+    public HttpServerResolver getServerResolver() {
+        return serverResolver;
+    }
+
+    public HttpServerFailureHandler getServerFailureHandler() {
+        return serverFailureHandler;
     }
 
     public String getProxyHost() {
@@ -190,10 +203,6 @@ public final class HttpProxy {
         }
     }
 
-    public final int getProxyPort() {
-        return proxyPort;
-    }
-
     @Override
     public String toString() {
         return "AlgART HTTP Proxy" + (ssl ? " (SSL)" : " (not SSL)")
@@ -237,7 +246,7 @@ public final class HttpProxy {
                         + "identical to the proxy host:port " + server);
                 }
                 final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(
-                    request, response, server, serverFailureHandler);
+                    HttpProxy.this, request, response, server);
                 LOG.config("Proxying " + requestURI + " to " + server);
 //            System.out.println("    Parameters: " + HttpServerDetector.BasedOnMap.toMap(queryParameters));
 //              - note: this call requires some resources for new Map and must be commented usually
@@ -248,18 +257,7 @@ public final class HttpProxy {
                 final FilterChain filterChain = clientFilterChainBuilder.build();
                 final TCPNIOConnectorHandler connectorHandler =
                     TCPNIOConnectorHandler.builder(clientTransport).processor(filterChain).build();
-                response.suspend(readingFromServerTimeoutInMs, TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
-                    @Override
-                    public boolean onTimeout(Response responseInTimeout) {
-                        clientProcessor.closeAndReturnError("Timeout while waiting for the server response");
-                        try {
-                            serverFailureHandler.onServerTimeout(server, requestURI);
-                        } catch (Throwable t) {
-                            LOG.log(Level.SEVERE, "Problem in onServerTimeout (" + this + ")", t);
-                        }
-                        return true;
-                    }
-                });
+                clientProcessor.suspendResponse();
                 clientProcessor.requestConnectionToServer(connectorHandler);
             } catch (Throwable t) {
                 response.setStatus(500, "AlgART Proxy request error");
