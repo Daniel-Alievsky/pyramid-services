@@ -39,10 +39,11 @@ import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
 import org.glassfish.grizzly.utils.Charsets;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -69,6 +70,7 @@ public final class HttpProxy {
     private static final int DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS = Integer.getInteger(
         "net.algart.http.proxy.timeout", 120000);
     // - 2 minutes: some complex services can require essential time for first access to the data
+    private static final boolean DEFAULT_CORRECT_MOVED_LOCATIONS = true;
 
     static final Logger LOG = Logger.getLogger(HttpProxy.class.getName());
 
@@ -83,6 +85,7 @@ public final class HttpProxy {
     private Path keystoreFile;
     private String keystorePassword;
     private String keyPassword;
+    private boolean correctMovedLocations = DEFAULT_CORRECT_MOVED_LOCATIONS;
     private int readingFromServerTimeoutInMs = DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS;
 
     private volatile boolean firstStart = true;
@@ -111,6 +114,10 @@ public final class HttpProxy {
         return proxyPort;
     }
 
+    public final int getDefaultProxyPort() {
+        return ssl ? 443 : 80;
+    }
+
     public HttpServerResolver getServerResolver() {
         return serverResolver;
     }
@@ -123,8 +130,9 @@ public final class HttpProxy {
         return proxyHost;
     }
 
-    public void setProxyHost(String proxyHost) {
+    public HttpProxy setProxyHost(String proxyHost) {
         this.proxyHost = Objects.requireNonNull(proxyHost, "Null localHost argument");
+        return this;
     }
 
     public boolean isSsl() {
@@ -143,11 +151,11 @@ public final class HttpProxy {
         return keyPassword;
     }
 
-    public void enableSsl(Path keystoreFile, String keystorePassword) {
-        enableSsl(keystoreFile, keystorePassword, keystorePassword);
+    public HttpProxy enableSsl(Path keystoreFile, String keystorePassword) {
+        return enableSsl(keystoreFile, keystorePassword, keystorePassword);
     }
 
-    public void enableSsl(Path keystoreFile, String keystorePassword, String keyPassword) {
+    public HttpProxy enableSsl(Path keystoreFile, String keystorePassword, String keyPassword) {
         Objects.requireNonNull(keystoreFile);
         Objects.requireNonNull(keystorePassword);
         Objects.requireNonNull(keyPassword);
@@ -155,21 +163,33 @@ public final class HttpProxy {
         this.keystorePassword = keystorePassword;
         this.keyPassword = keyPassword;
         this.ssl = true;
+        return this;
     }
 
-    public void disableSsl() {
+    public HttpProxy disableSsl() {
         this.ssl = false;
+        return this;
+    }
+
+    public boolean isCorrectMovedLocations() {
+        return correctMovedLocations;
+    }
+
+    public HttpProxy setCorrectMovedLocations(boolean correctMovedLocations) {
+        this.correctMovedLocations = correctMovedLocations;
+        return this;
     }
 
     public int getReadingFromServerTimeoutInMs() {
         return readingFromServerTimeoutInMs;
     }
 
-    public void setReadingFromServerTimeoutInMs(int readingFromServerTimeoutInMs) {
+    public HttpProxy setReadingFromServerTimeoutInMs(int readingFromServerTimeoutInMs) {
         if (readingFromServerTimeoutInMs <= 0) {
             throw new IllegalArgumentException("Zero or negative timeout for reading from server");
         }
         this.readingFromServerTimeoutInMs = readingFromServerTimeoutInMs;
+        return this;
     }
 
     public final void start() throws IOException {
@@ -201,6 +221,46 @@ public final class HttpProxy {
             proxyServer.shutdown();
             clientTransport.shutdown();
         }
+    }
+
+    public String correctLocationFor3XXResponse(
+        HttpServerAddress serverAddress,
+        String location)
+    {
+        final URI uri;
+        try {
+            uri = new URI(location);
+        } catch (URISyntaxException e) {
+            HttpProxy.LOG.log(Level.INFO, "Invalid location \"" + location + "\"in 301/302 server response", e);
+            return location;
+        }
+        if (uri.getScheme() == null || uri.getHost()  == null) {
+            return location;
+            // - relative address
+        }
+        if (!uri.getScheme().equalsIgnoreCase("http")) {
+            return location;
+            // - this proxy cannot connect to server via other protocols
+        }
+        if (uri.getHost().equals(serverAddress.serverHost())
+            && (uri.getPort() == -1 ? 80 : uri.getPort()) == serverAddress.serverPort())
+        {
+            try {
+                return new URI(
+                    ssl ? "https" : "http",
+                    uri.getUserInfo(),
+                    proxyHost,
+                    proxyPort == getDefaultProxyPort() ? -1 : proxyPort,
+                    uri.getPath(),
+                    uri.getQuery(),
+                    uri.getFragment()).toASCIIString();
+            } catch (URISyntaxException e) {
+                LOG.log(Level.SEVERE, "Strange exception while constructing new URI for \"" + location
+                    + "\" in proxy object " + this, e);
+                return location;
+            }
+        }
+        return uri.toString();
     }
 
     @Override

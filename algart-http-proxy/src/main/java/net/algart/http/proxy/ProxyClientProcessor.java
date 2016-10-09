@@ -38,6 +38,7 @@ import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.server.SuspendContext;
 import org.glassfish.grizzly.http.server.TimeoutHandler;
+import org.glassfish.grizzly.http.util.HttpStatus;
 import org.glassfish.grizzly.http.util.MimeHeaders;
 import org.glassfish.grizzly.memory.Buffers;
 import org.glassfish.grizzly.nio.transport.TCPNIOConnectorHandler;
@@ -215,10 +216,16 @@ class ProxyClientProcessor extends BaseFilter {
             }
             if (firstReply) {
                 final HttpResponsePacket httpHeader = (HttpResponsePacket) httpContent.getHttpHeader();
-                response.setStatus(httpHeader.getHttpStatus());
+                final HttpStatus httpStatus = httpHeader.getHttpStatus();
+                response.setStatus(httpStatus);
+                final boolean correctMoved = proxy.isCorrectMovedLocations() &&
+                    (httpStatus.getStatusCode() == 301 || httpStatus.getStatusCode() == 302);
                 final MimeHeaders headers = httpHeader.getHeaders();
                 for (String headerName : headers.names()) {
                     for (String headerValue : headers.values(headerName)) {
+                        if (correctMoved && "location".equalsIgnoreCase(headerName)) {
+                            headerValue = proxy.correctLocationFor3XXResponse(serverAddress, headerValue);
+                        }
                         response.addHeader(headerName, headerValue);
                     }
                 }
