@@ -50,7 +50,7 @@ import java.util.logging.Level;
 
 class ProxyClientProcessor extends BaseFilter {
     private final HttpProxy proxy;
-    private final String requestURL;
+    private final Request request;
     // - for logging needs
     private final HttpRequestPacket requestToServerHeaders;
     private final Response response;
@@ -78,7 +78,7 @@ class ProxyClientProcessor extends BaseFilter {
         assert response != null;
         assert serverAddress != null;
         this.proxy = proxy;
-        this.requestURL = String.valueOf(request.getRequestURL());
+        this.request = request;
         this.response = response;
         this.inputStreamFromClient = request.getNIOInputStream();
         this.connectionToClient = request.getRequest().getConnection();
@@ -109,7 +109,9 @@ class ProxyClientProcessor extends BaseFilter {
             public boolean onTimeout(Response responseInTimeout) {
                 closeAndReturnError("Timeout while waiting for the server response");
                 try {
-                    proxy.getServerFailureHandler().onServerTimeout(serverAddress, requestURL);
+                    proxy.getServerFailureHandler().onServerTimeout(
+                        serverAddress,
+                        String.valueOf(request.getRequestURL()));
                 } catch (Throwable t) {
                     HttpProxy.LOG.log(Level.SEVERE, "Problem in onServerTimeout (" + proxy + ")", t);
                 }
@@ -132,13 +134,15 @@ class ProxyClientProcessor extends BaseFilter {
                 public void failed(Throwable throwable) {
                     synchronized (lock) {
                         HttpProxy.LOG.log(Level.WARNING,
-                            "Connection to server " + serverAddress + " failed (" + requestURL + "): " + throwable);
+                            "Connection to server " + serverAddress + " failed ("
+                                + request.getRequestURL() + "): " + throwable);
                         // - possible situation, no sense to print stack trace
                         closeAndReturnError("Cannot connect to the server");
                         try {
                             proxy.getServerFailureHandler().onConnectionFailed(serverAddress, throwable);
                         } catch (Throwable t) {
-                            HttpProxy.LOG.log(Level.SEVERE, "Problem in onConnectionFailed (" + requestURL + ")", t);
+                            HttpProxy.LOG.log(Level.SEVERE, "Problem in onConnectionFailed ("
+                                + request.getRequestURL() + ")", t);
                         }
                     }
                 }
@@ -168,8 +172,8 @@ class ProxyClientProcessor extends BaseFilter {
             }
 
             @Override
-            public void onError(Throwable error) {
-                HttpProxy.LOG.log(Level.WARNING, "Error while reading request (" + requestURL + ")", error);
+            public void onError(Throwable t) {
+                HttpProxy.LOG.log(Level.WARNING, "Error while reading request (" + request.getRequestURL() + ")", t);
                 closeAndReturnError("Error while reading request");
             }
 
@@ -223,8 +227,16 @@ class ProxyClientProcessor extends BaseFilter {
                 final MimeHeaders headers = httpHeader.getHeaders();
                 for (String headerName : headers.names()) {
                     for (String headerValue : headers.values(headerName)) {
-                        if (correctMoved && "location".equalsIgnoreCase(headerName)) {
-                            headerValue = proxy.correctLocationFor3XXResponse(serverAddress, headerValue);
+                        if (correctMoved && "location".equalsIgnoreCase(headerName) && headerValue != null) {
+                            // - null check to be on the safe side (should not occur)
+                            String newLocation = HttpProxy.correctLocationFor3XXResponse(headerValue,
+                                request, serverAddress);
+                            HttpProxy.LOG.info("Redirection to " + headerValue + " catched: "
+                                + (newLocation.equals(headerValue) ?
+                                    "not changed" :
+                                    "changed to " + newLocation)
+                                + " (proxying " + request.getRequestURL() + " to " + serverAddress + ")");
+                            headerValue = newLocation;
                         }
                         response.addHeader(headerName, headerValue);
                     }
@@ -242,7 +254,8 @@ class ProxyClientProcessor extends BaseFilter {
 
     @Override
     public void exceptionOccurred(FilterChainContext ctx, Throwable error) {
-        HttpProxy.LOG.log(Level.SEVERE, "Error while reading data from " + serverAddress + " (" + requestURL + ")", error);
+        HttpProxy.LOG.log(Level.SEVERE, "Error while reading data from "
+            + serverAddress + " (" + request.getRequestURL() + ")", error);
     }
 
     @Override
@@ -254,7 +267,7 @@ class ProxyClientProcessor extends BaseFilter {
         }
 
         HttpProxy.LOG.log(Level.INFO, "Unexpected connection close while reading from "
-            + serverAddress + " (" + requestURL + ")");
+            + serverAddress + " (" + request.getRequestURL() + ")");
         closeConnectionsAndResponse();
         return ctx.getStopAction();
     }
@@ -269,7 +282,8 @@ class ProxyClientProcessor extends BaseFilter {
                 final Buffer contentBuffer = Buffers.wrap(null, "AlgART Proxy: " + message);
                 outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, true));
             }
-            HttpProxy.LOG.warning("Error: " + message + " (" + requestURL + ", forwarded to " + serverAddress + ")");
+            HttpProxy.LOG.warning("Error: " + message + " ("
+                + request.getRequestURL() + ", forwarded to " + serverAddress + ")");
         }
     }
 
@@ -344,7 +358,7 @@ class ProxyClientProcessor extends BaseFilter {
 
         @Override
         public void onError(Throwable t) {
-            HttpProxy.LOG.config("Error while sending data to client (" + requestURL + "): " + t);
+            HttpProxy.LOG.config("Error while sending data to client (" + request.getRequestURL() + "): " + t);
             // - this is not a serious problem, just the client cannot receive data too quickly (internet is slow)
         }
     }

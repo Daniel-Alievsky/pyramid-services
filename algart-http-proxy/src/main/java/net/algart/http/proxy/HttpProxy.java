@@ -114,10 +114,6 @@ public final class HttpProxy {
         return proxyPort;
     }
 
-    public final int getDefaultProxyPort() {
-        return ssl ? 443 : 80;
-    }
-
     public HttpServerResolver getServerResolver() {
         return serverResolver;
     }
@@ -223,44 +219,67 @@ public final class HttpProxy {
         }
     }
 
-    public String correctLocationFor3XXResponse(
-        HttpServerAddress serverAddress,
-        String location)
+    public static String correctLocationFor3XXResponse(
+        String location,
+        Request requestToProxy,
+        HttpServerAddress serverAddress)
     {
-        final URI uri;
+        Objects.requireNonNull(requestToProxy, "Null requestToProxy");
+        return correctLocationFor3XXResponse(
+            location,
+            requestToProxy.getScheme(),
+            requestToProxy.getServerName(),
+            requestToProxy.getServerPort(),
+            serverAddress);
+    }
+
+    public static String correctLocationFor3XXResponse(
+        String location,
+        String requestScheme,
+        String requestHost,
+        int requestPort,
+        HttpServerAddress serverAddress)
+    {
+        Objects.requireNonNull(location, "Null location");
+        Objects.requireNonNull(requestScheme, "Null requestScheme");
+        Objects.requireNonNull(requestHost, "Null requestHost");
+        Objects.requireNonNull(serverAddress, "Null serverAddress");
+        final URI locationURI;
         try {
-            uri = new URI(location);
+            locationURI = new URI(location);
         } catch (URISyntaxException e) {
-            HttpProxy.LOG.log(Level.INFO, "Invalid location \"" + location + "\"in 301/302 server response", e);
+            HttpProxy.LOG.log(Level.WARNING, "Invalid location \"" + location + "\"in 301/302 server response", e);
             return location;
         }
-        if (uri.getScheme() == null || uri.getHost()  == null) {
+        final int locationPort = locationURI.getPort() == -1 ? 80 : locationURI.getPort();
+        final int detaultPort = "https".equalsIgnoreCase(requestScheme) ? 443 : 80;
+        if (locationURI.getScheme() == null || locationURI.getHost()  == null) {
             return location;
             // - relative address
         }
-        if (!uri.getScheme().equalsIgnoreCase("http")) {
+        if (!locationURI.getScheme().equalsIgnoreCase("http")) {
             return location;
             // - this proxy cannot connect to server via other protocols
         }
-        if (uri.getHost().equals(serverAddress.serverHost())
-            && (uri.getPort() == -1 ? 80 : uri.getPort()) == serverAddress.serverPort())
+        if (locationURI.getHost().equals(serverAddress.serverHost())
+            && locationPort == serverAddress.serverPort())
         {
             try {
                 return new URI(
-                    ssl ? "https" : "http",
-                    uri.getUserInfo(),
-                    proxyHost,
-                    proxyPort == getDefaultProxyPort() ? -1 : proxyPort,
-                    uri.getPath(),
-                    uri.getQuery(),
-                    uri.getFragment()).toASCIIString();
+                    requestScheme,
+                    locationURI.getUserInfo(),
+                    requestHost,
+                    requestPort == detaultPort ? -1 : requestPort,
+                    locationURI.getPath(),
+                    locationURI.getQuery(),
+                    locationURI.getFragment()).toASCIIString();
             } catch (URISyntaxException e) {
                 LOG.log(Level.SEVERE, "Strange exception while constructing new URI for \"" + location
-                    + "\" in proxy object " + this, e);
+                    + "\" while proxying request " + requestScheme + "://" + requestHost + ":" + requestPort, e);
                 return location;
             }
         }
-        return uri.toString();
+        return locationURI.toString();
     }
 
     @Override
@@ -273,7 +292,10 @@ public final class HttpProxy {
         @Override
         public void service(Request request, Response response) {
 //            System.out.println("Proxying " + request.getRequestURI() + " - " + request.getRequestURL());
-//            System.out.println("  port: " + request.getServerPort());
+//            System.out.println("  server name: " + request.getServerName());
+//            System.out.println("  server port: " + request.getServerPort());
+//            System.out.println("  remote host: " + request.getRemoteHost());
+//            System.out.println("  remote address: " + request.getRemoteAddr());
 //            System.out.println("  remote port: " + request.getRemotePort());
 //            System.out.println("  path info: " + request.getPathInfo());
 //            System.out.println("  context: " + request.getContextPath());
@@ -300,14 +322,14 @@ public final class HttpProxy {
                     // - we must not decode encoded data, but need to pass them to the client
                 }
                 final Parameters queryParameters = parseQueryOnly(request);
-                final HttpServerAddress server = serverResolver.findServer(requestURI, queryParameters);
-                if (server.serverHost().equals(proxyHost) && server.serverPort() == proxyPort) {
+                final HttpServerAddress serverAddress = serverResolver.findServer(requestURI, queryParameters);
+                if (serverAddress.serverHost().equals(proxyHost) && serverAddress.serverPort() == proxyPort) {
                     throw new IllegalStateException("Infinite loop: server resolver returns host:port, "
-                        + "identical to the proxy host:port " + server);
+                        + "identical to the proxy host:port " + serverAddress);
                 }
                 final ProxyClientProcessor clientProcessor = new ProxyClientProcessor(
-                    HttpProxy.this, request, response, server);
-                LOG.config("Proxying " + requestURI + " to " + server);
+                    HttpProxy.this, request, response, serverAddress);
+                LOG.config("Proxying " + requestURI + " to " + serverAddress);
 //            System.out.println("    Parameters: " + HttpServerDetector.BasedOnMap.toMap(queryParameters));
 //              - note: this call requires some resources for new Map and must be commented usually
                 final FilterChainBuilder clientFilterChainBuilder = FilterChainBuilder.stateless();
