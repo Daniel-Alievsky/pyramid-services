@@ -3,6 +3,7 @@
   "proxySettings": {
     "proxyPort": 100,
     "defaultHost": "localhost",
+    "defaultPort": 80,
     "ssl": false
   },
   "sslSettings": {

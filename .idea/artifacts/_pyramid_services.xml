@@ -63,7 +63,7 @@
         <element id="directory" name="logging">
           <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/logging" />
         </element>
-        <element id="file-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/specific-server-settings-example.json" />
+        <element id="file-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/specific-server-settings-example.json" output-file-name="specific-server-settings.json" />
         <element id="directory" name="ssl">
           <element id="file-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/ssl/ssl-test-keystore.jks" />
         </element>

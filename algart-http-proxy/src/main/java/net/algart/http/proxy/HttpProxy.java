@@ -221,20 +221,6 @@ public final class HttpProxy {
 
     public static String correctLocationFor3XXResponse(
         String location,
-        Request requestToProxy,
-        HttpServerAddress serverAddress)
-    {
-        Objects.requireNonNull(requestToProxy, "Null requestToProxy");
-        return correctLocationFor3XXResponse(
-            location,
-            requestToProxy.getScheme(),
-            requestToProxy.getServerName(),
-            requestToProxy.getServerPort(),
-            serverAddress);
-    }
-
-    public static String correctLocationFor3XXResponse(
-        String location,
         String requestScheme,
         String requestHost,
         int requestPort,
@@ -251,28 +237,29 @@ public final class HttpProxy {
             HttpProxy.LOG.log(Level.WARNING, "Invalid location \"" + location + "\"in 301/302 server response", e);
             return location;
         }
+        final String locationScheme = locationURI.getScheme();
+        final String locationHost = locationURI.getHost();
         final int locationPort = locationURI.getPort() == -1 ? 80 : locationURI.getPort();
-        final int detaultPort = "https".equalsIgnoreCase(requestScheme) ? 443 : 80;
-        if (locationURI.getScheme() == null || locationURI.getHost()  == null) {
+        final int detaultRequestPort = "https".equalsIgnoreCase(requestScheme) ? 443 : 80;
+        if (locationScheme == null || locationHost == null) {
             return location;
             // - relative address
         }
-        if (!locationURI.getScheme().equalsIgnoreCase("http")) {
+        if (!"http".equalsIgnoreCase(locationScheme)) {
             return location;
             // - this proxy cannot connect to server via other protocols
         }
-        if (locationURI.getHost().equals(serverAddress.serverHost())
-            && locationPort == serverAddress.serverPort())
-        {
+        if (locationHost.equals(serverAddress.serverHost()) && locationPort == serverAddress.serverPort()) {
             try {
                 return new URI(
                     requestScheme,
                     locationURI.getUserInfo(),
                     requestHost,
-                    requestPort == detaultPort ? -1 : requestPort,
+                    requestPort == detaultRequestPort ? -1 : requestPort,
                     locationURI.getPath(),
                     locationURI.getQuery(),
-                    locationURI.getFragment()).toASCIIString();
+                    locationURI.getFragment())
+                    .toASCIIString();
             } catch (URISyntaxException e) {
                 LOG.log(Level.SEVERE, "Strange exception while constructing new URI for \"" + location
                     + "\" while proxying request " + requestScheme + "://" + requestHost + ":" + requestPort, e);
@@ -286,6 +273,20 @@ public final class HttpProxy {
     public String toString() {
         return "AlgART HTTP Proxy" + (ssl ? " (SSL)" : " (not SSL)")
             + " at " + proxyHost + ":" + proxyPort + " (server detector: " + serverResolver + ")";
+    }
+
+    static String correctLocationFor3XXResponse(
+        String location,
+        Request requestToProxy,
+        HttpServerAddress serverAddress)
+    {
+        Objects.requireNonNull(requestToProxy, "Null requestToProxy");
+        return correctLocationFor3XXResponse(
+            location,
+            requestToProxy.getScheme(),
+            requestToProxy.getServerName(),
+            requestToProxy.getServerPort(),
+            serverAddress);
     }
 
     private class HttpProxyHandler extends HttpHandler {
