@@ -71,6 +71,7 @@ public final class HttpProxy {
         "net.algart.http.proxy.timeout", 120000);
     // - 2 minutes: some complex services can require essential time for first access to the data
     private static final boolean DEFAULT_CORRECT_MOVED_LOCATIONS = true;
+    private static final boolean DEFAULT_ADD_X_FORWARDED_FOR = true;
 
     static final Logger LOG = Logger.getLogger(HttpProxy.class.getName());
 
@@ -86,6 +87,7 @@ public final class HttpProxy {
     private String keystorePassword;
     private String keyPassword;
     private boolean correctMovedLocations = DEFAULT_CORRECT_MOVED_LOCATIONS;
+    private boolean addingXForwardedFor = DEFAULT_ADD_X_FORWARDED_FOR;
     private int readingFromServerTimeoutInMs = DEFAULT_READING_FROM_SERVER_TIMEOUT_IN_MS;
 
     private volatile boolean firstStart = true;
@@ -173,6 +175,15 @@ public final class HttpProxy {
 
     public HttpProxy setCorrectMovedLocations(boolean correctMovedLocations) {
         this.correctMovedLocations = correctMovedLocations;
+        return this;
+    }
+
+    public boolean isAddingXForwardedFor() {
+        return addingXForwardedFor;
+    }
+
+    public HttpProxy setAddingXForwardedFor(boolean addingXForwardedFor) {
+        this.addingXForwardedFor = addingXForwardedFor;
         return this;
     }
 

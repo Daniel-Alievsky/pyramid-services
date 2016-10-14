@@ -100,6 +100,16 @@ class ProxyClientProcessor extends BaseFilter {
         }
         builder.removeHeader("Host");
         builder.header("Host", serverAddress.canonicalHTTPHostHeader());
+        if (proxy.isAddingXForwardedFor()) {
+            String xForwardedFor = request.getHeader("X-Forwarded-For");
+            if (xForwardedFor == null) {
+                xForwardedFor = request.getRemoteAddr();
+            } else {
+                xForwardedFor += ", " + request.getRemoteAddr();
+            }
+            builder.removeHeader("X-Forwarded-For");
+            builder.header("X-Forwarded-For", xForwardedFor);
+        }
         this.requestToServerHeaders = builder.build();
     }
 

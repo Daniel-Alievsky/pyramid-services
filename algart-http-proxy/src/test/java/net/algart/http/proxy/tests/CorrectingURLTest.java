@@ -26,34 +26,13 @@ package net.algart.http.proxy.tests;
 
 import net.algart.http.proxy.HttpProxy;
 import net.algart.http.proxy.HttpServerAddress;
-import net.algart.http.proxy.HttpServerFailureHandler;
-import net.algart.http.proxy.HttpServerResolver;
-import org.glassfish.grizzly.http.server.Request;
-import org.glassfish.grizzly.http.util.Parameters;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Paths;
 
 public class CorrectingURLTest {
-//    static HttpProxy usualProxy = new HttpProxy(80, new HttpServerResolver() {
-//        @Override
-//        public HttpServerAddress findServer(String requestURI, Parameters queryParameters) throws IOException {
-//            return new HttpServerAddress("localhost", 8080);
-//        }
-//    }, new HttpServerFailureHandler() {
-//    });
-//    static HttpProxy sslProxy = new HttpProxy(443, new HttpServerResolver() {
-//        @Override
-//        public HttpServerAddress findServer(String requestURI, Parameters queryParameters) throws IOException {
-//            return new HttpServerAddress("localhost", 9999);
-//        }
-//    }, new HttpServerFailureHandler() {
-//    }).enableSsl(Paths.get("dummyPath"), "dummyPassword");
-
     public static void main(String[] args) throws MalformedURLException, URISyntaxException {
 
         URL url1 = new URL("https://%D1%82%D0%B5%D1%81%D1%82@localhost/asd/asd?123%20456#re%20ff");
@@ -100,8 +79,8 @@ public class CorrectingURLTest {
             uri.getFragment());
         System.out.println("Copy of this URI:");
         showURI(uriCopy);
-//        showCorrectionByProxy(usualProxy, uri);
-//        showCorrectionByProxy(sslProxy, uri);
+        showCorrectionByProxy(uri.toString(), "http", "localhost", 80, "localhost", 123);
+        showCorrectionByProxy(uri.toString(), "https", "mydomain.com", 82, "mylocalhost.com", 90);
     }
 
     private static void showURI(URI uri) {
@@ -120,19 +99,19 @@ public class CorrectingURLTest {
         System.out.println("  RawFragment: \"" + uri.getRawFragment() + "\"");
     }
 
-//    private static void showCorrectionByProxy(HttpProxy proxy, URI uri) {
-//        String corrected;
-//        if (uri.getScheme() != null && uri.getHost() != null) {
-//            System.out.println("  Correction of \"" + uri + "\" by " + proxy + ", same address:");
-//            corrected = proxy.correctLocationFor3XXResponse(
-//                new HttpServerAddress(uri.getHost(), uri.getPort() == -1 ? 80 : uri.getPort()),
-//                uri.toString());
-//            System.out.println("    " + (corrected.equals(uri.toString()) ? "NONE" : corrected));
-//        }
-//        System.out.println("  Correction of \"" + uri  + "\" by " + proxy + ", address mydomain.com:123:");
-//        corrected = proxy.correctLocationFor3XXResponse(
-//            new HttpServerAddress("mydomain.com", 123),
-//            uri.toString());
-//        System.out.println("    " + (corrected.equals(uri.toString()) ? "NONE" : corrected));
-//    }
+    private static void showCorrectionByProxy(
+        String location,
+        String requestScheme,
+        String requestHost,
+        int requestPort,
+        String serverHost,
+        int serverPort)
+    {
+        String corrected = HttpProxy.correctLocationFor3XXResponse(
+            location, requestScheme, requestHost, requestPort,
+            new HttpServerAddress(serverHost, serverPort));
+        System.out.printf("Correction of %s, request %s://%s:%d, real server address %s:%d:%n  %s%n",
+            location, requestScheme, requestHost, requestPort, serverHost, serverPort,
+            corrected.equals(location) ? "NONE" : corrected);
+    }
 }

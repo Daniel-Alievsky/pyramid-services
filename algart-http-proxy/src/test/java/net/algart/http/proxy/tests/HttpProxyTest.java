@@ -72,6 +72,7 @@ public class HttpProxyTest {
         if (proxyHost != null) {
             proxy.setProxyHost(proxyHost);
         }
+        // proxy.setAddingXForwardedFor(false);
         proxy.start();
         System.out.println("Press ENTER to stop the proxy server...");
         System.in.read();
