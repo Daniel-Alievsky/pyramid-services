@@ -25,7 +25,6 @@
 package net.algart.http.proxy.tests;
 
 import net.algart.http.proxy.HttpProxy;
-import net.algart.http.proxy.HttpServerAddress;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -79,8 +78,9 @@ public class CorrectingURLTest {
             uri.getFragment());
         System.out.println("Copy of this URI:");
         showURI(uriCopy);
-        showCorrectionByProxy(uri.toString(), "http", "localhost", 80, "localhost", 123);
+        showCorrectionByProxy(uri.toString(), "http", "localhost", 80, "mydomain.com", 123);
         showCorrectionByProxy(uri.toString(), "https", "mydomain.com", 82, "mylocalhost.com", 90);
+        showCorrectionByProxy(uri.toString(), "https", "mydomain.com", 82, "mydomain.com", 123);
     }
 
     private static void showURI(URI uri) {
@@ -105,11 +105,18 @@ public class CorrectingURLTest {
         String requestHost,
         int requestPort,
         String serverHost,
-        int serverPort)
+        int serverPort) throws URISyntaxException
     {
         String corrected = HttpProxy.correctLocationFor3XXResponse(
-            location, requestScheme, requestHost, requestPort,
-            new HttpServerAddress(serverHost, serverPort));
+            location, requestScheme, requestHost, requestPort, serverHost, serverPort);
+        System.out.printf("Correction of %s, request %s://%s:%d, real server address %s:%d:%n  %s%n",
+            location, requestScheme, requestHost, requestPort, serverHost, serverPort,
+            corrected.equals(location) ? "NONE" : corrected);
+        URI locationUri = new URI(location);
+        serverHost = locationUri.getHost();
+        serverPort = locationUri.getPort() == -1 ? 80 : locationUri.getPort();
+        corrected = HttpProxy.correctLocationFor3XXResponse(
+            location, requestScheme, requestHost, requestPort, serverHost, serverPort);
         System.out.printf("Correction of %s, request %s://%s:%d, real server address %s:%d:%n  %s%n",
             location, requestScheme, requestHost, requestPort, serverHost, serverPort,
             corrected.equals(location) ? "NONE" : corrected);

@@ -102,7 +102,7 @@ class ProxyClientProcessor extends BaseFilter {
         builder.header("Host", serverAddress.canonicalHTTPHostHeader());
         if (proxy.isAddingXForwardedFor()) {
             String xForwardedFor = request.getHeader("X-Forwarded-For");
-            if (xForwardedFor == null) {
+            if (xForwardedFor == null || xForwardedFor.trim().isEmpty()) {
                 xForwardedFor = request.getRemoteAddr();
             } else {
                 xForwardedFor += ", " + request.getRemoteAddr();

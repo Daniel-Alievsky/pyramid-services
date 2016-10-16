@@ -231,16 +231,24 @@ public final class HttpProxy {
     }
 
     public static String correctLocationFor3XXResponse(
-        String location,
-        String requestScheme,
-        String requestHost,
-        int requestPort,
-        HttpServerAddress serverAddress)
+        final String location,
+        final String requestScheme,
+        final String requestHost,
+        final int requestPort,
+        final String serverHost,
+        final int serverPort)
     {
         Objects.requireNonNull(location, "Null location");
         Objects.requireNonNull(requestScheme, "Null requestScheme");
         Objects.requireNonNull(requestHost, "Null requestHost");
-        Objects.requireNonNull(serverAddress, "Null serverAddress");
+        Objects.requireNonNull(serverHost, "Null serverHost");
+        if (requestPort <= 0) {
+            throw new IllegalArgumentException("Zero or negative requested server port " + requestPort);
+        }
+        if (serverPort <= 0) {
+            throw new IllegalArgumentException("Zero or negative proxied server port " + serverPort);
+        }
+        // - but requestPort may be -1!
         final URI locationURI;
         try {
             locationURI = new URI(location);
@@ -250,17 +258,19 @@ public final class HttpProxy {
         }
         final String locationScheme = locationURI.getScheme();
         final String locationHost = locationURI.getHost();
-        final int locationPort = locationURI.getPort() == -1 ? 80 : locationURI.getPort();
-        final int detaultRequestPort = "https".equalsIgnoreCase(requestScheme) ? 443 : 80;
         if (locationScheme == null || locationHost == null) {
             return location;
-            // - relative address
+            // - probably relative address
         }
         if (!"http".equalsIgnoreCase(locationScheme)) {
             return location;
             // - this proxy cannot connect to server via other protocols
         }
-        if (locationHost.equals(serverAddress.serverHost()) && locationPort == serverAddress.serverPort()) {
+        final int locationPort = locationURI.getPort() == -1 ? 80 : locationURI.getPort();
+        // - we cannot proxy https-sites, so, default location port is always 80
+        final int detaultRequestPort = "https".equalsIgnoreCase(requestScheme) ? 443 : 80;
+        // - on the other hand, the proxy can be SSL and requested via https protocol
+        if (locationHost.equals(serverHost) && locationPort == serverPort) {
             try {
                 return new URI(
                     requestScheme,
@@ -276,8 +286,9 @@ public final class HttpProxy {
                     + "\" while proxying request " + requestScheme + "://" + requestHost + ":" + requestPort, e);
                 return location;
             }
+        } else {
+            return locationURI.toString();
         }
-        return locationURI.toString();
     }
 
     @Override
@@ -292,27 +303,29 @@ public final class HttpProxy {
         HttpServerAddress serverAddress)
     {
         Objects.requireNonNull(requestToProxy, "Null requestToProxy");
+        Objects.requireNonNull(serverAddress, "Null serverAddress");
         return correctLocationFor3XXResponse(
             location,
             requestToProxy.getScheme(),
             requestToProxy.getServerName(),
             requestToProxy.getServerPort(),
-            serverAddress);
+            serverAddress.serverHost(),
+            serverAddress.serverPort());
     }
 
     private class HttpProxyHandler extends HttpHandler {
         @Override
         public void service(Request request, Response response) {
 //            System.out.println("Proxying " + request.getRequestURI() + " - " + request.getRequestURL());
-//            System.out.println("  server name: " + request.getServerName());
-//            System.out.println("  server port: " + request.getServerPort());
-//            System.out.println("  remote host: " + request.getRemoteHost());
-//            System.out.println("  remote address: " + request.getRemoteAddr());
-//            System.out.println("  remote port: " + request.getRemotePort());
-//            System.out.println("  path info: " + request.getPathInfo());
-//            System.out.println("  context: " + request.getContextPath());
-//            System.out.println("  query: " + request.getQueryString());
-//            System.out.println("  headers:");
+//            System.out.println("  request server name: " + request.getServerName());
+//            System.out.println("  request server port: " + request.getServerPort());
+//            System.out.println("  request remote host: " + request.getRemoteHost());
+//            System.out.println("  request remote address: " + request.getRemoteAddr());
+//            System.out.println("  request remote port: " + request.getRemotePort());
+//            System.out.println("  request path info: " + request.getPathInfo());
+//            System.out.println("  request context: " + request.getContextPath());
+//            System.out.println("  request query: " + request.getQueryString());
+//            System.out.println("  request headers:");
 //            for (String headerName : request.getHeaderNames()) {
 //                for (String headerValue : request.getHeaders(headerName)) {
 //                    System.out.printf("    %s=%s%n", headerName, headerValue);
