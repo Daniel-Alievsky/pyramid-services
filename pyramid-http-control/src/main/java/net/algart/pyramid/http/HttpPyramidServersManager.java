@@ -29,6 +29,7 @@ import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class HttpPyramidServersManager {
     private final HttpPyramidServersLauncher launcher;
@@ -62,18 +63,32 @@ public class HttpPyramidServersManager {
     }
 
     public void stopAll() throws IOException {
+        //TODO!! stop that parallel thread
         launcher.stopAll(false);
     }
 
 
-    public static void main(String[] args) throws InterruptedException, IOException {
-        if (args.length < 3) {
+    public static void main(String[] args) throws IOException {
+        if (args.length < 2) {
             System.out.printf("Usage:%n");
             System.out.printf("    %s configurationFolder specificServerConfigurationFile%n",
                 HttpPyramidServersManager.class.getName());
             return;
         }
-        //TODO!!
+        final Path configurationFolder = Paths.get(args[0]);
+        final Path specificServerConfigurationFile = Paths.get(args[1]);
+        final HttpPyramidServersManager manager = newInstance(configurationFolder, specificServerConfigurationFile);
+        manager.startAll();
 
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException ignored) {
+        }
+        System.out.printf("Press \"Ctrl+C\" or \"ENTER\" to stop all started servers...%n%n");
+        try {
+            System.in.read();
+        } catch (IOException ignored) {
+        }
+        manager.stopAll();
     }
 }

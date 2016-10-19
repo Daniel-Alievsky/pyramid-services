@@ -302,7 +302,7 @@ public final class HttpPyramidServersLauncher {
         // - to be on the side: little pause to allow services to show their logging messages
         System.out.printf("%nThe servers successfully started%n");
         System.out.printf("Press \"Ctrl+C\" or \"ENTER\" to kill the server, "
-            + "or wait when it will be finished normally by HTTP command...%n%n");
+            + "or wait when it will be finished normally by system command...%n%n");
         final Thread thread = new Thread() {
             @Override
             public void run() {
