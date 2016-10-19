@@ -73,6 +73,10 @@ public final class HttpPyramidServersLauncher {
         return configuration;
     }
 
+    public HttpPyramidSpecificServerConfiguration getSpecificServerConfiguration() {
+        return specificServerConfiguration;
+    }
+
     /**
      * Starts all pyramid processes and proxy.
      * Good for starting all service at the very beginning, for example, as OS services.
