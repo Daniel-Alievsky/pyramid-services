@@ -123,7 +123,7 @@ public final class HttpPyramidServiceControl {
     }
 
     public final boolean requestSystemCommand(String commandPrefix, int timeoutInMilliseconds) throws IOException {
-        return JavaProcessControlWithHttpCheckingAliveStatus.requestSystemCommand(
+        return JavaProcessControlWithHttpCheckingAliveStatus.requestSystemCommandAndWaitForResults(
             commandPrefix, port, systemCommandsFolder, timeoutInMilliseconds);
     }
 

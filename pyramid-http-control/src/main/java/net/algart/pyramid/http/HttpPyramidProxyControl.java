@@ -131,7 +131,7 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
     public final boolean stopOnLocalhost(int timeoutInMilliseconds) {
         try {
             LOG.info("Stopping " + processName() + " on localhost...");
-            boolean result = JavaProcessControlWithHttpCheckingAliveStatus.requestSystemCommand(
+            boolean result = JavaProcessControlWithHttpCheckingAliveStatus.requestSystemCommandAndWaitForResults(
                 HttpProxy.FINISH_COMMAND, proxyPort, systemCommandsFolder, timeoutInMilliseconds);
             LOG.info("Stopping " + processName() + " on localhost: command was " + (result ? "accepted" : "IGNORED"));
             return result;

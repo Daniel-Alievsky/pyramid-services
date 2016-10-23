@@ -31,9 +31,7 @@ import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -269,6 +267,74 @@ public final class HttpPyramidServersLauncher {
             }
         }
     }
+
+/*
+    private int stopProcesses(
+        List<JavaProcessControlWithHttpCheckingAliveStatus> controls,
+        boolean skipIfNotAlive)
+        throws IOException
+    {
+        int numberOfStopped = 0;
+        final List<JavaProcessControlWithHttpCheckingAliveStatus> aliveControls = new ArrayList<>();
+        final List<Process> javaProcesses = new ArrayList<>();
+        synchronized (lock) {
+            for (JavaProcessControlWithHttpCheckingAliveStatus control : controls) {
+                if (!skipIfNotAlive || control.isAtLeastSomeHttpServiceAlive(true)) {
+                    aliveControls.add(control);
+//            System.out.println("!!!" + runningProcesses);
+                    javaProcesses.add(runningProcesses.remove(control.processId()));
+//            System.out.println(">>>" + runningProcesses);
+                    // - Removing is necessary for correct behaviour of the daemon thread in
+                    // printWelcomeAndWaitForEnterKey method.
+                    // Note that we need to remove it BEFORE attempts to stop it.
+                }
+            }
+            for (int attempt = 0; attempt < PROBLEM_NUMBER_OF_ATTEMPTS; attempt++) {
+                for (int k = 0, n = aliveControls.size(); k < n; k++) {
+                    final JavaProcessControlWithHttpCheckingAliveStatus control = aliveControls.get(k);
+                    final Process javaProcess = javaProcesses.get(k);
+                }
+                final boolean commandAccepted = control.stopOnLocalhost(SUCCESS_STOP_TIMEOUT_IN_MS);
+                if (javaProcess != null ?
+                    !javaProcess.isAlive() :
+                    control.isStabilityHttpCheckAfterStartOrStopRecommended() ?
+                        !control.isAtLeastSomeHttpServiceAlive(false) :
+                        commandAccepted)
+                {
+                    return true;
+                }
+                sleep(PROBLEM_DELAY_IN_MS);
+                // waiting, maybe there was not enough time to finish all services
+            }
+            for (int attempt = 0; attempt < (javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1); attempt++) {
+                final boolean commandAccepted = control.stopOnLocalhost(SUCCESS_STOP_TIMEOUT_IN_MS);
+                if (javaProcess != null ?
+                    !javaProcess.isAlive() :
+                    control.isStabilityHttpCheckAfterStartOrStopRecommended() ?
+                        !control.isAtLeastSomeHttpServiceAlive(false) :
+                        commandAccepted)
+                {
+                    return true;
+                }
+                sleep(PROBLEM_DELAY_IN_MS);
+                // waiting, maybe there was not enough time to finish all services
+            }
+            if (javaProcess == null) {
+                LOG.warning("Cannot stop process " + control.processName() + " by system command");
+                return false;
+            } else {
+                if (javaProcess.isAlive()) {
+                    LOG.warning("Cannot finish process " + control.processName()
+                        + " by system command, killing it FORCIBLY");
+                    javaProcess.destroyForcibly();
+                    sleep(FORCIBLE_STOP_DELAY_IN_MS);
+                    // - waiting for better guarantee
+                }
+                return true;
+            }
+        }
+    }
+*/
 
     private boolean restartProcess(JavaProcessControlWithHttpCheckingAliveStatus control, boolean skipIfAlive)
         throws IOException

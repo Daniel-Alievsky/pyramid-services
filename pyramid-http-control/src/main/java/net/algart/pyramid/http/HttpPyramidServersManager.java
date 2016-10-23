@@ -65,6 +65,7 @@ public class HttpPyramidServersManager {
     public void stopAll() throws IOException {
         //TODO!! stop that parallel thread
         launcher.stopAll(false);
+        //TODO!! common timeout for all services
     }
 
 

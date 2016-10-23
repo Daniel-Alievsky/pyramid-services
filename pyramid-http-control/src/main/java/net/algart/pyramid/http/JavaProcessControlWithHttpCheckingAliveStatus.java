@@ -31,6 +31,9 @@ import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 interface JavaProcessControlWithHttpCheckingAliveStatus {
     int INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS = 200;
@@ -58,9 +61,12 @@ interface JavaProcessControlWithHttpCheckingAliveStatus {
     boolean isAtLeastSomeHttpServiceAlive(boolean logWhenFails);
 
     /**
-     * Starts this process with all its possible services on the current computer.
+     * <p>Starts this process with all its possible services on the current computer.
      * This method is not relevant when this class works not with localhost or its alias
-     * (it still can be used for checking, are services alive on some remote host).
+     * (it still can be used for checking, are services alive on some remote host).</p>
+     *
+     * <p>Note: this method does not perform any waiting and just calls <tt>ProcessBuilder.start()</tt>
+     * method for starting an external application.</p>
      *
      * @return OS process with newly started JVM
      * @throws IOException in a case of I/O errors
@@ -77,51 +83,83 @@ interface JavaProcessControlWithHttpCheckingAliveStatus {
      */
     boolean stopOnLocalhost(int timeoutInMilliseconds) throws IOException;
 
-    static boolean requestSystemCommand(
+    static boolean requestSystemCommandAndWaitForResults(
         String commandPrefix,
         int port,
         Path systemCommandsFolder,
         int timeoutInMilliseconds)
         throws IOException
     {
-        if (!Files.isDirectory(systemCommandsFolder)) {
-            throw new FileNotFoundException("System command folder not found or not a directory: "
-                + systemCommandsFolder.toAbsolutePath());
-        }
-        final Path keyFile = HttpPyramidApiTools.keyFile(systemCommandsFolder, commandPrefix, port);
         try {
-            Files.deleteIfExists(keyFile);
-            // - to be on the safe side; removing key file does not affect services
-        } catch (IOException ignored) {
-        }
-        boolean commandAccepted = false;
-        try {
-            Files.createFile(keyFile);
-        } catch (FileAlreadyExistsException e) {
-            // it is not a problem if a parallel process also created the same file
-        }
-        try {
-            for (long t = System.currentTimeMillis(); System.currentTimeMillis() - t < timeoutInMilliseconds; ) {
-                try {
-                    Thread.sleep(INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                if (!Files.exists(keyFile)) {
-                    commandAccepted = true;
-                }
+            return requestSystemCommand(commandPrefix, port, systemCommandsFolder, timeoutInMilliseconds).get();
+        } catch (InterruptedException e) {
+            throw new AssertionError("Unexpected thread interruption", e);
+        } catch (ExecutionException e) {
+            final Throwable cause = e.getCause();
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            } else if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            } else if (cause instanceof Error) {
+                throw (Error) cause;
+            } else {
+                throw new AssertionError("Unexpected exception: " + cause.getMessage(), cause);
             }
-        } finally {
-            if (!commandAccepted) {
+        }
+    }
+
+    static FutureTask<Boolean> requestSystemCommand(
+        String commandPrefix,
+        int port,
+        Path systemCommandsFolder,
+        int timeoutInMilliseconds)
+    {
+        final Path keyFile = HttpPyramidApiTools.keyFile(systemCommandsFolder, commandPrefix, port);
+        final FutureTask<Boolean> futureTask = new FutureTask<>(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                if (!Files.isDirectory(systemCommandsFolder)) {
+                    throw new FileNotFoundException("System command folder not found or not a directory: "
+                        + systemCommandsFolder.toAbsolutePath());
+                }
                 try {
                     Files.deleteIfExists(keyFile);
-                    // - necessary to remove file even if the process did not react to it:
-                    // in other case, this file will lead to problems while new starting that process
+                    // - to be on the safe side; removing key file does not affect services
                 } catch (IOException ignored) {
                 }
+                boolean commandAccepted = false;
+                try {
+                    Files.createFile(keyFile);
+                } catch (FileAlreadyExistsException e) {
+                    // it is not a problem if a parallel process also created the same file
+                }
+                try {
+                    for (long t = System.currentTimeMillis();
+                         System.currentTimeMillis() - t < timeoutInMilliseconds; ) {
+                        try {
+                            Thread.sleep(INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                        if (!Files.exists(keyFile)) {
+                            commandAccepted = true;
+                        }
+                    }
+                } finally {
+                    if (!commandAccepted) {
+                        try {
+                            Files.deleteIfExists(keyFile);
+                            // - necessary to remove file even if the process did not react to it:
+                            // in other case, this file will lead to problems while new starting that process
+                        } catch (IOException ignored) {
+                        }
+                    }
+                }
+                return commandAccepted;
             }
-        }
-        return commandAccepted;
+        });
+        new Thread(futureTask).start();
+        return futureTask;
     }
 
     static String commandLineToString(ProcessBuilder processBuilder) {
