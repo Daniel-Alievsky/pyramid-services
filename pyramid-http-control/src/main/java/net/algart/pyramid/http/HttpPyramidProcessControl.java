@@ -34,9 +34,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Logger;
 
-public final class HttpPyramidProcessControl implements JavaProcessControlWithHttpCheckingAliveStatus {
+public final class HttpPyramidProcessControl extends JavaProcessControl {
     private static final Logger LOG = Logger.getLogger(HttpPyramidProcessControl.class.getName());
 
     private final String host;
@@ -135,20 +136,28 @@ public final class HttpPyramidProcessControl implements JavaProcessControlWithHt
         processBuilder.directory(processConfiguration.workingDirectory().toFile());
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        LOG.info(JavaProcessControlWithHttpCheckingAliveStatus.commandLineToString(processBuilder));
+        LOG.info(JavaProcessControl.commandLineToString(processBuilder));
         return processBuilder.start();
     }
 
 
     @Override
-    public boolean stopOnLocalhost(int timeoutInMilliseconds) throws IOException {
+    public FutureTask<Boolean> stopOnLocalhost(int timeoutInMilliseconds) {
         LOG.info("Stopping " + processName() + " on localhost...");
-        boolean success = true;
-        for (HttpPyramidServiceControl serviceControl : serviceControls) {
-            success &= serviceControl.stopServiceOnLocalhost(timeoutInMilliseconds);
-        }
-        LOG.info("Stopping " + processName() + " on localhost: command was "
-            + (success ? "accepted" : "IGNORED (at least by 1 of services)"));
-        return success;
+        final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
+            final List<FutureTask<Boolean>> subTasks = new ArrayList<>();
+            for (HttpPyramidServiceControl serviceControl : serviceControls) {
+                subTasks.add(serviceControl.stopServiceOnLocalhost(timeoutInMilliseconds));
+            }
+            boolean success = true;
+            for (FutureTask<Boolean> subTask : subTasks ) {
+                success &= subTask.get();
+            }
+            LOG.info("Stopping " + processName() + " on localhost: command was "
+                + (success ? "accepted" : "IGNORED (at least by 1 of services)"));
+            return success;
+        });
+        new Thread(futureTask).start();
+        return futureTask;
     }
 }

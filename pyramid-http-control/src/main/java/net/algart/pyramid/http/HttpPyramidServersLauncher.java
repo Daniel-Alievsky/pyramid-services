@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -55,8 +56,6 @@ public final class HttpPyramidServersLauncher {
     private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final Map<String, Process> runningProcesses;
 
-    private final Object lock = new Object();
-
     public HttpPyramidServersLauncher(
         HttpPyramidConfiguration configuration,
         HttpPyramidSpecificServerConfiguration specificServerConfiguration)
@@ -64,7 +63,7 @@ public final class HttpPyramidServersLauncher {
         this.configuration = Objects.requireNonNull(configuration, "Null configuration");
         this.specificServerConfiguration = Objects.requireNonNull(specificServerConfiguration,
             "Null specificServerConfiguration");
-        this.runningProcesses = new LinkedHashMap<>();
+        this.runningProcesses = Collections.synchronizedMap(new LinkedHashMap<>());
     }
 
     public HttpPyramidConfiguration getProcessConfiguration() {
@@ -86,12 +85,10 @@ public final class HttpPyramidServersLauncher {
      */
     public void startAll(boolean skipAlreadyAlive) throws IOException {
         int serviceCount = 0, processCount = 0;
-        synchronized (lock) {
-            for (String groupId : configuration.allGroupId()) {
-                if (startPyramidServicesGroup(groupId, skipAlreadyAlive)) {
-                    processCount++;
-                    serviceCount += configuration.numberOfProcessServices(groupId);
-                }
+        for (String groupId : configuration.allGroupId()) {
+            if (startPyramidServicesGroup(groupId, skipAlreadyAlive)) {
+                processCount++;
+                serviceCount += configuration.numberOfProcessServices(groupId);
             }
         }
         boolean proxy = false;
@@ -103,42 +100,69 @@ public final class HttpPyramidServersLauncher {
                 specificServerConfiguration.hasProxy() ? "1 proxy FAILED" : "proxy absent"));
     }
 
-    public void stopAll(boolean skipNotAlive) throws IOException {
-        int serviceCount = 0, processCount = 0;
-        synchronized (lock) {
-            for (String groupId : configuration.allGroupId()) {
-                if (stopPyramidServicesGroup(groupId, skipNotAlive)) {
+    public FutureTask<Boolean> stopAll(boolean skipNotAlive) {
+        final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
+            final List<FutureTask<Boolean>> serviceTasks = new ArrayList<>();
+            final ArrayList<String> allGroupId = new ArrayList<>(configuration.allGroupId());
+            for (String groupId : allGroupId) {
+                serviceTasks.add(stopPyramidServicesGroup(groupId, skipNotAlive));
+            }
+            FutureTask<Boolean> proxyTask = null;
+            if (specificServerConfiguration.hasProxy()) {
+                proxyTask = stopPyramidProxy(skipNotAlive);
+            }
+            boolean success = true;
+            int serviceCount = 0, processCount = 0;
+            for (int i = 0; i < serviceTasks.size(); i++) {
+                final Boolean stoppingProcessResult = serviceTasks.get(i).get();
+                success &= stoppingProcessResult;
+                if (stoppingProcessResult) {
                     processCount++;
-                    serviceCount += configuration.numberOfProcessServices(groupId);
+                    serviceCount += configuration.numberOfProcessServices(allGroupId.get(i));
                 }
             }
-        }
-        boolean proxy = false;
-        if (specificServerConfiguration.hasProxy()) {
-            proxy = stopPyramidProxy(skipNotAlive);
-        }
-        LOG.info(String.format("%n%d services in %d processes stopped, %s",
-            serviceCount, processCount, proxy ? "1 proxy stopped" :
-                specificServerConfiguration.hasProxy() ? "1 proxy FAILED to stop" : "proxy absent"));
+            boolean proxy = proxyTask == null ? false : proxyTask.get();
+            success &= proxy;
+            LOG.info(String.format("%n%d services in %d processes stopped, %s",
+                serviceCount, processCount, proxy ? "1 proxy stopped" :
+                    specificServerConfiguration.hasProxy() ? "1 proxy FAILED to stop" : "proxy absent"));
+            return success;
+        });
+        new Thread(futureTask).start();
+        return futureTask;
+
     }
 
-    public void restartAll(boolean skipAlreadyAlive) throws IOException {
-        int serviceCount = 0, processCount = 0;
-        synchronized (lock) {
-            for (String groupId : configuration.allGroupId()) {
-                if (restartPyramidServicesGroup(groupId, skipAlreadyAlive)) {
+    public FutureTask<Boolean> restartAll(boolean skipAlreadyAlive) {
+        final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
+            final List<FutureTask<Boolean>> serviceTasks = new ArrayList<>();
+            final ArrayList<String> allGroupId = new ArrayList<>(configuration.allGroupId());
+            for (String groupId : allGroupId) {
+                serviceTasks.add(restartPyramidServicesGroup(groupId, skipAlreadyAlive));
+            }
+            FutureTask<Boolean> proxyTask = null;
+            if (specificServerConfiguration.hasProxy()) {
+                proxyTask = restartPyramidProxy(skipAlreadyAlive);
+            }
+            boolean success = true;
+            int serviceCount = 0, processCount = 0;
+            for (int i = 0; i < serviceTasks.size(); i++) {
+                final Boolean stoppingProcessResult = serviceTasks.get(i).get();
+                success &= stoppingProcessResult;
+                if (stoppingProcessResult) {
                     processCount++;
-                    serviceCount += configuration.numberOfProcessServices(groupId);
+                    serviceCount += configuration.numberOfProcessServices(allGroupId.get(i));
                 }
             }
-        }
-        boolean proxy = false;
-        if (specificServerConfiguration.hasProxy()) {
-            proxy = restartPyramidProxy(skipAlreadyAlive);
-        }
-        LOG.info(String.format("%n%d services in %d processes restarted, %s",
-            serviceCount, processCount, proxy ? "1 proxy restarted" :
-                specificServerConfiguration.hasProxy() ? "1 proxy not restarted" : "proxy absent"));
+            boolean proxy = proxyTask == null ? false : proxyTask.get();
+            success &= proxy;
+            LOG.info(String.format("%n%d services in %d processes restarted, %s",
+                serviceCount, processCount, proxy ? "1 proxy restarted" :
+                    specificServerConfiguration.hasProxy() ? "1 proxy not restarted" : "proxy absent"));
+            return success;
+        });
+        new Thread(futureTask).start();
+        return futureTask;
     }
 
     public boolean startPyramidServicesGroup(String groupId, boolean skipIfAlive) throws IOException {
@@ -147,13 +171,13 @@ public final class HttpPyramidServersLauncher {
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
     }
 
-    public boolean stopPyramidServicesGroup(String groupId, boolean skipIfNotAlive) throws IOException {
+    public FutureTask<Boolean> stopPyramidServicesGroup(String groupId, boolean skipIfNotAlive) {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return stopProcess(new HttpPyramidProcessControl(
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfNotAlive);
     }
 
-    public boolean restartPyramidServicesGroup(String groupId, boolean skipIfAlive) throws IOException {
+    public FutureTask<Boolean> restartPyramidServicesGroup(String groupId, boolean skipIfAlive) {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return restartProcess(new HttpPyramidProcessControl(
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
@@ -164,73 +188,71 @@ public final class HttpPyramidServersLauncher {
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
     }
 
-    public boolean stopPyramidProxy(boolean skipIfNotAlive) throws IOException {
+    public FutureTask<Boolean> stopPyramidProxy(boolean skipIfNotAlive) throws IOException {
         return stopProcess(new HttpPyramidProxyControl(
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfNotAlive);
     }
 
-    public boolean restartPyramidProxy(boolean skipIfAlive) throws IOException {
+    public FutureTask<Boolean> restartPyramidProxy(boolean skipIfAlive) throws IOException {
         return restartProcess(new HttpPyramidProxyControl(
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
     }
 
-    private boolean startProcess(JavaProcessControlWithHttpCheckingAliveStatus control, boolean skipIfAlive)
+    private boolean startProcess(JavaProcessControl control, boolean skipIfAlive)
         throws IOException
     {
-        synchronized (lock) {
-            if (skipIfAlive && control.areAllHttpServicesAlive(true)) {
-                return false;
+        if (skipIfAlive && control.areAllHttpServicesAlive(true)) {
+            return false;
+        }
+        if (runningProcesses.get(control.processId()) != null) {
+            throw new IllegalStateException("The process " + control.processName() + " is already started");
+        }
+        Process javaProcess = null;
+        boolean exited = false;
+        for (int attempt = 0; ; attempt++) {
+            if (attempt == 0 || exited) {
+                javaProcess = control.startOnLocalhost();
+                // - try to start again if exited; maybe, the port was not released quickly enough
+                exited = waitFor(javaProcess, SUCCESS_START_DELAY_IN_MS);
+                // - waiting to allow the process to really start Web servers
             }
-            if (runningProcesses.get(control.processId()) != null) {
-                throw new IllegalStateException("The process " + control.processName() + " is already started");
-            }
-            Process javaProcess = null;
-            boolean exited = false;
-            for (int attempt = 0; ; attempt++) {
-                if (attempt == 0 || exited) {
-                    javaProcess = control.startOnLocalhost();
-                    // - try to start again if exited; maybe, the port was not released quickly enough
-                    exited = waitFor(javaProcess, SUCCESS_START_DELAY_IN_MS);
-                    // - waiting to allow the process to really start Web servers
-                }
-                if (exited) {
-                    LOG.warning("Unexpected exit of the process with exit code " + javaProcess.exitValue());
-                    javaProcess.destroy();
-                    if (attempt >= PROBLEM_NUMBER_OF_ATTEMPTS) {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
-                if (attempt >= SLOW_START_NUMBER_OF_ATTEMPTS) {
-                    break;
-                }
-                if (!control.isStabilityHttpCheckAfterStartOrStopRecommended()
-                    || control.areAllHttpServicesAlive(true))
-                {
-                    // All O'k
-                    assert javaProcess != null;
-                    runningProcesses.put(control.processId(), javaProcess);
-                    return true;
-                }
-                exited = waitFor(javaProcess, PROBLEM_DELAY_IN_MS);
-                // waiting, maybe there was not enough time to start all services
-            }
-            final int exitValue = exited ? javaProcess.exitValue() : -1;
-            javaProcess.destroy();
             if (exited) {
-                throw new IOException("Cannot start process " + control.processName() + ", exit code " + exitValue);
-            } else {
-                throw new IOException("Process " + control.processName()
-                    + " launched, but services were note started; new process was killed forcibly");
+                LOG.warning("Unexpected exit of the process with exit code " + javaProcess.exitValue());
+                javaProcess.destroy();
+                if (attempt >= PROBLEM_NUMBER_OF_ATTEMPTS) {
+                    break;
+                } else {
+                    continue;
+                }
             }
+            if (attempt >= SLOW_START_NUMBER_OF_ATTEMPTS) {
+                break;
+            }
+            if (!control.isStabilityHttpCheckAfterStartOrStopRecommended()
+                || control.areAllHttpServicesAlive(true))
+            {
+                // All O'k
+                assert javaProcess != null;
+                runningProcesses.put(control.processId(), javaProcess);
+                return true;
+            }
+            LOG.info("Cannot start process " + control.processName() + " in " + SUCCESS_START_DELAY_IN_MS / 1000.0
+                + " seconds (attempt #" + (attempt + 1) + "); making delay...");
+            exited = waitFor(javaProcess, PROBLEM_DELAY_IN_MS);
+            // waiting, maybe there was not enough time to start all services
+        }
+        final int exitValue = exited ? javaProcess.exitValue() : -1;
+        javaProcess.destroy();
+        if (exited) {
+            throw new IOException("Cannot start process " + control.processName() + ", exit code " + exitValue);
+        } else {
+            throw new IOException("Process " + control.processName()
+                + " launched, but services were note started; new process was killed forcibly");
         }
     }
 
-    private boolean stopProcess(JavaProcessControlWithHttpCheckingAliveStatus control, boolean skipIfNotAlive)
-        throws IOException
-    {
-        synchronized (lock) {
+    private FutureTask<Boolean> stopProcess(JavaProcessControl control, boolean skipIfNotAlive) {
+        final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
             if (skipIfNotAlive && !control.isAtLeastSomeHttpServiceAlive(true)) {
                 return false;
             }
@@ -240,7 +262,7 @@ public final class HttpPyramidServersLauncher {
             // - Removing is necessary for correct behaviour of the daemon thread in printWelcomeAndWaitForEnterKey
             // method. Note that we need to remove it BEFORE attempts to stop it.
             for (int attempt = 0; attempt < (javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1); attempt++) {
-                final boolean commandAccepted = control.stopOnLocalhost(SUCCESS_STOP_TIMEOUT_IN_MS);
+                boolean commandAccepted = control.stopOnLocalhostAndWaitForResults(SUCCESS_STOP_TIMEOUT_IN_MS);
                 if (javaProcess != null ?
                     !javaProcess.isAlive() :
                     control.isStabilityHttpCheckAfterStartOrStopRecommended() ?
@@ -249,6 +271,8 @@ public final class HttpPyramidServersLauncher {
                 {
                     return true;
                 }
+                LOG.info("Cannot stop process " + control.processName() + " in " + SUCCESS_STOP_TIMEOUT_IN_MS / 1000.0
+                    + " seconds (attempt #" + (attempt + 1) + "); making delay...");
                 sleep(PROBLEM_DELAY_IN_MS);
                 // waiting, maybe there was not enough time to finish all services
             }
@@ -265,7 +289,9 @@ public final class HttpPyramidServersLauncher {
                 }
                 return true;
             }
-        }
+        });
+        new Thread(futureTask).start();
+        return futureTask;
     }
 
 /*
@@ -336,19 +362,21 @@ public final class HttpPyramidServersLauncher {
     }
 */
 
-    private boolean restartProcess(JavaProcessControlWithHttpCheckingAliveStatus control, boolean skipIfAlive)
-        throws IOException
-    {
-        synchronized (lock) {
+    private FutureTask<Boolean> restartProcess(JavaProcessControl control, boolean skipIfAlive) {
+        final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
             if (skipIfAlive && control.areAllHttpServicesAlive(true)) {
                 return false;
             }
-            stopProcess(control, skipIfAlive);
-            // - skipIfAlive is a "smart" mode; in this case, if we will pass "false" to stopProcess
-            // and the process is really not alive, stopProcess will create signal file
-            // and the following startProcess will be enforced to start the process TWICE!
+            final FutureTask<Boolean> subTask = stopProcess(control, skipIfAlive);
+            // - skipIfAlive is a "smart" mode; in this case, we must pass "true" to stopProcess:
+            // in otter case, if the process is really not alive, stopProcess will create signal file
+            // and wait for timeout without needs
+            subTask.get();
+            // - result is not interesting
             return startProcess(control, false);
-        }
+        });
+        new Thread(futureTask).start();
+        return futureTask;
     }
 
     private HttpPyramidConfiguration.Process getProcessConfiguration(String groupId) {
@@ -378,7 +406,7 @@ public final class HttpPyramidServersLauncher {
                     } catch (InterruptedException ignored) {
                     }
                     boolean hasAliveProcesses;
-                    synchronized (lock) {
+                    synchronized (runningProcesses) {
 //                        System.out.println(runningProcesses);
                         hasAliveProcesses = runningProcesses.isEmpty();
                         // runningProcess can become empty as a result of direct call of stopAll
@@ -472,11 +500,12 @@ public final class HttpPyramidServersLauncher {
                     break;
                 }
                 case "stop": {
-                    launcher.stopAll(checkAlive);
+                    launcher.stopAll(checkAlive).get();
+                    // get() method allows to print welcome message after ACTUAL performing the command
                     break;
                 }
                 case "restart": {
-                    launcher.restartAll(checkAlive);
+                    launcher.restartAll(checkAlive).get();
                     break;
                 }
                 default: {

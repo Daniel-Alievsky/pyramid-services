@@ -37,6 +37,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -75,7 +76,6 @@ public final class HttpPyramidServiceControl {
         this.port = port;
         this.systemCommandsFolder = Objects.requireNonNull(systemCommandsFolder, "Null systemCommandsFolder");
         this.https = https;
-        // TODO!! support HTTPS on server side
     }
 
     public final boolean isServiceAlive(boolean logWhenFails) {
@@ -91,14 +91,8 @@ public final class HttpPyramidServiceControl {
         }
     }
 
-    public final boolean stopServiceOnLocalhost(int timeoutInMilliseconds) {
-        try {
-            return requestSystemCommand(HttpPyramidConstants.CommandPrefixes.FINISH, timeoutInMilliseconds);
-        } catch (IOException e) {
-            LOG.log(Level.INFO, "Cannot request finish command in folder "
-                + systemCommandsFolder + ": " + e);
-            return false;
-        }
+    public final FutureTask<Boolean> stopServiceOnLocalhost(int timeoutInMilliseconds) {
+        return requestSystemCommand(HttpPyramidConstants.CommandPrefixes.FINISH, timeoutInMilliseconds);
     }
 
     public final PlanePyramidInformation information(String pyramidId) throws IOException {
@@ -122,8 +116,8 @@ public final class HttpPyramidServiceControl {
         return openCustomConnection(pathAndQuery, requestMethod, host, port, https);
     }
 
-    public final boolean requestSystemCommand(String commandPrefix, int timeoutInMilliseconds) throws IOException {
-        return JavaProcessControlWithHttpCheckingAliveStatus.requestSystemCommandAndWaitForResults(
+    public final FutureTask<Boolean> requestSystemCommand(String commandPrefix, int timeoutInMilliseconds) {
+        return JavaProcessControl.requestSystemCommand(
             commandPrefix, port, systemCommandsFolder, timeoutInMilliseconds);
     }
 

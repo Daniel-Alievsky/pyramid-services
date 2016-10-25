@@ -37,10 +37,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class HttpPyramidProxyControl implements JavaProcessControlWithHttpCheckingAliveStatus {
+public class HttpPyramidProxyControl extends JavaProcessControl {
     public static final String PROXY_PROCESS_ID = "ProcessId~~~~." + HttpPyramidProxyServer.class.getName();
 
     private static final Logger LOG = Logger.getLogger(HttpPyramidProxyControl.class.getName());
@@ -123,23 +124,15 @@ public class HttpPyramidProxyControl implements JavaProcessControlWithHttpChecki
         processBuilder.directory(configuration.getRootFolder().toAbsolutePath().toFile());
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-        LOG.info(JavaProcessControlWithHttpCheckingAliveStatus.commandLineToString(processBuilder));
+        LOG.info(JavaProcessControl.commandLineToString(processBuilder));
         return processBuilder.start();
     }
 
     @Override
-    public final boolean stopOnLocalhost(int timeoutInMilliseconds) {
-        try {
-            LOG.info("Stopping " + processName() + " on localhost...");
-            boolean result = JavaProcessControlWithHttpCheckingAliveStatus.requestSystemCommandAndWaitForResults(
-                HttpProxy.FINISH_COMMAND, proxyPort, systemCommandsFolder, timeoutInMilliseconds);
-            LOG.info("Stopping " + processName() + " on localhost: command was " + (result ? "accepted" : "IGNORED"));
-            return result;
-        } catch (IOException e) {
-            LOG.log(Level.INFO, "Cannot request finish proxy command in folder "
-                + systemCommandsFolder + ": " + e);
-            return false;
-        }
+    public final FutureTask<Boolean> stopOnLocalhost(int timeoutInMilliseconds) {
+        LOG.info("Stopping " + processName() + " on localhost...");
+        return JavaProcessControl.requestSystemCommand(
+            HttpProxy.FINISH_COMMAND, proxyPort, systemCommandsFolder, timeoutInMilliseconds);
     }
 
     public final boolean isProxyAlive(boolean logWhenFails) {
