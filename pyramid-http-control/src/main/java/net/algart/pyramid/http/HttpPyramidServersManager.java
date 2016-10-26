@@ -30,6 +30,7 @@ import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.FutureTask;
 
 public class HttpPyramidServersManager {
     private final HttpPyramidServersLauncher launcher;
@@ -62,9 +63,9 @@ public class HttpPyramidServersManager {
         //TODO!! start parallel thread for reviving sercices
     }
 
-    public void stopAll() throws IOException {
+    public FutureTask<Boolean> stopAll() throws IOException {
         //TODO!! stop that parallel thread
-        launcher.stopAll(false);
+        return launcher.stopAll(false);
         //TODO!! common timeout for all services
     }
 

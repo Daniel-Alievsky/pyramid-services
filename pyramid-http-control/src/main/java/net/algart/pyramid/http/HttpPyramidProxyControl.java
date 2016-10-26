@@ -141,8 +141,10 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
             final HttpURLConnection connection = HttpPyramidServiceControl.openCustomConnection(
                 HttpProxy.ALIVE_STATUS_COMMAND, "GET", proxyHost, proxyPort, useSSL);
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
-            // getResponseCode() actually waits for results
+            // - getResponseCode() actually waits for results
         } catch (IOException e) {
+            // - For example, java.net.ConnectException is normal situation, meaning that the service is stopped.
+            // Unfortunately, some other exceptions like javax.net.ssl.SSLHandshakeException can lead to the same.
             if (logWhenFails) {
                 LOG.log(Level.INFO, "Cannot connect to proxy " +
                     HttpPyramidServiceControl.protocol(useSSL) + "://" + proxyHost + ":" + proxyPort + ": " + e);

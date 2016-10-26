@@ -83,7 +83,9 @@ public final class HttpPyramidServiceControl {
             final HttpURLConnection connection = openCustomConnection(
                 HttpPyramidConstants.CommandPrefixes.ALIVE_STATUS, "GET");
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
+            // - getResponseCode() actually waits for results
         } catch (IOException e) {
+            // - For example, java.net.ConnectException is normal situation, meaning that the service is stopped
             if (logWhenFails) {
                 LOG.log(Level.INFO, "Cannot connect to " + host + ":" + port + ": " + e);
             }

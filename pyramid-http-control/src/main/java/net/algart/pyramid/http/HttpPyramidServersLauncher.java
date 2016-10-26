@@ -269,7 +269,10 @@ public final class HttpPyramidServersLauncher {
                         !control.isAtLeastSomeHttpServiceAlive(false) :
                         commandAccepted)
                 {
-                    return true;
+                    // - no sense to try again if all services do not react OR if command was accepted
+                    return commandAccepted;
+                    // - however, if command was NOT accepted (but isAtLeastSomeHttpServiceAlive returned false),
+                    // it is better to return false: it is not a problem, but reporting will be better
                 }
                 LOG.info("Cannot stop process " + control.processName() + " in " + SUCCESS_STOP_TIMEOUT_IN_MS / 1000.0
                     + " seconds (attempt #" + (attempt + 1) + "); making delay...");
