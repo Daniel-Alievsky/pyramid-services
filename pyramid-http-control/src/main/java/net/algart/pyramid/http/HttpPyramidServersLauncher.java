@@ -261,7 +261,8 @@ public final class HttpPyramidServersLauncher {
 //            System.out.println(">>>" + runningProcesses);
             // - Removing is necessary for correct behaviour of the daemon thread in printWelcomeAndWaitForEnterKey
             // method. Note that we need to remove it BEFORE attempts to stop it.
-            for (int attempt = 0; attempt < (javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1); attempt++) {
+            final int numberOfAttempts = javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1;
+            for (int attempt = 0; attempt < numberOfAttempts; attempt++) {
                 boolean commandAccepted = control.stopOnLocalhostAndWaitForResults(SUCCESS_STOP_TIMEOUT_IN_MS);
                 if (javaProcess != null ?
                     !javaProcess.isAlive() :
@@ -276,8 +277,10 @@ public final class HttpPyramidServersLauncher {
                 }
                 LOG.info("Cannot stop process " + control.processName() + " in " + SUCCESS_STOP_TIMEOUT_IN_MS / 1000.0
                     + " seconds (attempt #" + (attempt + 1) + "); making delay...");
-                sleep(PROBLEM_DELAY_IN_MS);
-                // waiting, maybe there was not enough time to finish all services
+                if (attempt + 1 < numberOfAttempts) {
+                    sleep(PROBLEM_DELAY_IN_MS);
+                    // waiting, maybe there was not enough time to finish all services
+                }
             }
             if (javaProcess == null) {
                 LOG.warning("Cannot stop process " + control.processName() + " by system command");
