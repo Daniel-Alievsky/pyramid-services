@@ -27,6 +27,8 @@ package net.algart.pyramid.http;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.commands.AsyncPyramidCommand;
+import net.algart.pyramid.commands.MultipleAsyncPyramidCommand;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +36,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.FutureTask;
 import java.util.logging.Logger;
 
 public final class HttpPyramidProcessControl extends JavaProcessControl {
@@ -79,7 +80,7 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
     }
 
     @Override
-    public boolean isStabilityHttpCheckAfterStartOrStopRecommended() {
+    public boolean isStabilityHttpCheckAfterStartRecommended() {
         return true;
     }
 
@@ -142,22 +143,12 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
 
 
     @Override
-    public FutureTask<Boolean> stopOnLocalhost(int timeoutInMilliseconds) {
+    public AsyncPyramidCommand stopOnLocalhostCommand(int timeoutInMilliseconds) throws IOException {
         LOG.info("Stopping " + processName() + " on localhost...");
-        final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
-            final List<FutureTask<Boolean>> subTasks = new ArrayList<>();
-            for (HttpPyramidServiceControl serviceControl : serviceControls) {
-                subTasks.add(serviceControl.stopServiceOnLocalhost(timeoutInMilliseconds));
-            }
-            boolean success = true;
-            for (FutureTask<Boolean> subTask : subTasks ) {
-                success &= subTask.get();
-            }
-            LOG.info("Stopping " + processName() + " on localhost: command was "
-                + (success ? "accepted" : "IGNORED (at least by 1 of services)"));
-            return success;
-        });
-        new Thread(futureTask).start();
-        return futureTask;
+        final List<AsyncPyramidCommand> subTasks = new ArrayList<>();
+        for (HttpPyramidServiceControl serviceControl : serviceControls) {
+            subTasks.add(serviceControl.stopServiceOnLocalhostCommand(timeoutInMilliseconds));
+        }
+        return new MultipleAsyncPyramidCommand(subTasks);
     }
 }

@@ -27,12 +27,14 @@ package net.algart.pyramid.http;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.commands.AsyncPyramidCommand;
+import net.algart.pyramid.commands.ImmediatePyramidCommand;
+import net.algart.pyramid.commands.MultipleAsyncPyramidCommand;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -100,69 +102,58 @@ public final class HttpPyramidServersLauncher {
                 specificServerConfiguration.hasProxy() ? "1 proxy FAILED" : "proxy absent"));
     }
 
-    public FutureTask<Boolean> stopAll(boolean skipNotAlive) {
-        final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
-            final List<FutureTask<Boolean>> serviceTasks = new ArrayList<>();
-            final ArrayList<String> allGroupId = new ArrayList<>(configuration.allGroupId());
-            for (String groupId : allGroupId) {
-                serviceTasks.add(stopPyramidServicesGroup(groupId, skipNotAlive));
+    public void stopAll(boolean skipNotAlive) throws IOException {
+        final List<AsyncPyramidCommand> allSubCommands = new ArrayList<>();
+        final List<AsyncPyramidCommand> serviceCommands = new ArrayList<>();
+        final List<String> allGroupId = new ArrayList<>(configuration.allGroupId());
+        for (String groupId : allGroupId) {
+            serviceCommands.add(stopPyramidServicesGroupCommand(groupId, skipNotAlive));
+        }
+        allSubCommands.addAll(serviceCommands);
+        AsyncPyramidCommand proxyCommand = null;
+        if (specificServerConfiguration.hasProxy()) {
+            proxyCommand = stopPyramidProxyCommand(skipNotAlive);
+            allSubCommands.add(proxyCommand);
+        }
+        new MultipleAsyncPyramidCommand(allSubCommands).waitForFinish();
+        int serviceCount = 0, processCount = 0;
+        for (int i = 0; i < serviceCommands.size(); i++) {
+            if (serviceCommands.get(i).isAccepted()) {
+                processCount++;
+                serviceCount += configuration.numberOfProcessServices(allGroupId.get(i));
             }
-            FutureTask<Boolean> proxyTask = null;
-            if (specificServerConfiguration.hasProxy()) {
-                proxyTask = stopPyramidProxy(skipNotAlive);
-            }
-            boolean success = true;
-            int serviceCount = 0, processCount = 0;
-            for (int i = 0; i < serviceTasks.size(); i++) {
-                final Boolean stoppingProcessResult = serviceTasks.get(i).get();
-                success &= stoppingProcessResult;
-                if (stoppingProcessResult) {
-                    processCount++;
-                    serviceCount += configuration.numberOfProcessServices(allGroupId.get(i));
-                }
-            }
-            boolean proxy = proxyTask == null ? false : proxyTask.get();
-            success &= proxy;
-            LOG.info(String.format("%n%d services in %d processes stopped, %s",
-                serviceCount, processCount, proxy ? "1 proxy stopped" :
-                    specificServerConfiguration.hasProxy() ? "1 proxy FAILED to stop" : "proxy absent"));
-            return success;
-        });
-        new Thread(futureTask).start();
-        return futureTask;
-
+        }
+        LOG.info(String.format("%n%d services in %d processes stopped, %s",
+            serviceCount, processCount, proxyCommand != null && proxyCommand.isAccepted() ?
+                "1 proxy stopped" :
+                specificServerConfiguration.hasProxy() ? "1 proxy FAILED to stop" : "proxy absent"));
     }
 
-    public FutureTask<Boolean> restartAll(boolean skipAlreadyAlive) {
-        final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
-            final List<FutureTask<Boolean>> serviceTasks = new ArrayList<>();
-            final ArrayList<String> allGroupId = new ArrayList<>(configuration.allGroupId());
-            for (String groupId : allGroupId) {
-                serviceTasks.add(restartPyramidServicesGroup(groupId, skipAlreadyAlive));
+    public void restartAll(boolean skipAlreadyAlive) throws IOException {
+        final List<AsyncPyramidCommand> allSubCommands = new ArrayList<>();
+        final List<AsyncPyramidCommand> serviceCommands = new ArrayList<>();
+        final List<String> allGroupId = new ArrayList<>(configuration.allGroupId());
+        for (String groupId : allGroupId) {
+            serviceCommands.add(restartPyramidServicesGroupCommand(groupId, skipAlreadyAlive));
+        }
+        allSubCommands.addAll(serviceCommands);
+        AsyncPyramidCommand proxyCommand = null;
+        if (specificServerConfiguration.hasProxy()) {
+            proxyCommand = restartPyramidProxyCommand(skipAlreadyAlive);
+            allSubCommands.add(proxyCommand);
+        }
+        new MultipleAsyncPyramidCommand(allSubCommands).waitForFinish();
+        int serviceCount = 0, processCount = 0;
+        for (int i = 0; i < serviceCommands.size(); i++) {
+            if (serviceCommands.get(i).isAccepted()) {
+                processCount++;
+                serviceCount += configuration.numberOfProcessServices(allGroupId.get(i));
             }
-            FutureTask<Boolean> proxyTask = null;
-            if (specificServerConfiguration.hasProxy()) {
-                proxyTask = restartPyramidProxy(skipAlreadyAlive);
-            }
-            boolean success = true;
-            int serviceCount = 0, processCount = 0;
-            for (int i = 0; i < serviceTasks.size(); i++) {
-                final Boolean stoppingProcessResult = serviceTasks.get(i).get();
-                success &= stoppingProcessResult;
-                if (stoppingProcessResult) {
-                    processCount++;
-                    serviceCount += configuration.numberOfProcessServices(allGroupId.get(i));
-                }
-            }
-            boolean proxy = proxyTask == null ? false : proxyTask.get();
-            success &= proxy;
-            LOG.info(String.format("%n%d services in %d processes restarted, %s",
-                serviceCount, processCount, proxy ? "1 proxy restarted" :
-                    specificServerConfiguration.hasProxy() ? "1 proxy not restarted" : "proxy absent"));
-            return success;
-        });
-        new Thread(futureTask).start();
-        return futureTask;
+        }
+        LOG.info(String.format("%n%d services in %d processes restarted, %s",
+            serviceCount, processCount, proxyCommand != null && proxyCommand.isAccepted() ?
+                "1 proxy restarted" :
+                specificServerConfiguration.hasProxy() ? "1 proxy not restarted" : "proxy absent"));
     }
 
     public boolean startPyramidServicesGroup(String groupId, boolean skipIfAlive) throws IOException {
@@ -171,15 +162,19 @@ public final class HttpPyramidServersLauncher {
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
     }
 
-    public FutureTask<Boolean> stopPyramidServicesGroup(String groupId, boolean skipIfNotAlive) {
+    public AsyncPyramidCommand stopPyramidServicesGroupCommand(String groupId, boolean skipIfNotAlive)
+        throws IOException
+    {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
-        return stopProcess(new HttpPyramidProcessControl(
+        return stopProcessCommand(new HttpPyramidProcessControl(
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfNotAlive);
     }
 
-    public FutureTask<Boolean> restartPyramidServicesGroup(String groupId, boolean skipIfAlive) {
+    public AsyncPyramidCommand restartPyramidServicesGroupCommand(String groupId, boolean skipIfAlive)
+        throws IOException
+    {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
-        return restartProcess(new HttpPyramidProcessControl(
+        return restartProcessCommand(new HttpPyramidProcessControl(
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
     }
 
@@ -188,13 +183,13 @@ public final class HttpPyramidServersLauncher {
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
     }
 
-    public FutureTask<Boolean> stopPyramidProxy(boolean skipIfNotAlive) throws IOException {
-        return stopProcess(new HttpPyramidProxyControl(
+    public AsyncPyramidCommand stopPyramidProxyCommand(boolean skipIfNotAlive) throws IOException {
+        return stopProcessCommand(new HttpPyramidProxyControl(
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfNotAlive);
     }
 
-    public FutureTask<Boolean> restartPyramidProxy(boolean skipIfAlive) throws IOException {
-        return restartProcess(new HttpPyramidProxyControl(
+    public AsyncPyramidCommand restartPyramidProxyCommand(boolean skipIfAlive) throws IOException {
+        return restartProcessCommand(new HttpPyramidProxyControl(
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
     }
 
@@ -228,7 +223,7 @@ public final class HttpPyramidServersLauncher {
             if (attempt >= SLOW_START_NUMBER_OF_ATTEMPTS) {
                 break;
             }
-            if (!control.isStabilityHttpCheckAfterStartOrStopRecommended()
+            if (!control.isStabilityHttpCheckAfterStartRecommended()
                 || control.areAllHttpServicesAlive(true))
             {
                 // All O'k
@@ -251,8 +246,91 @@ public final class HttpPyramidServersLauncher {
         }
     }
 
-    private FutureTask<Boolean> stopProcess(JavaProcessControl control, boolean skipIfNotAlive) {
-        final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
+    private AsyncPyramidCommand stopProcessCommand(JavaProcessControl control, boolean skipIfNotAlive)
+        throws IOException
+    {
+        if (skipIfNotAlive && !control.isAtLeastSomeHttpServiceAlive(true)) {
+            return new ImmediatePyramidCommand(false);
+        }
+//            System.out.println("!!!" + runningProcesses);
+        final Process javaProcess = runningProcesses.remove(control.processId());
+//            System.out.println(">>>" + runningProcesses);
+        // - Removing is necessary for correct behaviour of the daemon thread in printWelcomeAndWaitForEnterKey
+        // method. Note that we need to remove it BEFORE attempts to stop it.
+        return new AsyncPyramidCommand() {
+            int remainingAttemptsCount = javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1;
+            AsyncPyramidCommand subCommand = control.stopOnLocalhostCommand(SUCCESS_STOP_TIMEOUT_IN_MS);
+            long sleepEndTimeStamp;
+            boolean delayAfterFailure = false;
+            boolean delayAfterDestroyForcibly = false;
+
+            @Override
+            public void check() throws IOException {
+                if (finished) {
+                    return;
+                }
+                if (delayAfterFailure || delayAfterDestroyForcibly) {
+                    // delaying stage after failure
+                    if (System.currentTimeMillis() > sleepEndTimeStamp) {
+                        if (delayAfterFailure) {
+                            subCommand = control.stopOnLocalhostCommand(SUCCESS_STOP_TIMEOUT_IN_MS);
+                            delayAfterFailure = false;
+                            // new attempt
+                        } else {
+                            delayAfterDestroyForcibly = true;
+                            finished = true;
+                        }
+                    }
+                    return;
+                }
+                assert subCommand != null;
+                assert !accepted;
+                subCommand.check();
+                if (!subCommand.isFinished()) {
+                    // waiting for command results
+                    return;
+                }
+                boolean subCommandAccepted = subCommand.isAccepted();
+                if (javaProcess != null ?
+                    !javaProcess.isAlive() :
+                    subCommandAccepted)
+                {
+                    // - no sense to try again if all services do not react OR if command was accepted
+                    accepted = subCommandAccepted;
+                    finished = true;
+                    // - however, if command was NOT accepted (but isAtLeastSomeHttpServiceAlive returned false),
+                    // it is better to set accepted=false: it is not a problem, but reporting will be better
+                    return;
+                }
+                subCommand = null;
+                remainingAttemptsCount--;
+                if (remainingAttemptsCount > 0) {
+                    sleepEndTimeStamp = System.currentTimeMillis() + PROBLEM_DELAY_IN_MS;
+                    delayAfterFailure = true;
+                    LOG.info("Cannot stop process " + control.processName() + " in "
+                        + SUCCESS_STOP_TIMEOUT_IN_MS / 1000.0 + " seconds; making delay (remaining attempts: "
+                        + remainingAttemptsCount + ")...");
+                    return;
+                    // starting delaying stage
+                }
+                assert !accepted;
+                if (javaProcess == null) {
+                    LOG.warning("Cannot stop process " + control.processName() + " by system command");
+                    finished = true;
+                } else {
+                    if (javaProcess.isAlive()) {
+                        LOG.warning("Cannot finish process " + control.processName()
+                            + " by system command, killing it FORCIBLY");
+                        javaProcess.destroyForcibly();
+                        sleepEndTimeStamp = System.currentTimeMillis() + FORCIBLE_STOP_DELAY_IN_MS;
+                        delayAfterDestroyForcibly = true;
+                        // - waiting for better guarantee
+                    }
+                }
+            }
+        };
+/*
+        return new FutureTask<>(() -> {
             if (skipIfNotAlive && !control.isAtLeastSomeHttpServiceAlive(true)) {
                 return false;
             }
@@ -298,6 +376,7 @@ public final class HttpPyramidServersLauncher {
         });
         new Thread(futureTask).start();
         return futureTask;
+        */
     }
 
 /*
@@ -368,7 +447,26 @@ public final class HttpPyramidServersLauncher {
     }
 */
 
-    private FutureTask<Boolean> restartProcess(JavaProcessControl control, boolean skipIfAlive) {
+    private AsyncPyramidCommand restartProcessCommand(JavaProcessControl control, boolean skipIfAlive)
+        throws IOException
+    {
+        if (skipIfAlive && control.areAllHttpServicesAlive(true)) {
+            return new ImmediatePyramidCommand(false);
+        }
+        return new AsyncPyramidCommand() {
+            AsyncPyramidCommand subCommand = stopProcessCommand(control, skipIfAlive);
+            boolean finished = false;
+
+            @Override
+            public void check() throws IOException {
+                subCommand.check();
+                if (subCommand.isFinished()) {
+                    accepted = startProcess(control, false);
+                    finished = true;
+                }
+            }
+        };
+/*
         final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
             if (skipIfAlive && control.areAllHttpServicesAlive(true)) {
                 return false;
@@ -383,6 +481,7 @@ public final class HttpPyramidServersLauncher {
         });
         new Thread(futureTask).start();
         return futureTask;
+*/
     }
 
     private HttpPyramidConfiguration.Process getProcessConfiguration(String groupId) {
@@ -462,6 +561,8 @@ public final class HttpPyramidServersLauncher {
         }
     }
 
+    //TODO!! remove
+    /*
     private static void sleep(int timeoutInMilliseconds) {
         try {
             Thread.sleep(timeoutInMilliseconds);
@@ -469,6 +570,7 @@ public final class HttpPyramidServersLauncher {
             Thread.currentThread().interrupt();
         }
     }
+    */
 
     public static void main(String[] args) throws InterruptedException, IOException {
         int startArgIndex = 0;
@@ -500,18 +602,19 @@ public final class HttpPyramidServersLauncher {
             HttpPyramidConfiguration.readFromFolder(configurationFolder),
             HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile));
         try {
+            long t1 = System.nanoTime();
             switch (command) {
                 case "start": {
                     launcher.startAll(checkAlive);
                     break;
                 }
                 case "stop": {
-                    launcher.stopAll(checkAlive).get();
+                    launcher.stopAll(checkAlive);
                     // get() method allows to print welcome message after ACTUAL performing the command
                     break;
                 }
                 case "restart": {
-                    launcher.restartAll(checkAlive).get();
+                    launcher.restartAll(checkAlive);
                     break;
                 }
                 default: {
@@ -519,6 +622,9 @@ public final class HttpPyramidServersLauncher {
                     return;
                 }
             }
+            long t2 = System.nanoTime();
+            LOG.info(String.format(Locale.US,
+                "Command \"%s\" executed in %.3f seconds%n", command, (t2 - t1) * 1e-9));
         } catch (Exception e) {
             if (serviceMode) {
                 e.printStackTrace();

@@ -28,6 +28,7 @@ import net.algart.http.proxy.HttpProxy;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.commands.AsyncPyramidCommand;
 import net.algart.pyramid.http.proxy.HttpPyramidProxyServer;
 
 import java.io.File;
@@ -37,7 +38,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -83,7 +83,7 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
     }
 
     @Override
-    public boolean isStabilityHttpCheckAfterStartOrStopRecommended() {
+    public boolean isStabilityHttpCheckAfterStartRecommended() {
         return false;
     }
 
@@ -129,9 +129,9 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
     }
 
     @Override
-    public final FutureTask<Boolean> stopOnLocalhost(int timeoutInMilliseconds) {
+    public final AsyncPyramidCommand stopOnLocalhostCommand(int timeoutInMilliseconds) throws IOException {
         LOG.info("Stopping " + processName() + " on localhost...");
-        return JavaProcessControl.requestSystemCommand(
+        return new AsyncPyramidSystemCommand(
             HttpProxy.FINISH_COMMAND, proxyPort, systemCommandsFolder, timeoutInMilliseconds);
     }
 

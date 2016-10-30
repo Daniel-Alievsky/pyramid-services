@@ -27,6 +27,7 @@ package net.algart.pyramid.http;
 import net.algart.pyramid.PlanePyramidInformation;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
+import net.algart.pyramid.commands.AsyncPyramidCommand;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -93,7 +94,7 @@ public final class HttpPyramidServiceControl {
         }
     }
 
-    public final FutureTask<Boolean> stopServiceOnLocalhost(int timeoutInMilliseconds) {
+    public final AsyncPyramidCommand stopServiceOnLocalhostCommand(int timeoutInMilliseconds) throws IOException {
         return requestSystemCommand(HttpPyramidConstants.CommandPrefixes.FINISH, timeoutInMilliseconds);
     }
 
@@ -118,9 +119,10 @@ public final class HttpPyramidServiceControl {
         return openCustomConnection(pathAndQuery, requestMethod, host, port, https);
     }
 
-    public final FutureTask<Boolean> requestSystemCommand(String commandPrefix, int timeoutInMilliseconds) {
-        return JavaProcessControl.requestSystemCommand(
-            commandPrefix, port, systemCommandsFolder, timeoutInMilliseconds);
+    public final AsyncPyramidCommand requestSystemCommand(String commandPrefix, int timeoutInMilliseconds)
+        throws IOException
+    {
+        return new AsyncPyramidSystemCommand(commandPrefix, port, systemCommandsFolder, timeoutInMilliseconds);
     }
 
     private void checkHttpOk(HttpURLConnection connection) throws IOException {

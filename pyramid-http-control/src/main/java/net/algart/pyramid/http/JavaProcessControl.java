@@ -24,16 +24,9 @@
 
 package net.algart.pyramid.http;
 
-import net.algart.pyramid.api.http.HttpPyramidApiTools;
+import net.algart.pyramid.commands.AsyncPyramidCommand;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 abstract class JavaProcessControl {
@@ -48,16 +41,16 @@ abstract class JavaProcessControl {
     /**
      * <p>If this method returns <tt>true</tt>, the process should be considered as potentially <i>unstable</i>
      * (maybe due to using native code or too complex and resource-intensive algorithms).
-     * In this case, if you call {@link #startOnLocalhost()} or {@link #stopOnLocalhostAndWaitForResults(int)} methods,
-     * after this you should use HTTP checks to be sure that the process is really started or stopped.</p>
+     * In this case, if you call {@link #startOnLocalhost()} method,
+     * after this you should use HTTP checks to be sure that the process is really started.</p>
      *
      * <p>For simple and stable processes, like lightweight
      * {@link net.algart.pyramid.http.proxy.HttpPyramidProxyServer HttpPyramidProxyServer},
      * this method should return <tt>false</tt>.</p>
      *
-     * @return whether additional check via HTTP is recommended after starting and stopping the process.
+     * @return whether additional check via HTTP is recommended after starting the process.
      */
-    public abstract boolean isStabilityHttpCheckAfterStartOrStopRecommended();
+    public abstract boolean isStabilityHttpCheckAfterStartRecommended();
 
     public abstract boolean areAllHttpServicesAlive(boolean logWhenFails);
 
@@ -77,47 +70,26 @@ abstract class JavaProcessControl {
     public abstract Process startOnLocalhost() throws IOException;
 
     /**
-     * <p>Finishes this process on the current computer.</p>
+     * <p>Initiates finishing this process on the current computer.</p>
      *
      * <p>This method is not relevant when this class works not with localhost or its alias.</p>
      *
-     * <p>This method only initializes finishing the process (by creating special system key file)
-     * and does not wait for actual finishing.
-     * You should wait for actual finishing with help of <tt>get()</tt> method of the returned <tt>FutureTask</tt>.
-     * This method will return <tt>true</tt>, if the command to finish was successfully accepted
-     * by the external process (the key file was deleted), or <tt>false</tt> if there is no any reaction
-     * during the specified timeout; in the 2nd case the key file will be deleted by this method after timeout.
-     * Normally <tt>FutureTask.get()</tt> method should not throw exceptions, besides a rare case
-     * when configuration of the file system prevents creating or deleting any files (for example,
-     * the system folder for key files does not really exist).</p>
+     * <p>This method does not wait for actual finishing.
+     * You should wait for actual finishing with help of {@link AsyncPyramidCommand#waitForFinish()} method.</p>
      *
      * @param timeoutInMilliseconds timeout in milliseconds; if the command was not accepted in this period,
-     *                              the method will generate <tt>false</tt> in <tt>FutureTask</tt> result.
-     * @return <tt>FutureTask</tt> allowing to wait for actual finishing the process.
+     *                              {@link AsyncPyramidCommand#isAccepted()} will return <tt>false</tt>.
+     * @return {@link AsyncPyramidCommand} object allowing to wait for actual finishing the process.
+     * @throws IOException in a case of disk problems. Usually this method should not throw exceptions,
+     *                     besides a rare case when configuration of the file system prevents creating or
+     *                     deleting any files (for example, the system folder for key files does not really exist).
      */
-    public abstract FutureTask<Boolean> stopOnLocalhost(int timeoutInMilliseconds);
+    public abstract AsyncPyramidCommand stopOnLocalhostCommand(int timeoutInMilliseconds) throws IOException;
 
-    public boolean stopOnLocalhostAndWaitForResults(int timeoutInMilliseconds) {
-        try {
-            return stopOnLocalhost(timeoutInMilliseconds).get();
-        } catch (InterruptedException e) {
-            throw new AssertionError("Unexpected thread interruption", e);
-        } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            while (cause instanceof ExecutionException) {
-                cause = cause.getCause();
-            }
-            if (cause instanceof IOException) {
-                LOG.log(Level.INFO, "Cannot request stopping command in folder: " + cause);
-                return false;
-            } else if (cause instanceof RuntimeException) {
-                throw (RuntimeException) cause;
-            } else if (cause instanceof Error) {
-                throw (Error) cause;
-            } else {
-                throw new AssertionError("Unexpected exception cause: " + cause.getMessage(), e);
-            }
-        }
+    //TODO!! remove with INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS
+    /*
+    public boolean stopOnLocalhostAndWaitForResults(int timeoutInMilliseconds) throws IOException {
+        return stopOnLocalhostCommand(timeoutInMilliseconds).waitForFinish();
     }
 
     static FutureTask<Boolean> requestSystemCommand(
@@ -172,6 +144,7 @@ abstract class JavaProcessControl {
         new Thread(futureTask).start();
         return futureTask;
     }
+    */
 
     static String commandLineToString(ProcessBuilder processBuilder) {
         final StringBuilder sb = new StringBuilder();

@@ -63,9 +63,9 @@ public class HttpPyramidServersManager {
         //TODO!! start parallel thread for reviving sercices
     }
 
-    public FutureTask<Boolean> stopAll() throws IOException {
+    public void stopAll() throws IOException {
         //TODO!! stop that parallel thread
-        return launcher.stopAll(false);
+        launcher.stopAll(false);
         //TODO!! common timeout for all services
     }
 
