@@ -277,7 +277,7 @@ public final class HttpPyramidServersLauncher {
                             delayAfterFailure = false;
                             // new attempt
                         } else {
-                            delayAfterDestroyForcibly = true;
+                            delayAfterDestroyForcibly = false;
                             finished = true;
                         }
                     }
