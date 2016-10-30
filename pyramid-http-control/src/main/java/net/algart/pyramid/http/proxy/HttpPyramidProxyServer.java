@@ -91,14 +91,16 @@ public final class HttpPyramidProxyServer {
                 if (Files.exists(finishKeyFile())) {
                     try {
                         proxy.finish();
+                        Thread.sleep(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH);
+                        // - additional delay is to be on the safe side: allow all tasks to be correctly
+                        // finished; do this BEFORE removing key file: in other case the client
+                        // will "think" that the process is shut down, but the OS process will be still alive
                     } finally {
                         Files.deleteIfExists(finishKeyFile());
                     }
                     break;
                 }
             }
-            Thread.sleep(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH);
-            // - additional delay is to be on the safe side: allow all tasks to be correctly finished
         } catch (IOException e) {
             throw new IOError(e);
         }

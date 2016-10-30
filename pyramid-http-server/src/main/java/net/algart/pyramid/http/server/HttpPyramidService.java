@@ -114,14 +114,18 @@ public class HttpPyramidService {
                     if (Files.exists(systemCommand.keyFile())) {
                         try {
                             systemCommand.service();
+                            if (shutdown) {
+                                Thread.sleep(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH);
+                                // - additional delay is to be on the safe side: allow all tasks to be correctly
+                                // finished; do this BEFORE removing key file: in other case the client
+                                // will "think" that the process is shut down, but the OS process will be still alive
+                            }
                         } finally {
                             Files.deleteIfExists(systemCommand.keyFile());
                         }
                     }
                 }
             }
-            Thread.sleep(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH);
-            // - additional delay is to be on the safe side: allow all tasks to be correctly finished
         } catch (InterruptedException e) {
             LOG.log(Level.SEVERE, "Unexpected interrupted exception", e);
         } catch (IOException e) {
