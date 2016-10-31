@@ -26,8 +26,8 @@ package net.algart.pyramid.http;
 
 public class ImmediatePyramidCommand extends AsyncPyramidCommand {
     public ImmediatePyramidCommand(boolean accepted) {
-        this.accepted = accepted;
-        this.finished = true;
+        setAccepted(accepted);
+        setFinished(true);
     }
 
     @Override

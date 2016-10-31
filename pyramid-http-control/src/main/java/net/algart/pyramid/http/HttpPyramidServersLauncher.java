@@ -270,9 +270,11 @@ public final class HttpPyramidServersLauncher {
 
             @Override
             public void check() throws IOException {
-                if (finished) {
+                if (isFinished()) {
                     return;
                 }
+                assert !isAccepted();
+                // - if accepted==true, then finished==true, but finished was checked in the beginning of the method
                 if (delayAfterFailure || delayAfterDestroyForcibly) {
                     // delaying stage after failure
                     if (System.currentTimeMillis() > sleepEndTimeStamp) {
@@ -282,14 +284,12 @@ public final class HttpPyramidServersLauncher {
                             // new attempt
                         } else {
                             delayAfterDestroyForcibly = false;
-                            finished = true;
+                            setFinished(true);
                         }
                     }
                     return;
                 }
                 assert subCommand != null;
-                assert !accepted;
-                // - if accepted==true, then finished==true, but finished was checked in the beginning of the method
                 subCommand.check();
                 if (!subCommand.isFinished()) {
                     // waiting for command results
@@ -297,8 +297,8 @@ public final class HttpPyramidServersLauncher {
                 }
                 boolean subCommandAccepted = subCommand.isAccepted();
                 if (javaProcess != null ? !javaProcess.isAlive() : subCommandAccepted) {
-                    accepted = subCommandAccepted;
-                    finished = true;
+                    setAccepted(subCommandAccepted);
+                    setFinished(true);
                     return;
                 }
                 subCommand = null;
@@ -313,10 +313,10 @@ public final class HttpPyramidServersLauncher {
                     return;
                     // starting delaying stage
                 }
-                assert !accepted;
+                assert !isAccepted();
                 if (javaProcess == null) {
                     LOG.warning("Cannot stop process " + control.processName() + " by system command");
-                    finished = true;
+                    setFinished(true);
                 } else {
                     if (javaProcess.isAlive()) {
                         LOG.warning("Cannot finish process " + control.processName()
@@ -455,14 +455,13 @@ public final class HttpPyramidServersLauncher {
         }
         return new AsyncPyramidCommand() {
             AsyncPyramidCommand subCommand = stopProcess(control, skipIfAlive);
-            boolean finished = false;
 
             @Override
             public void check() throws IOException {
                 subCommand.check();
                 if (subCommand.isFinished()) {
-                    accepted = startProcess(control, false);
-                    finished = true;
+                    setAccepted(startProcess(control, false));
+                    setFinished(true);
                 }
             }
         };
@@ -574,7 +573,7 @@ public final class HttpPyramidServersLauncher {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         int startArgIndex = 0;
-        boolean checkAlive = false, serviceMode = false, debuggingWait = false;
+        boolean checkAlive = false, serviceMode = false, consoleWaiting = false;
         if (args.length > startArgIndex && args[startArgIndex].equals("--checkAlive")) {
             checkAlive = true;
             startArgIndex++;
@@ -583,14 +582,14 @@ public final class HttpPyramidServersLauncher {
             serviceMode = true;
             startArgIndex++;
         }
-        if (args.length > startArgIndex && args[startArgIndex].equals("--debuggingWait")) {
+        if (args.length > startArgIndex && args[startArgIndex].equals("--consoleWaiting")) {
             // for debugging needs only
-            debuggingWait = true;
+            consoleWaiting = true;
             startArgIndex++;
         }
         if (args.length < startArgIndex + 3) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s [--checkAlive] [--serviceMode] start|stop|restart "
+            System.out.printf("    %s [--checkAlive] [--serviceMode] [--consoleWaiting] start|stop|restart "
                     + "configurationFolder specificServerConfigurationFile%n",
                 HttpPyramidServersLauncher.class.getName());
             return;
@@ -635,7 +634,7 @@ public final class HttpPyramidServersLauncher {
             return;
             // - this operator will never executed
         }
-        if (debuggingWait && !command.equals("stop")) {
+        if (consoleWaiting && !command.equals("stop")) {
             launcher.printWelcomeAndWaitForEnterKey();
             launcher.stopAll(false);
         }

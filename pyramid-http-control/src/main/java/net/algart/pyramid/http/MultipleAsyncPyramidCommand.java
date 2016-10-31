@@ -47,8 +47,8 @@ public class MultipleAsyncPyramidCommand extends AsyncPyramidCommand {
             accepted &= command.isAccepted();
             finished &= command.isFinished();
         }
-        this.accepted = accepted;
-        this.finished = finished;
+        setAccepted(accepted);
+        setFinished(finished);
     }
 
     @Override

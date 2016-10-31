@@ -33,8 +33,8 @@ public abstract class AsyncPyramidCommand {
 
     private static final int INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS = 200;
 
-    volatile boolean finished;
-    volatile boolean accepted;
+    private volatile boolean finished;
+    private volatile boolean accepted;
 
     volatile FinishHandler finishHandler = null;
 
@@ -43,12 +43,20 @@ public abstract class AsyncPyramidCommand {
 
     abstract void check() throws IOException;
 
-    boolean isAccepted() {
+    final boolean isAccepted() {
         return accepted;
     };
 
-    boolean isFinished() {
+    final boolean isFinished() {
         return finished;
+    }
+
+    final void setFinished(boolean finished) {
+        this.finished = finished;
+    }
+
+    final void setAccepted(boolean accepted) {
+        this.accepted = accepted;
     }
 
     public final boolean waitFor() throws IOException{

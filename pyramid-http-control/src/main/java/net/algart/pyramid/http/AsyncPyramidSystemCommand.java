@@ -69,12 +69,12 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
     }
 
     void check() {
-        if (!finished) {
-            accepted = !Files.exists(keyFile);
+        if (!isFinished()) {
+            setAccepted(!Files.exists(keyFile));
         }
-        if (accepted || System.currentTimeMillis() >= timeoutStamp) {
-            finished = true;
-            if (!accepted) {
+        if (isAccepted() || System.currentTimeMillis() >= timeoutStamp) {
+            setFinished(true);
+            if (!isAccepted()) {
                 try {
                     Files.deleteIfExists(keyFile);
                     // - necessary to remove file even if the process did not react to it:
@@ -82,7 +82,7 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
                 } catch (IOException ignored) {
                 }
             }
-            LOG.info(this + " was " + (accepted ? "accepted" : "IGNORED"));
+            LOG.info(this + " was " + (isAccepted() ? "accepted" : "IGNORED"));
         }
     }
 
