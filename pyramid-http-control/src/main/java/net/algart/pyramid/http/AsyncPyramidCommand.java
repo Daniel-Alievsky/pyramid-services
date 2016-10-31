@@ -22,27 +22,30 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.commands;
+package net.algart.pyramid.http;
 
 import java.io.IOException;
 
 public abstract class AsyncPyramidCommand {
     private static final int INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS = 200;
 
-    protected volatile boolean finished;
-    protected volatile boolean accepted;
+    volatile boolean finished;
+    volatile boolean accepted;
 
-    public abstract void check() throws IOException;
+    AsyncPyramidCommand() {
+    }
 
-    public boolean isAccepted() {
+    abstract void check() throws IOException;
+
+    boolean isAccepted() {
         return accepted;
     };
 
-    public boolean isFinished() {
+    boolean isFinished() {
         return finished;
     }
 
-    public final boolean waitForFinish() throws IOException{
+    public final boolean waitFor() throws IOException{
         while (!isFinished()) {
             try {
                 Thread.sleep(INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS);

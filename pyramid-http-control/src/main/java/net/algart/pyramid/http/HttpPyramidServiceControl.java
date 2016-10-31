@@ -27,7 +27,6 @@ package net.algart.pyramid.http;
 import net.algart.pyramid.PlanePyramidInformation;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
-import net.algart.pyramid.commands.AsyncPyramidCommand;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -38,7 +37,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

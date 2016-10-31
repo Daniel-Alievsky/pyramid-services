@@ -25,7 +25,6 @@
 package net.algart.pyramid.http;
 
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
-import net.algart.pyramid.commands.AsyncPyramidCommand;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -71,7 +70,7 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
         this.timeoutInMilliseconds = timeoutInMilliseconds;
     }
 
-    public void check() {
+    void check() {
         if (!finished) {
             accepted = !Files.exists(keyFile);
         }

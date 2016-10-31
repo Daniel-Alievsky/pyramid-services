@@ -22,37 +22,15 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.commands;
+package net.algart.pyramid.http;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-public class MultipleAsyncPyramidCommand extends AsyncPyramidCommand {
-    private List<AsyncPyramidCommand> commands;
-
-    public MultipleAsyncPyramidCommand(Collection<AsyncPyramidCommand> commands) {
-        this.commands = new ArrayList<>(commands);
-    }
-
-    @Override
-    public void check() throws IOException {
-        for (AsyncPyramidCommand command : commands) {
-            command.check();
-        }
-        boolean accepted = true;
-        boolean finished = true;
-        for (AsyncPyramidCommand command : commands) {
-            accepted &= command.isAccepted();
-            finished &= command.isFinished();
-        }
+public class ImmediatePyramidCommand extends AsyncPyramidCommand {
+    public ImmediatePyramidCommand(boolean accepted) {
         this.accepted = accepted;
-        this.finished = finished;
+        this.finished = true;
     }
 
     @Override
-    public String toString() {
-        return "multiple command " + commands;
+    void check() {
     }
 }

@@ -24,8 +24,6 @@
 
 package net.algart.pyramid.http;
 
-import net.algart.pyramid.commands.AsyncPyramidCommand;
-
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -75,7 +73,7 @@ abstract class JavaProcessControl {
      * <p>This method is not relevant when this class works not with localhost or its alias.</p>
      *
      * <p>This method does not wait for actual finishing.
-     * You should wait for actual finishing with help of {@link AsyncPyramidCommand#waitForFinish()} method.</p>
+     * You should wait for actual finishing with help of {@link AsyncPyramidCommand#waitFor()} method.</p>
      *
      * @param timeoutInMilliseconds timeout in milliseconds; if the command was not accepted in this period,
      *                              {@link AsyncPyramidCommand#isAccepted()} will return <tt>false</tt>.
@@ -89,7 +87,7 @@ abstract class JavaProcessControl {
     //TODO!! remove with INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS
     /*
     public boolean stopOnLocalhostAndWaitForResults(int timeoutInMilliseconds) throws IOException {
-        return stopOnLocalhostCommand(timeoutInMilliseconds).waitForFinish();
+        return stopOnLocalhostCommand(timeoutInMilliseconds).waitFor();
     }
 
     static FutureTask<Boolean> requestSystemCommand(

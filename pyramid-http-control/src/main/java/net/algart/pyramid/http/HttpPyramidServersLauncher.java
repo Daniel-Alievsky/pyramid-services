@@ -27,9 +27,6 @@ package net.algart.pyramid.http;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
-import net.algart.pyramid.commands.AsyncPyramidCommand;
-import net.algart.pyramid.commands.ImmediatePyramidCommand;
-import net.algart.pyramid.commands.MultipleAsyncPyramidCommand;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -115,7 +112,7 @@ public final class HttpPyramidServersLauncher {
             proxyCommand = stopPyramidProxyCommand(skipNotAlive);
             allSubCommands.add(proxyCommand);
         }
-        new MultipleAsyncPyramidCommand(allSubCommands).waitForFinish();
+        new MultipleAsyncPyramidCommand(allSubCommands).waitFor();
         int serviceCount = 0, processCount = 0;
         for (int i = 0; i < serviceCommands.size(); i++) {
             if (serviceCommands.get(i).isAccepted()) {
@@ -142,7 +139,7 @@ public final class HttpPyramidServersLauncher {
             proxyCommand = restartPyramidProxyCommand(skipAlreadyAlive);
             allSubCommands.add(proxyCommand);
         }
-        new MultipleAsyncPyramidCommand(allSubCommands).waitForFinish();
+        new MultipleAsyncPyramidCommand(allSubCommands).waitFor();
         int serviceCount = 0, processCount = 0;
         for (int i = 0; i < serviceCommands.size(); i++) {
             if (serviceCommands.get(i).isAccepted()) {
