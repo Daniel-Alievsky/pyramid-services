@@ -66,7 +66,7 @@ public class HttpPyramidProxyControlTest {
                     break;
                 }
                 case "stop": {
-                    final boolean result = client.stopOnLocalhostCommand(1000).waitFor();
+                    final boolean result = client.stopOnLocalhost(1000).waitFor();
                     System.out.println("Proxy " + (result ? "is finished": "DOES NOT REACT"));
                     break;
                 }

@@ -141,11 +141,11 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
 
 
     @Override
-    public AsyncPyramidCommand stopOnLocalhostCommand(int timeoutInMilliseconds) throws IOException {
+    public AsyncPyramidCommand stopOnLocalhost(int timeoutInMilliseconds) throws IOException {
         LOG.info("Stopping " + processName() + " on localhost...");
         final List<AsyncPyramidCommand> subTasks = new ArrayList<>();
         for (HttpPyramidServiceControl serviceControl : serviceControls) {
-            subTasks.add(serviceControl.stopServiceOnLocalhostCommand(timeoutInMilliseconds));
+            subTasks.add(serviceControl.stopServiceOnLocalhost(timeoutInMilliseconds));
         }
         return new MultipleAsyncPyramidCommand(subTasks);
     }

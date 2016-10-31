@@ -92,7 +92,7 @@ public final class HttpPyramidServiceControl {
         }
     }
 
-    public final AsyncPyramidCommand stopServiceOnLocalhostCommand(int timeoutInMilliseconds) throws IOException {
+    public final AsyncPyramidCommand stopServiceOnLocalhost(int timeoutInMilliseconds) throws IOException {
         return requestSystemCommand(HttpPyramidConstants.CommandPrefixes.FINISH, timeoutInMilliseconds);
     }
 

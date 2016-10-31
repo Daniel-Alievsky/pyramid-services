@@ -128,7 +128,7 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
     }
 
     @Override
-    public final AsyncPyramidCommand stopOnLocalhostCommand(int timeoutInMilliseconds) throws IOException {
+    public final AsyncPyramidCommand stopOnLocalhost(int timeoutInMilliseconds) throws IOException {
         LOG.info("Stopping " + processName() + " on localhost...");
         return new AsyncPyramidSystemCommand(
             HttpProxy.FINISH_COMMAND, proxyPort, systemCommandsFolder, timeoutInMilliseconds);

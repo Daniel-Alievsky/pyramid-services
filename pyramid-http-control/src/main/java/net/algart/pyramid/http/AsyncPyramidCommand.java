@@ -27,10 +27,16 @@ package net.algart.pyramid.http;
 import java.io.IOException;
 
 public abstract class AsyncPyramidCommand {
+    public interface FinishHandler {
+        void onFinish();
+    }
+
     private static final int INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS = 200;
 
     volatile boolean finished;
     volatile boolean accepted;
+
+    volatile FinishHandler finishHandler = null;
 
     AsyncPyramidCommand() {
     }
@@ -54,6 +60,14 @@ public abstract class AsyncPyramidCommand {
                 Thread.currentThread().interrupt();
             }
         }
+        if (finishHandler != null) {
+            finishHandler.onFinish();
+        }
         return isAccepted();
+    }
+
+    public final AsyncPyramidCommand setFinishHandler(FinishHandler finishHandler) {
+        this.finishHandler = finishHandler;
+        return this;
     }
 }

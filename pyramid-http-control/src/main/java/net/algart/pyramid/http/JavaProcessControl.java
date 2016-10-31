@@ -82,12 +82,12 @@ abstract class JavaProcessControl {
      *                     besides a rare case when configuration of the file system prevents creating or
      *                     deleting any files (for example, the system folder for key files does not really exist).
      */
-    public abstract AsyncPyramidCommand stopOnLocalhostCommand(int timeoutInMilliseconds) throws IOException;
+    public abstract AsyncPyramidCommand stopOnLocalhost(int timeoutInMilliseconds) throws IOException;
 
     //TODO!! remove with INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS
     /*
     public boolean stopOnLocalhostAndWaitForResults(int timeoutInMilliseconds) throws IOException {
-        return stopOnLocalhostCommand(timeoutInMilliseconds).waitFor();
+        return stopOnLocalhost(timeoutInMilliseconds).waitFor();
     }
 
     static FutureTask<Boolean> requestSystemCommand(
