@@ -135,7 +135,7 @@ public class HttpPyramidService {
     }
 
     public final void finish() {
-        LOG.log(Level.INFO, "Shutting down pyramid service...");
+        LOG.log(Level.INFO, "Shutting down pyramid service " + this + "...");
         server.shutdown();
         threadPool.shutdown();
         shutdown = true;

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http;
+package net.algart.pyramid.http.control;
 
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
@@ -30,7 +30,6 @@ import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.FutureTask;
 
 public class HttpPyramidServersManager {
     private final HttpPyramidServersLauncher launcher;

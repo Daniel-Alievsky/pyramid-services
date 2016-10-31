@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.tests;
 
 import net.algart.pyramid.PlanePyramidInformation;
-import net.algart.pyramid.http.HttpPyramidServiceControl;
+import net.algart.pyramid.http.control.HttpPyramidServiceControl;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 
 import java.io.IOException;

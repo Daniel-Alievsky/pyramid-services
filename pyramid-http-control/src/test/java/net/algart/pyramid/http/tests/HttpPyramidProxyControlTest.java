@@ -26,7 +26,7 @@ package net.algart.pyramid.http.tests;
 
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
-import net.algart.pyramid.http.HttpPyramidProxyControl;
+import net.algart.pyramid.http.control.HttpPyramidProxyControl;
 
 import java.io.IOException;
 import java.nio.file.Path;

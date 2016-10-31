@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http;
+package net.algart.pyramid.http.control;
 
 import net.algart.http.proxy.HttpProxy;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;

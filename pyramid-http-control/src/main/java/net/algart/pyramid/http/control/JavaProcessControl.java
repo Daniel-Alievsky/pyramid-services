@@ -22,16 +22,11 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http;
+package net.algart.pyramid.http.control;
 
 import java.io.IOException;
-import java.util.logging.Logger;
 
 abstract class JavaProcessControl {
-    private static final Logger LOG = Logger.getLogger(JavaProcessControl.class.getName());
-
-    private static final int INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS = 200;
-
     public abstract String processId();
 
     public abstract String processName();
@@ -83,66 +78,6 @@ abstract class JavaProcessControl {
      *                     deleting any files (for example, the system folder for key files does not really exist).
      */
     public abstract AsyncPyramidCommand stopOnLocalhost(int timeoutInMilliseconds) throws IOException;
-
-    //TODO!! remove with INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS
-    /*
-    public boolean stopOnLocalhostAndWaitForResults(int timeoutInMilliseconds) throws IOException {
-        return stopOnLocalhost(timeoutInMilliseconds).waitFor();
-    }
-
-    static FutureTask<Boolean> requestSystemCommand(
-        final String command,
-        final int port,
-        final Path systemCommandsFolder,
-        final int timeoutInMilliseconds)
-    {
-        final Path keyFile = HttpPyramidApiTools.keyFile(systemCommandsFolder, command, port);
-        final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
-            if (!Files.isDirectory(systemCommandsFolder)) {
-                throw new FileNotFoundException("System command folder not found or not a directory: "
-                    + systemCommandsFolder.toAbsolutePath());
-            }
-            try {
-                Files.deleteIfExists(keyFile);
-                // - to be on the safe side; removing key file does not affect services
-            } catch (IOException ignored) {
-            }
-            boolean commandAccepted = false;
-            try {
-                Files.createFile(keyFile);
-            } catch (FileAlreadyExistsException e) {
-                // it is not a problem if a parallel process also created the same file
-            }
-            try {
-                for (long t = System.currentTimeMillis();
-                     System.currentTimeMillis() - t < timeoutInMilliseconds; ) {
-                    try {
-                        Thread.sleep(INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                    if (!Files.exists(keyFile)) {
-                        commandAccepted = true;
-                        break;
-                    }
-                }
-            } finally {
-                if (!commandAccepted) {
-                    try {
-                        Files.deleteIfExists(keyFile);
-                        // - necessary to remove file even if the process did not react to it:
-                        // in other case, this file will lead to problems while new starting that process
-                    } catch (IOException ignored) {
-                    }
-                }
-            }
-            LOG.info("Command " + command + " was " + (commandAccepted ? "accepted" : "IGNORED"));
-            return commandAccepted;
-        });
-        new Thread(futureTask).start();
-        return futureTask;
-    }
-    */
 
     static String commandLineToString(ProcessBuilder processBuilder) {
         final StringBuilder sb = new StringBuilder();

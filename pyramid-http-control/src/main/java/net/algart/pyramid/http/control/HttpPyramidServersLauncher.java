@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http;
+package net.algart.pyramid.http.control;
 
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
@@ -329,123 +329,7 @@ public final class HttpPyramidServersLauncher {
                 }
             }
         };
-/*
-        return new FutureTask<>(() -> {
-            if (skipIfNotAlive && !control.isAtLeastSomeHttpServiceAlive(true)) {
-                return false;
-            }
-//            System.out.println("!!!" + runningProcesses);
-            final Process javaProcess = runningProcesses.remove(control.processId());
-//            System.out.println(">>>" + runningProcesses);
-            // - Removing is necessary for correct behaviour of the daemon thread in printWelcomeAndWaitForEnterKey
-            // method. Note that we need to remove it BEFORE attempts to stop it.
-            final int numberOfAttempts = javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1;
-            for (int attempt = 0; attempt < numberOfAttempts; attempt++) {
-                boolean commandAccepted = control.stopOnLocalhostAndWaitForResults(SUCCESS_STOP_TIMEOUT_IN_MS);
-                if (javaProcess != null ?
-                    !javaProcess.isAlive() :
-                    control.isStabilityHttpCheckAfterStartOrStopRecommended() ?
-                        !control.isAtLeastSomeHttpServiceAlive(false) :
-                        commandAccepted)
-                {
-                    // - no sense to try again if all services do not react OR if command was accepted
-                    return commandAccepted;
-                    // - however, if command was NOT accepted (but isAtLeastSomeHttpServiceAlive returned false),
-                    // it is better to return false: it is not a problem, but reporting will be better
-                }
-                LOG.info("Cannot stop process " + control.processName() + " in " + SUCCESS_STOP_TIMEOUT_IN_MS / 1000.0
-                    + " seconds (attempt #" + (attempt + 1) + "); making delay...");
-                if (attempt + 1 < numberOfAttempts) {
-                    sleep(PROBLEM_DELAY_IN_MS);
-                    // waiting, maybe there was not enough time to finish all services
-                }
-            }
-            if (javaProcess == null) {
-                LOG.warning("Cannot stop process " + control.processName() + " by system command");
-                return false;
-            } else {
-                if (javaProcess.isAlive()) {
-                    LOG.warning("Cannot finish process " + control.processName()
-                        + " by system command, killing it FORCIBLY");
-                    javaProcess.destroyForcibly();
-                    sleep(FORCIBLE_STOP_DELAY_IN_MS);
-                    // - waiting for better guarantee
-                }
-                return true;
-            }
-        });
-        new Thread(futureTask).start();
-        return futureTask;
-        */
     }
-
-/*
-    private int stopProcesses(
-        List<JavaProcessControlWithHttpCheckingAliveStatus> controls,
-        boolean skipIfNotAlive)
-        throws IOException
-    {
-        int numberOfStopped = 0;
-        final List<JavaProcessControlWithHttpCheckingAliveStatus> aliveControls = new ArrayList<>();
-        final List<Process> javaProcesses = new ArrayList<>();
-        synchronized (lock) {
-            for (JavaProcessControlWithHttpCheckingAliveStatus control : controls) {
-                if (!skipIfNotAlive || control.isAtLeastSomeHttpServiceAlive(true)) {
-                    aliveControls.add(control);
-//            System.out.println("!!!" + runningProcesses);
-                    javaProcesses.add(runningProcesses.remove(control.processId()));
-//            System.out.println(">>>" + runningProcesses);
-                    // - Removing is necessary for correct behaviour of the daemon thread in
-                    // printWelcomeAndWaitForEnterKey method.
-                    // Note that we need to remove it BEFORE attempts to stop it.
-                }
-            }
-            for (int attempt = 0; attempt < PROBLEM_NUMBER_OF_ATTEMPTS; attempt++) {
-                for (int k = 0, n = aliveControls.size(); k < n; k++) {
-                    final JavaProcessControlWithHttpCheckingAliveStatus control = aliveControls.get(k);
-                    final Process javaProcess = javaProcesses.get(k);
-                }
-                final boolean commandAccepted = control.stopOnLocalhost(SUCCESS_STOP_TIMEOUT_IN_MS);
-                if (javaProcess != null ?
-                    !javaProcess.isAlive() :
-                    control.isStabilityHttpCheckAfterStartOrStopRecommended() ?
-                        !control.isAtLeastSomeHttpServiceAlive(false) :
-                        commandAccepted)
-                {
-                    return true;
-                }
-                sleep(PROBLEM_DELAY_IN_MS);
-                // waiting, maybe there was not enough time to finish all services
-            }
-            for (int attempt = 0; attempt < (javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1); attempt++) {
-                final boolean commandAccepted = control.stopOnLocalhost(SUCCESS_STOP_TIMEOUT_IN_MS);
-                if (javaProcess != null ?
-                    !javaProcess.isAlive() :
-                    control.isStabilityHttpCheckAfterStartOrStopRecommended() ?
-                        !control.isAtLeastSomeHttpServiceAlive(false) :
-                        commandAccepted)
-                {
-                    return true;
-                }
-                sleep(PROBLEM_DELAY_IN_MS);
-                // waiting, maybe there was not enough time to finish all services
-            }
-            if (javaProcess == null) {
-                LOG.warning("Cannot stop process " + control.processName() + " by system command");
-                return false;
-            } else {
-                if (javaProcess.isAlive()) {
-                    LOG.warning("Cannot finish process " + control.processName()
-                        + " by system command, killing it FORCIBLY");
-                    javaProcess.destroyForcibly();
-                    sleep(FORCIBLE_STOP_DELAY_IN_MS);
-                    // - waiting for better guarantee
-                }
-                return true;
-            }
-        }
-    }
-*/
 
     private AsyncPyramidCommand restartProcess(JavaProcessControl control, boolean skipIfAlive)
         throws IOException
@@ -465,22 +349,6 @@ public final class HttpPyramidServersLauncher {
                 }
             }
         };
-/*
-        final FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
-            if (skipIfAlive && control.areAllHttpServicesAlive(true)) {
-                return false;
-            }
-            final FutureTask<Boolean> subTask = stopProcess(control, skipIfAlive);
-            // - skipIfAlive is a "smart" mode; in this case, we must pass "true" to stopProcess:
-            // in otter case, if the process is really not alive, stopProcess will create signal file
-            // and wait for timeout without needs
-            subTask.get();
-            // - result is not interesting
-            return startProcess(control, false);
-        });
-        new Thread(futureTask).start();
-        return futureTask;
-*/
     }
 
     private HttpPyramidConfiguration.Process getProcessConfiguration(String groupId) {
@@ -559,17 +427,6 @@ public final class HttpPyramidServersLauncher {
             return false;
         }
     }
-
-    //TODO!! remove
-    /*
-    private static void sleep(int timeoutInMilliseconds) {
-        try {
-            Thread.sleep(timeoutInMilliseconds);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-    */
 
     public static void main(String[] args) throws InterruptedException, IOException {
         int startArgIndex = 0;
