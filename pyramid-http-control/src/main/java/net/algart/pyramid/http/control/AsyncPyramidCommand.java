@@ -63,6 +63,9 @@ public abstract class AsyncPyramidCommand {
         while (!isFinished()) {
             try {
                 Thread.sleep(INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS);
+                if (isFinished()) {
+                    throw new AssertionError("Concurrent change of \"finished\" state of the command " + this);
+                }
                 check();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

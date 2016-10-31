@@ -338,13 +338,17 @@ public final class HttpPyramidServersLauncher {
             return new ImmediatePyramidCommand(false);
         }
         return new AsyncPyramidCommand() {
-            AsyncPyramidCommand subCommand = stopProcess(control, skipIfAlive);
+            AsyncPyramidCommand subCommand = stopProcess(control, false);
 
             @Override
             public void check() throws IOException {
                 subCommand.check();
                 if (subCommand.isFinished()) {
-                    setAccepted(startProcess(control, false));
+                    if (isFinished()) {
+                        throw new AssertionError("Illegal state: command not finished!");
+                    }
+                    final boolean successfullyStarted = startProcess(control, false);
+                    setAccepted(successfullyStarted);
                     setFinished(true);
                 }
             }

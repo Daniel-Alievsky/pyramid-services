@@ -39,16 +39,21 @@ public class MultipleAsyncPyramidCommand extends AsyncPyramidCommand {
     @Override
     void check() throws IOException {
         for (AsyncPyramidCommand command : commands) {
-            command.check();
+            if (!command.isFinished()) {
+                // It is possible that some sub-commands are finished and some are not finished;
+                // in this case, this mechod check() is permitted to be called (in waitFor() method).
+                // But we must not call check() for already finished commands: it can lead to errors.
+                command.check();
+            }
         }
-        boolean accepted = true;
-        boolean finished = true;
+        boolean allAccepted = true;
+        boolean allFinished = true;
         for (AsyncPyramidCommand command : commands) {
-            accepted &= command.isAccepted();
-            finished &= command.isFinished();
+            allAccepted &= command.isAccepted();
+            allFinished &= command.isFinished();
         }
-        setAccepted(accepted);
-        setFinished(finished);
+        setAccepted(allAccepted);
+        setFinished(allFinished);
     }
 
     @Override
