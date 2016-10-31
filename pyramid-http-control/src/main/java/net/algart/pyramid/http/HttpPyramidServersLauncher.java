@@ -42,7 +42,7 @@ public final class HttpPyramidServersLauncher {
     private static final int SUCCESS_STOP_TIMEOUT_IN_MS =
         HttpPyramidConstants.SYSTEM_COMMANDS_DELAY +
             HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH +
-            100;
+            200;
     // - note that services and the proxy don't stop immediately, but may delay exiting during
     // someTime + SYSTEM_COMMANDS_DELAY_AFTER_FINISH ms, where someTime <= SYSTEM_COMMANDS_DELAY
     private static final int FORCIBLE_STOP_DELAY_IN_MS = 500;
@@ -235,7 +235,8 @@ public final class HttpPyramidServersLauncher {
                 return true;
             }
             LOG.info("Cannot start process " + control.processName() + " in " + SUCCESS_START_DELAY_IN_MS / 1000.0
-                + " seconds (attempt #" + (attempt + 1) + "); making delay...");
+                + " seconds (attempt #" + (attempt + 1)
+                + "); making " + PROBLEM_DELAY_IN_MS / 1000.0 + " seconds delay...");
             exited = waitFor(javaProcess, PROBLEM_DELAY_IN_MS);
             // waiting, maybe there was not enough time to start all services
         }
@@ -263,9 +264,9 @@ public final class HttpPyramidServersLauncher {
         return new AsyncPyramidCommand() {
             int remainingAttemptsCount = javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1;
             AsyncPyramidCommand subCommand = control.stopOnLocalhost(SUCCESS_STOP_TIMEOUT_IN_MS);
-            long sleepEndTimeStamp;
-            boolean delayAfterFailure = false;
-            boolean delayAfterDestroyForcibly = false;
+            volatile long sleepEndTimeStamp;
+            volatile boolean delayAfterFailure = false;
+            volatile boolean delayAfterDestroyForcibly = false;
 
             @Override
             public void check() throws IOException {
@@ -288,21 +289,16 @@ public final class HttpPyramidServersLauncher {
                 }
                 assert subCommand != null;
                 assert !accepted;
+                // - if accepted==true, then finished==true, but finished was checked in the beginning of the method
                 subCommand.check();
                 if (!subCommand.isFinished()) {
                     // waiting for command results
                     return;
                 }
                 boolean subCommandAccepted = subCommand.isAccepted();
-                if (javaProcess != null ?
-                    !javaProcess.isAlive() :
-                    subCommandAccepted)
-                {
-                    // - no sense to try again if all services do not react OR if command was accepted
+                if (javaProcess != null ? !javaProcess.isAlive() : subCommandAccepted) {
                     accepted = subCommandAccepted;
                     finished = true;
-                    // - however, if command was NOT accepted (but isAtLeastSomeHttpServiceAlive returned false),
-                    // it is better to set accepted=false: it is not a problem, but reporting will be better
                     return;
                 }
                 subCommand = null;
@@ -311,7 +307,8 @@ public final class HttpPyramidServersLauncher {
                     sleepEndTimeStamp = System.currentTimeMillis() + PROBLEM_DELAY_IN_MS;
                     delayAfterFailure = true;
                     LOG.info("Cannot stop process " + control.processName() + " in "
-                        + SUCCESS_STOP_TIMEOUT_IN_MS / 1000.0 + " seconds; making delay (remaining attempts: "
+                        + SUCCESS_STOP_TIMEOUT_IN_MS / 1000.0 + " seconds; "
+                        + "making " + PROBLEM_DELAY_IN_MS / 1000.0 + " seconds delay (remaining attempts: "
                         + remainingAttemptsCount + ")...");
                     return;
                     // starting delaying stage

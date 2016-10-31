@@ -40,8 +40,7 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
     private final String command;
     private final int port;
     private final Path keyFile;
-    private final int timeoutInMilliseconds;
-    private final long timeStamp;
+    private final long timeoutStamp;
 
     AsyncPyramidSystemCommand(String command, int port, Path systemCommandsFolder, int timeoutInMilliseconds)
         throws IOException
@@ -66,15 +65,14 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
         } catch (FileAlreadyExistsException e) {
             // it is not a problem if a parallel process also created the same file
         }
-        this.timeStamp = System.currentTimeMillis();
-        this.timeoutInMilliseconds = timeoutInMilliseconds;
+        this.timeoutStamp = System.currentTimeMillis() + timeoutInMilliseconds;
     }
 
     void check() {
         if (!finished) {
             accepted = !Files.exists(keyFile);
         }
-        if (accepted || System.currentTimeMillis() - timeStamp >= timeoutInMilliseconds) {
+        if (accepted || System.currentTimeMillis() >= timeoutStamp) {
             finished = true;
             if (!accepted) {
                 try {
