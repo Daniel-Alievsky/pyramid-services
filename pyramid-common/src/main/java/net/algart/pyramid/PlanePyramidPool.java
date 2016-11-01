@@ -40,7 +40,6 @@ public final class PlanePyramidPool {
     private final int poolSize;
     private final PlanePyramidFactory factory;
     private final PyramidPoolHashMap pool = new PyramidPoolHashMap();
-    private final Thread cleaningThread;
 
     public PlanePyramidPool(PlanePyramidFactory factory, int poolSize) {
         this.factory = Objects.requireNonNull(factory);
@@ -48,9 +47,9 @@ public final class PlanePyramidPool {
             throw new IllegalArgumentException("Zero or negative pool size");
         }
         this.poolSize = poolSize;
-        this.cleaningThread = new CleaningPyramidsThread();
-        this.cleaningThread.setDaemon(true);
-        this.cleaningThread.start();
+        final Thread cleaningThread = new CleaningPyramidsThread();
+        cleaningThread.setDaemon(true);
+        cleaningThread.start();
     }
 
     public PlanePyramidFactory getFactory() {

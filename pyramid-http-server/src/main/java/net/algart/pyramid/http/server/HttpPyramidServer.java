@@ -34,6 +34,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 public class HttpPyramidServer {
     static {
@@ -41,6 +42,8 @@ public class HttpPyramidServer {
             throw new AssertionError("Invalid constant DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME");
         }
     }
+
+    private static final Logger LOG = Logger.getLogger(HttpPyramidServer.class.getName());
 
     private final HttpPyramidConfiguration.Process processConfiguration;
     private volatile List<HttpPyramidService> services = null;
@@ -91,6 +94,7 @@ public class HttpPyramidServer {
         for (final Thread thread : waitingThreads) {
             thread.join();
         }
+        LOG.info("Finishing pyramid server for ports " + processConfiguration.allPorts());
     }
 
     public HttpPyramidConfiguration.Process getProcessConfiguration() {

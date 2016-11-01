@@ -25,14 +25,23 @@
 package net.algart.pyramid.http.control;
 
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class HttpPyramidServersManager {
+    private static final Logger LOG = Logger.getLogger(HttpPyramidServersManager.class.getName());
+
     private final HttpPyramidServersLauncher launcher;
+
+    private volatile boolean shutdown = false;
+    private volatile boolean revivingActive = false;
+    private final Object lock = new Object();
 
     private HttpPyramidServersManager(
         HttpPyramidConfiguration configuration,
@@ -58,14 +67,28 @@ public class HttpPyramidServersManager {
     }
 
     public void startAll() throws IOException {
+        if (shutdown) {
+            throw new IllegalStateException("Server manager was shut down and cannot be used");
+        }
         launcher.startAll(false);
-        //TODO!! start parallel thread for reviving sercices
+        revivingActive = true;
+        new RevivingThread().start();
     }
 
     public void stopAll() throws IOException {
-        //TODO!! stop that parallel thread
+        synchronized (lock) {
+            shutdown = true;
+            lock.notifyAll();
+            while (revivingActive) {
+                // we must stop reviving thread before an attempt to stop servers
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    LOG.log(Level.SEVERE, "Unexpected interrupted exception", e);
+                }
+            }
+        }
         launcher.stopAll(false).waitFor();
-        //TODO!! common timeout for all services
     }
 
 
@@ -85,11 +108,36 @@ public class HttpPyramidServersManager {
             Thread.sleep(2000);
         } catch (InterruptedException ignored) {
         }
-        System.out.printf("Press \"Ctrl+C\" or \"ENTER\" to stop all started servers...%n%n");
+        System.out.printf("Press \"ENTER\" to stop all started servers...%n%n");
         try {
             System.in.read();
         } catch (IOException ignored) {
         }
         manager.stopAll();
+    }
+
+    private class RevivingThread extends Thread {
+
+        @Override
+        public void run() {
+            synchronized (lock) {
+                try {
+                    while (!shutdown) {
+                        lock.wait(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY);
+                        //TODO!! check behaviour with very long delay
+                        reviveAll();
+                    }
+                } catch (InterruptedException e) {
+                    LOG.log(Level.SEVERE, "Unexpected interrupted exception", e);
+                }
+                LOG.info("Finishing reviving thread");
+                revivingActive = false;
+                lock.notifyAll();
+            }
+        }
+
+        private void reviveAll() {
+            //TODO!!
+        }
     }
 }

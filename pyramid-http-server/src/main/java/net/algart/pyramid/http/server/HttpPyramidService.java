@@ -102,6 +102,9 @@ public class HttpPyramidService {
     }
 
     public final void start() throws IOException {
+        if (shutdown) {
+            throw new IllegalStateException("Service " + this + " was shut down and cannot be used");
+        }
         LOG.info("Starting " + this);
         server.start();
     }
