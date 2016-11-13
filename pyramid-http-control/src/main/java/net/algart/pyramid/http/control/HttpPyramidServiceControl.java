@@ -92,7 +92,9 @@ public final class HttpPyramidServiceControl {
         }
     }
 
-    public final AsyncPyramidCommand stopServiceOnLocalhost(int timeoutInMilliseconds) throws IOException {
+    public final AsyncPyramidCommand stopServiceOnLocalhost(int timeoutInMilliseconds)
+        throws InvalidFileConfigurationException
+    {
         return requestSystemCommand(HttpPyramidConstants.CommandPrefixes.FINISH, timeoutInMilliseconds);
     }
 
@@ -118,7 +120,7 @@ public final class HttpPyramidServiceControl {
     }
 
     public final AsyncPyramidCommand requestSystemCommand(String commandPrefix, int timeoutInMilliseconds)
-        throws IOException
+        throws InvalidFileConfigurationException
     {
         return new AsyncPyramidSystemCommand(commandPrefix, port, systemCommandsFolder, timeoutInMilliseconds);
     }

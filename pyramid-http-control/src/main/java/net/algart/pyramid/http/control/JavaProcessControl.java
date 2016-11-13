@@ -24,8 +24,6 @@
 
 package net.algart.pyramid.http.control;
 
-import java.io.IOException;
-
 abstract class JavaProcessControl {
     public abstract String processId();
 
@@ -58,9 +56,8 @@ abstract class JavaProcessControl {
      * method for starting an external application.</p>
      *
      * @return OS process with newly started JVM
-     * @throws IOException in a case of I/O errors
      */
-    public abstract Process startOnLocalhost() throws IOException;
+    public abstract Process startOnLocalhost();
 
     /**
      * <p>Initiates finishing this process on the current computer.</p>
@@ -73,11 +70,13 @@ abstract class JavaProcessControl {
      * @param timeoutInMilliseconds timeout in milliseconds; if the command was not accepted in this period,
      *                              {@link AsyncPyramidCommand#isAccepted()} will return <tt>false</tt>.
      * @return {@link AsyncPyramidCommand} object allowing to wait for actual finishing the process.
-     * @throws IOException in a case of disk problems. Usually this method should not throw exceptions,
-     *                     besides a rare case when configuration of the file system prevents creating or
-     *                     deleting any files (for example, the system folder for key files does not really exist).
+     * @throws InvalidFileConfigurationException in a case of disk problems. Usually this method should not
+     *                                           throw exceptions, besides a rare case when configuration
+     *                                           of the file system prevents creating or deleting any files
+     *                                           (for example, the system folder for key files does not really exist).
      */
-    public abstract AsyncPyramidCommand stopOnLocalhost(int timeoutInMilliseconds) throws IOException;
+    public abstract AsyncPyramidCommand stopOnLocalhost(int timeoutInMilliseconds)
+        throws InvalidFileConfigurationException;
 
     static String commandLineToString(ProcessBuilder processBuilder) {
         final StringBuilder sb = new StringBuilder();

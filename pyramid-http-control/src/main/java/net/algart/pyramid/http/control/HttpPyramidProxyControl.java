@@ -31,6 +31,7 @@ import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import net.algart.pyramid.http.proxy.HttpPyramidProxyServer;
 
 import java.io.File;
+import java.io.IOError;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.nio.file.Path;
@@ -97,8 +98,8 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
     }
 
     @Override
-    public Process startOnLocalhost() throws IOException {
-        final Path javaPath = HttpPyramidConfiguration.getJavaExecutable(HttpPyramidConfiguration.getCurrentJREHome());
+    public Process startOnLocalhost() {
+        final Path javaPath = HttpPyramidConfiguration.getCurrentJREJavaExecutable();
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
         command.addAll(configuration.getCommonVmOptions());
@@ -124,11 +125,18 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         LOG.info(JavaProcessControl.commandLineToString(processBuilder));
-        return processBuilder.start();
+        try {
+            return processBuilder.start();
+        } catch (IOException e) {
+            // Impossibility to start current Java (java.exe) is a serious system problem!
+            throw new IOError(e);
+        }
     }
 
     @Override
-    public final AsyncPyramidCommand stopOnLocalhost(int timeoutInMilliseconds) throws IOException {
+    public final AsyncPyramidCommand stopOnLocalhost(int timeoutInMilliseconds)
+        throws InvalidFileConfigurationException
+    {
         LOG.info("Stopping " + processName() + " on localhost...");
         return new AsyncPyramidSystemCommand(
             HttpProxy.FINISH_COMMAND, proxyPort, systemCommandsFolder, timeoutInMilliseconds);

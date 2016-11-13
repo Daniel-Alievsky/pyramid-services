@@ -24,8 +24,6 @@
 
 package net.algart.pyramid.http.control;
 
-import java.io.IOException;
-
 public abstract class AsyncPyramidCommand {
     public interface FinishHandler {
         void onFinish();
@@ -41,7 +39,7 @@ public abstract class AsyncPyramidCommand {
     AsyncPyramidCommand() {
     }
 
-    abstract void check() throws IOException;
+    abstract void check() throws InvalidFileConfigurationException;
 
     final boolean isAccepted() {
         return accepted;
@@ -59,7 +57,7 @@ public abstract class AsyncPyramidCommand {
         this.accepted = accepted;
     }
 
-    public final boolean waitFor() throws IOException{
+    public final boolean waitFor() throws InvalidFileConfigurationException {
         while (!isFinished()) {
             try {
                 Thread.sleep(INTERVAL_OF_WAITING_SYSTEM_COMMAND_IN_MS);

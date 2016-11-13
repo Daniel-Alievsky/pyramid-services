@@ -24,7 +24,6 @@
 
 package net.algart.pyramid.http.control;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -37,7 +36,7 @@ public class MultipleAsyncPyramidCommand extends AsyncPyramidCommand {
     }
 
     @Override
-    void check() throws IOException {
+    void check() throws InvalidFileConfigurationException {
         for (AsyncPyramidCommand command : commands) {
             if (!command.isFinished()) {
                 // It is possible that some sub-commands are finished and some are not finished;

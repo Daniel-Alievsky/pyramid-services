@@ -27,6 +27,7 @@ package net.algart.pyramid.api.http;
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
 import java.io.FileNotFoundException;
+import java.io.IOError;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -473,23 +474,33 @@ public class HttpPyramidConfiguration {
             processes);
     }
 
-    public static Path getCurrentJREHome() {
+    public static String getCurrentJREHome() {
         String s = System.getProperty("java.home");
         if (s == null) {
             throw new InternalError("Null java.home system property");
         }
-        return Paths.get(s);
+        return s;
     }
 
-    public static Path getJavaExecutable(Path jreHome) throws FileNotFoundException {
-        // Finding according http://docs.oracle.com/javase/1.5.0/docs/tooldocs/solaris/jdkfiles.html
+    public static Path getCurrentJREJavaExecutable() {
+        try {
+            return getJavaExecutable(HttpPyramidConfiguration.getCurrentJREHome());
+        } catch (FileNotFoundException e) {
+            // Currently running Java must exist always!
+            throw new IOError(e);
+        }
+    }
+
+    public static Path getJavaExecutable(String jreHome) throws FileNotFoundException {
+        // Finding executable file according http://docs.oracle.com/javase/1.5.0/docs/tooldocs/solaris/jdkfiles.html
         if (jreHome == null) {
             throw new NullPointerException("Null jreHome argument");
         }
-        if (!Files.exists(jreHome)) {
-            throw new FileNotFoundException("JRE home directory " + jreHome + " does not exist");
+        final Path jrePath = Paths.get(jreHome);
+        if (!Files.exists(jrePath)) {
+            throw new FileNotFoundException("JRE home directory " + jrePath + " does not exist");
         }
-        Path javaBin = jreHome.resolve("bin");
+        Path javaBin = jrePath.resolve("bin");
         Path javaFile = javaBin.resolve("java"); // Unix
         if (!Files.exists(javaFile)) {
             javaFile = javaBin.resolve("java.exe"); // Windows

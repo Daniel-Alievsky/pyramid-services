@@ -28,6 +28,7 @@ import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
+import java.io.IOError;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -65,7 +66,7 @@ public final class HttpPyramidServersLauncher {
         this.runningProcesses = Collections.synchronizedMap(new LinkedHashMap<>());
     }
 
-    public HttpPyramidConfiguration getProcessConfiguration() {
+    public HttpPyramidConfiguration getConfiguration() {
         return configuration;
     }
 
@@ -79,8 +80,8 @@ public final class HttpPyramidServersLauncher {
      *
      * @param skipAlreadyAlive if <tt>true</tt>, the processes, which are already alive, are skipped;
      *                         if not, alive processes will probably lead to exception  "cannot start process".
-     * @return the number of processes that were actually started (can be variable if <tt>skipAlreadyAlive</tt>)
-     * @throws IOException in a case of problems while starting process
+     * @return the number of processes that were actually started (can be variable if <tt>skipAlreadyAlive</tt>).
+     * @throws IOException in a case of problems while starting process.
      */
     public void startAll(boolean skipAlreadyAlive) throws IOException {
         int serviceCount = 0, processCount = 0;
@@ -99,7 +100,7 @@ public final class HttpPyramidServersLauncher {
                 specificServerConfiguration.hasProxy() ? "1 proxy FAILED" : "proxy absent"));
     }
 
-    public AsyncPyramidCommand stopAll(boolean skipNotAlive) throws IOException {
+    public AsyncPyramidCommand stopAll(boolean skipNotAlive) throws InvalidFileConfigurationException {
         final List<AsyncPyramidCommand> allSubCommands = new ArrayList<>();
         final List<AsyncPyramidCommand> serviceCommands = new ArrayList<>();
         final List<String> allGroupId = new ArrayList<>(configuration.allGroupId());
@@ -159,14 +160,16 @@ public final class HttpPyramidServersLauncher {
         });
     }
 
-    public boolean startPyramidServicesGroup(String groupId, boolean skipIfAlive) throws IOException {
+    public boolean startPyramidServicesGroup(String groupId, boolean skipIfAlive)
+        throws IOException
+    {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return startProcess(new HttpPyramidProcessControl(
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
     }
 
     public AsyncPyramidCommand stopPyramidServicesGroup(String groupId, boolean skipIfNotAlive)
-        throws IOException
+        throws InvalidFileConfigurationException
     {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return stopProcess(new HttpPyramidProcessControl(
@@ -174,24 +177,30 @@ public final class HttpPyramidServersLauncher {
     }
 
     public AsyncPyramidCommand restartPyramidServicesGroup(String groupId, boolean skipIfAlive)
-        throws IOException
+        throws InvalidFileConfigurationException
     {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return restartProcess(new HttpPyramidProcessControl(
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
     }
 
-    public boolean startPyramidProxy(boolean skipIfAlive) throws IOException {
+    public boolean startPyramidProxy(boolean skipIfAlive)
+        throws IOException
+    {
         return startProcess(new HttpPyramidProxyControl(
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
     }
 
-    public AsyncPyramidCommand stopPyramidProxy(boolean skipIfNotAlive) throws IOException {
+    public AsyncPyramidCommand stopPyramidProxy(boolean skipIfNotAlive)
+        throws InvalidFileConfigurationException
+    {
         return stopProcess(new HttpPyramidProxyControl(
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfNotAlive);
     }
 
-    public AsyncPyramidCommand restartPyramidProxy(boolean skipIfAlive) throws IOException {
+    public AsyncPyramidCommand restartPyramidProxy(boolean skipIfAlive)
+        throws InvalidFileConfigurationException
+    {
         return restartProcess(new HttpPyramidProxyControl(
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
     }
@@ -251,7 +260,7 @@ public final class HttpPyramidServersLauncher {
     }
 
     private AsyncPyramidCommand stopProcess(JavaProcessControl control, boolean skipIfNotAlive)
-        throws IOException
+        throws InvalidFileConfigurationException
     {
         if (skipIfNotAlive && !control.isAtLeastSomeHttpServiceAlive(true)) {
             return new ImmediatePyramidCommand(false);
@@ -269,7 +278,7 @@ public final class HttpPyramidServersLauncher {
             volatile boolean delayAfterDestroyForcibly = false;
 
             @Override
-            public void check() throws IOException {
+            public void check() throws InvalidFileConfigurationException {
                 if (isFinished()) {
                     return;
                 }
@@ -332,7 +341,7 @@ public final class HttpPyramidServersLauncher {
     }
 
     private AsyncPyramidCommand restartProcess(JavaProcessControl control, boolean skipIfAlive)
-        throws IOException
+        throws InvalidFileConfigurationException
     {
         if (skipIfAlive && control.areAllHttpServicesAlive(true)) {
             return new ImmediatePyramidCommand(false);
@@ -341,13 +350,20 @@ public final class HttpPyramidServersLauncher {
             AsyncPyramidCommand subCommand = stopProcess(control, false);
 
             @Override
-            public void check() throws IOException {
+            public void check() throws InvalidFileConfigurationException {
                 subCommand.check();
                 if (subCommand.isFinished()) {
                     if (isFinished()) {
                         throw new AssertionError("Illegal state: command not finished!");
                     }
-                    final boolean successfullyStarted = startProcess(control, false);
+                    final boolean successfullyStarted;
+                    try {
+                        successfullyStarted = startProcess(control, false);
+                    } catch (IOException e) {
+                        // Usually we restart processes, that were previously started;
+                        // the failure of RE-starting signals about some serious problems.
+                        throw new IOError(e);
+                    }
                     setAccepted(successfullyStarted);
                     setFinished(true);
                 }

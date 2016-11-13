@@ -43,7 +43,7 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
     private final long timeoutStamp;
 
     AsyncPyramidSystemCommand(String command, int port, Path systemCommandsFolder, int timeoutInMilliseconds)
-        throws IOException
+        throws InvalidFileConfigurationException
     {
         Objects.requireNonNull(command, "Null command");
         Objects.requireNonNull(systemCommandsFolder, "Null systemCommandsFolder");
@@ -52,8 +52,9 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
         this.port = port;
         this.keyFile = HttpPyramidApiTools.keyFile(systemCommandsFolder, command, port);
         if (!Files.isDirectory(systemCommandsFolder)) {
-            throw new FileNotFoundException("System command folder not found or not a directory: "
-                + systemCommandsFolder.toAbsolutePath());
+            throw new InvalidFileConfigurationException(
+                new FileNotFoundException("System command folder not found or not a directory: "
+                    + systemCommandsFolder.toAbsolutePath()));
         }
         try {
             Files.deleteIfExists(keyFile);
@@ -64,6 +65,8 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
             Files.createFile(keyFile);
         } catch (FileAlreadyExistsException e) {
             // it is not a problem if a parallel process also created the same file
+        } catch (IOException e) {
+            throw new InvalidFileConfigurationException(e);
         }
         this.timeoutStamp = System.currentTimeMillis() + timeoutInMilliseconds;
     }
