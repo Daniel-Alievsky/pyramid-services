@@ -70,7 +70,7 @@ public class HttpPyramidConstants {
         private CommandPrefixes() {}
     }
 
-    public static final String DEFAULT_SYSTEM_COMMANDS_FOLDER = "for-key-files";
+    public static final String DEFAULT_SYSTEM_COMMANDS_FOLDER = ".system.commands";
     /**
      * Names of key files in {@link #DEFAULT_SYSTEM_COMMANDS_FOLDER} start from this prefix,
      * where %d is replaced with the port number.

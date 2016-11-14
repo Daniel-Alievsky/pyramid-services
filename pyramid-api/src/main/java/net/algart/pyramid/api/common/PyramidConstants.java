@@ -25,16 +25,24 @@
 package net.algart.pyramid.api.common;
 
 public class PyramidConstants {
-    public static final String DEFAULT_PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON = System.getProperty(
-        "net.algart.pyramid.common.pyramidPathNameInJson", "pyramidPath");
-    public static final String DEFAULT_PYRAMID_CONFIGURATION_FILE_NAME = System.getProperty(
-        "net.algart.pyramid.common.pyramidConfigurationFileName", ".pp.json");
-    public static final String DEFAULT_FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME = "formatName";
+    // The following constants usually do not change, but theoretically can be customized via
+    // HttpPyramidConfiguration.GLOBAL_CONFIGURATION_FILE_NAME (json-file), "commonVmOptions" section.
+    public static final String PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON = System.getProperty(
+        "net.algart.pyramid.api.common.pyramidPathNameInJson", "pyramidPath");
+    public static final String PYRAMID_CONFIGURATION_FILE_NAME = System.getProperty(
+        "net.algart.pyramid.api.common.pyramidConfigurationFileName", ".pp.json");
+    public static final String FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME = "formatName";
 
-    public static final String CONFIG_ROOT_DIR = System.getProperty(
-        "net.algart.pyramid.http.configRoot", "/pp-links");
-    public static final String CONFIG_FILE_NAME = System.getProperty(
-        "net.algart.pyramid.http.configFile", "config.json");
+    // The following constants can be customized also by more simple way:
+    // HttpPyramidSpecificServerConfiguration json-file
+    public static final String DEFAULT_CONFIG_ROOT_DIR = System.getProperty(
+        "net.algart.pyramid.api.common.configRoot", "/pp-links");
+    public static final String DEFAULT_CONFIG_FILE_NAME = System.getProperty(
+        "net.algart.pyramid.api.common.configFile", "config.json");
+    // Note that the following constant is not used by pyramid services,
+    // but can be useful for upload and user management systems
+    public static final String DEFAULT_IMAGES_ROOT_DIR = System.getProperty(
+        "net.algart.pyramid.api.common.imagesRoot", "/pp-images");
 
 
     private PyramidConstants() {

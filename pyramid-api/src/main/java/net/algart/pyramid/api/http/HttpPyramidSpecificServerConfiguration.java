@@ -24,6 +24,8 @@
 
 package net.algart.pyramid.api.http;
 
+import net.algart.pyramid.api.common.PyramidConstants;
+
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.JsonObject;
@@ -150,6 +152,11 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         }
     }
 
+    private final String configRootDir;
+    private final String configFileName;
+    private final String imagesRootDir;
+    // - note that "imagesRootDir" is not used by pyramid services,
+    // but can be useful for upload and user management systems
     private final boolean proxy;
     private final ProxySettings proxySettings;
     private final SSLSettings sslSettings;
@@ -158,6 +165,9 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
     private HttpPyramidSpecificServerConfiguration(Path specificServerConfigurationFile, JsonObject json) {
         Objects.requireNonNull(specificServerConfigurationFile);
         Objects.requireNonNull(json);
+        this.configRootDir = json.getString("configRootDir", PyramidConstants.DEFAULT_CONFIG_ROOT_DIR);
+        this.configFileName = json.getString("configFileName", PyramidConstants.DEFAULT_CONFIG_FILE_NAME);
+        this.imagesRootDir = json.getString("imagesRootDir", PyramidConstants.DEFAULT_IMAGES_ROOT_DIR);
         this.proxy = json.getBoolean("proxy", false);
         final JsonObject proxySettingsJson = json.getJsonObject("proxySettings");
         if (proxy && proxySettingsJson == null) {
@@ -172,6 +182,14 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         }
         this.sslSettings = sslSettingsJson == null ? null : new SSLSettings(this, sslSettingsJson);
         this.specificServerConfigurationFile = specificServerConfigurationFile;
+    }
+
+    public String getConfigRootDir() {
+        return configRootDir;
+    }
+
+    public String getConfigFileName() {
+        return configFileName;
     }
 
     public boolean hasProxy() {
@@ -209,6 +227,9 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
 
     JsonObject toJson() {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
+        builder.add("configRootDir", configRootDir);
+        builder.add("configFileName", configFileName);
+        builder.add("imagesRootDir", imagesRootDir);
         builder.add("proxy", proxy);
         if (proxySettings != null) {
             builder.add("proxySettings", proxySettings.toJson());

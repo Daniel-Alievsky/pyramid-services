@@ -18,8 +18,8 @@
       <element id="directory" name="pp-config">
         <element id="directory" name="services">
           <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/services" />
-          <element id="directory" name="for-key-files">
-            <element id="file-copy" path="$PROJECT_DIR$/test-launcher/for-key-files.readme.txt" output-file-name="readme.txt" />
+          <element id="directory" name=".system.commands">
+            <element id="file-copy" path="$PROJECT_DIR$/test-launcher/.system.commands.readme.txt" output-file-name="readme.txt" />
           </element>
         </element>
         <element id="directory" name="lib">

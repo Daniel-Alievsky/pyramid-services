@@ -50,12 +50,15 @@ public class PyramidApiTools {
         return pyramidId.matches("^[A-Za-z0-9_\\-]*$");
     }
 
-    public static String pyramidIdToConfiguration(String pyramidId) throws IOException {
+    public static String pyramidIdToConfiguration(String pyramidId, String configRootDir, String configFileName)
+        throws IOException
+    {
         if (!isAllowedPyramidId(pyramidId)) {
             throw new IllegalArgumentException("Disallowed pyramid id: \"" + pyramidId + "\"");
         }
-        final Path path = Paths.get(
-            PyramidConstants.CONFIG_ROOT_DIR, pyramidId, PyramidConstants.CONFIG_FILE_NAME);
+        Objects.requireNonNull(configRootDir, "Null configRootDir");
+        Objects.requireNonNull(configFileName, "Null configFileName");
+        final Path path = Paths.get(configRootDir, pyramidId, configFileName);
         if (!Files.isRegularFile(path)) {
             throw new FileNotFoundException("File " + path.toAbsolutePath() + " does not exists");
         }
@@ -72,18 +75,18 @@ public class PyramidApiTools {
 
     public static Path getPyramidPath(JsonObject configurationJson) throws IOException {
         final String pyramidPath = configurationJson.getString(
-            PyramidConstants.DEFAULT_PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON, null);
+            PyramidConstants.PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON, null);
         if (pyramidPath == null) {
             throw new IOException("Invalid configuration json: no "
-                + PyramidConstants.DEFAULT_PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON
+                + PyramidConstants.PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON
                 + " value <<<" + configurationJson + ">>>");
         }
         return Paths.get(pyramidPath);
     }
 
-    public static JsonObject readDefaultPyramidConfiguration(Path pyramidPath) throws IOException {
+    public static JsonObject readPyramidConfiguration(Path pyramidPath) throws IOException {
         final Path pyramidConfigurationFile = pyramidPath.resolve(
-            PyramidConstants.DEFAULT_PYRAMID_CONFIGURATION_FILE_NAME);
+            PyramidConstants.PYRAMID_CONFIGURATION_FILE_NAME);
         try (final JsonReader reader = Json.createReader(Files.newBufferedReader(
             pyramidConfigurationFile, StandardCharsets.UTF_8)))
         {
@@ -95,11 +98,11 @@ public class PyramidApiTools {
 
     public static String getFormatNameFromPyramidJson(JsonObject pyramidJson) throws IOException {
         final String pyramidFormatName = pyramidJson.getString(
-            PyramidConstants.DEFAULT_FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME, null);
+            PyramidConstants.FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME, null);
         if (pyramidFormatName == null) {
             throw new IOException("Invalid pyramid configuration json ("
-                + PyramidConstants.DEFAULT_PYRAMID_CONFIGURATION_FILE_NAME + "): no "
-                + PyramidConstants.DEFAULT_FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME
+                + PyramidConstants.PYRAMID_CONFIGURATION_FILE_NAME + "): no "
+                + PyramidConstants.FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME
                 + " value <<<" + pyramidJson + ">>>");
         }
         return pyramidFormatName;

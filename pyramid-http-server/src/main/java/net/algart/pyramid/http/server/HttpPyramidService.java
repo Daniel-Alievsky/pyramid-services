@@ -27,7 +27,9 @@ package net.algart.pyramid.http.server;
 import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.PlanePyramidPool;
 import net.algart.pyramid.api.common.PyramidApiTools;
+import net.algart.pyramid.api.common.PyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import net.algart.pyramid.http.server.handlers.*;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.http.server.*;
@@ -55,13 +57,21 @@ public class HttpPyramidService {
     private final HttpServer server;
     private final int port;
     private final Path systemCommandsFolder;
+    private String configRootDir = PyramidConstants.DEFAULT_CONFIG_ROOT_DIR;
+    private String configFileName = PyramidConstants.DEFAULT_CONFIG_FILE_NAME;
+
     private final List<SystemCommand> systemHandlers = new ArrayList<>();
     private final ReadThreadPool threadPool;
     private final ServerConfiguration serverConfiguration;
     private final PlanePyramidPool pyramidPool;
     private volatile boolean shutdown = false;
 
-    public HttpPyramidService(PlanePyramidFactory factory, int port, Path systemCommandsFolder) throws IOException {
+    public HttpPyramidService(
+        PlanePyramidFactory factory,
+        int port,
+        Path systemCommandsFolder)
+        throws IOException
+    {
         Objects.requireNonNull(factory, "Null plane pyramid factory");
         Objects.requireNonNull(systemCommandsFolder, "Null folder for managing service by key files");
         if (port <= 0 || port > HttpPyramidConstants.MAX_ALLOWED_PORT) {
@@ -78,13 +88,24 @@ public class HttpPyramidService {
         this.server = new HttpServer();
         this.port = port;
         this.systemCommandsFolder = systemCommandsFolder;
-        server.addListener(new NetworkListener(HttpPyramidService.class.getName(),
+        this.server.addListener(new NetworkListener(HttpPyramidService.class.getName(),
             HttpPyramidConstants.LOCAL_HOST, port));
         this.serverConfiguration = server.getServerConfiguration();
 //        try {Thread.sleep(5000);} catch (InterruptedException e) {}
         addSystemHandler(new FinishCommand(this));
         addSystemHandler(new GcCommand(this));
         addHandler(new AliveStatusCommand(this));
+    }
+
+    public HttpPyramidService setSpecificConfiguration(
+        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+    {
+        Objects.requireNonNull(specificServerConfiguration, "Null configuration for specific server");
+        this.configRootDir = specificServerConfiguration.getConfigRootDir();
+        this.configFileName = specificServerConfiguration.getConfigFileName();
+        assert configRootDir != null;
+        assert configFileName != null;
+        return this;
     }
 
     public final void addHandler(HttpPyramidCommand command) {
@@ -165,7 +186,7 @@ public class HttpPyramidService {
     }
 
     public String pyramidIdToConfiguration(String pyramidId) throws IOException {
-        return PyramidApiTools.pyramidIdToConfiguration(pyramidId);
+        return PyramidApiTools.pyramidIdToConfiguration(pyramidId, configRootDir, configFileName);
     }
 
     @Override

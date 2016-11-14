@@ -48,6 +48,7 @@ class StandardPyramidServerResolver implements HttpServerResolver {
 
     private final Map<String, HttpServerAddress> pool = new ServerAddressHashMap();
     private final HttpPyramidConfiguration configuration;
+    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final HttpPyramidSpecificServerConfiguration.ProxySettings proxyConfiguration;
     private final Object lock = new Object();
 
@@ -58,6 +59,7 @@ class StandardPyramidServerResolver implements HttpServerResolver {
         assert configuration != null && specificServerConfiguration != null;
         assert specificServerConfiguration.getProxySettings() != null;
         this.configuration = configuration;
+        this.specificServerConfiguration = specificServerConfiguration;
         this.proxyConfiguration = specificServerConfiguration.getProxySettings();
     }
 
@@ -95,10 +97,13 @@ class StandardPyramidServerResolver implements HttpServerResolver {
     }
 
     private HttpServerAddress pyramidIdToServerAddress(String pyramidId) throws IOException {
-        final String pyramidConfiguration = PyramidApiTools.pyramidIdToConfiguration(pyramidId);
+        final String pyramidConfiguration = PyramidApiTools.pyramidIdToConfiguration(
+            pyramidId,
+            specificServerConfiguration.getConfigRootDir(),
+            specificServerConfiguration.getConfigFileName());
         final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
         final Path pyramidDir = PyramidApiTools.getPyramidPath(config);
-        final JsonObject pyramidJson = PyramidApiTools.readDefaultPyramidConfiguration(pyramidDir);
+        final JsonObject pyramidJson = PyramidApiTools.readPyramidConfiguration(pyramidDir);
         final String pyramidFormatName = PyramidApiTools.getFormatNameFromPyramidJson(pyramidJson);
         final HttpPyramidConfiguration.Service service = configuration.findServiceByFormatName(pyramidFormatName);
         if (service == null) {

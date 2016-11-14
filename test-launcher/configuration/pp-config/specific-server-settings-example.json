@@ -1,4 +1,6 @@
 {
+  "configRootDir": "/pp-links",
+  "configFileName": "config.json",
   "proxy": true,
   "proxySettings": {
     "proxyPort": 100,

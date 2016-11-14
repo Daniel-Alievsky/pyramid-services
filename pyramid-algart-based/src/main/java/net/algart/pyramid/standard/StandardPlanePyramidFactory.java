@@ -56,7 +56,7 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
         Objects.requireNonNull(pyramidConfiguration);
         final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
         final Path pyramidDir = PyramidApiTools.getPyramidPath(config);
-        final JsonObject pyramidJson = PyramidApiTools.readDefaultPyramidConfiguration(pyramidDir);
+        final JsonObject pyramidJson = PyramidApiTools.readPyramidConfiguration(pyramidDir);
         final String fileName = pyramidJson.getString("fileName");
         final Path pyramidFile = pyramidDir.resolve(fileName);
         if (!Files.exists(pyramidFile)) {

@@ -45,6 +45,7 @@ public final class HttpPyramidProxyServer {
     static final Logger LOG = Logger.getLogger(HttpPyramidProxyServer.class.getName());
 
     private final HttpPyramidConfiguration serviceConfiguration;
+    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final HttpProxy proxy;
 
     public HttpPyramidProxyServer(
@@ -57,6 +58,7 @@ public final class HttpPyramidProxyServer {
             throw new IllegalArgumentException("Proxy is not used in this configuration");
         }
         this.serviceConfiguration = configuration;
+        this.specificServerConfiguration = specificServerConfiguration;
         this.proxy = new HttpProxy(
             specificServerConfiguration.getProxySettings().getProxyPort(),
             new StandardPyramidServerResolver(configuration, specificServerConfiguration),

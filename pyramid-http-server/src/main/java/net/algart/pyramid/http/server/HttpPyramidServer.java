@@ -27,6 +27,7 @@ package net.algart.pyramid.http.server;
 import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -46,10 +47,15 @@ public class HttpPyramidServer {
     private static final Logger LOG = Logger.getLogger(HttpPyramidServer.class.getName());
 
     private final HttpPyramidConfiguration.Process processConfiguration;
+    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private volatile List<HttpPyramidService> services = null;
 
-    public HttpPyramidServer(HttpPyramidConfiguration.Process processConfiguration) {
+    public HttpPyramidServer(
+        HttpPyramidConfiguration.Process processConfiguration,
+        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+    {
         this.processConfiguration = Objects.requireNonNull(processConfiguration);
+        this.specificServerConfiguration = Objects.requireNonNull(specificServerConfiguration);
     }
 
     public void start() throws Exception {
@@ -146,7 +152,8 @@ public class HttpPyramidServer {
         return new HttpPyramidService(
             factory,
             port,
-            processConfiguration.parentConfiguration().systemCommandsFolder());
+            processConfiguration.parentConfiguration().systemCommandsFolder())
+            .setSpecificConfiguration(specificServerConfiguration);
     }
 
     protected void addHandlers(HttpPyramidService service) {
@@ -201,7 +208,9 @@ public class HttpPyramidServer {
             if (process == null) {
                 throw new IllegalArgumentException("Process with groupId \"" + groupId + "\" is not found");
             }
-            server = new HttpPyramidServer(process);
+            final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
+                HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
+            server = new HttpPyramidServer(process, specificServerConfiguration);
             server.start();
         } catch (Exception e) {
             if (serviceMode) {

@@ -27,7 +27,6 @@ package net.algart.pyramid.http.control;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
