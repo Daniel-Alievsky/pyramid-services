@@ -8,78 +8,71 @@
       </options>
     </properties>
     <root id="root">
-      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/welcome.html" />
-      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/AddImage.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/LaunchJavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/pyramids.html" />
+      <element id="file-copy" path="$PROJECT_DIR$/build/welcome.html" />
+      <element id="file-copy" path="$PROJECT_DIR$/build/AddImage.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/build/LaunchJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/build/pyramids.html" />
       <element id="directory" name="html">
-        <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/html" />
+        <element id="dir-copy" path="$PROJECT_DIR$/build/html" />
       </element>
-      <element id="directory" name="pp-config">
-        <element id="directory" name="services">
-          <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/services" />
-          <element id="directory" name=".system.commands">
-            <element id="file-copy" path="$PROJECT_DIR$/test-launcher/.system.commands.readme.txt" output-file-name="readme.txt" />
-          </element>
+      <element id="directory" name="pp-build">
+        <element id="directory" name="configuration">
+          <element id="dir-copy" path="$PROJECT_DIR$/build/pp-build/configuration" />
         </element>
         <element id="directory" name="lib">
-          <element id="directory" name="maven">
-            <element id="directory" name="grizzly">
-              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-framework:2.3.28" />
-              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-server:2.3.28" />
-              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-servlet:2.3.28" />
-              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http:2.3.28" />
-            </element>
-            <element id="directory" name="jai">
-              <element id="library" level="project" name="Maven: com.github.jai-imageio:jai-imageio-core:1.3.1" />
-            </element>
-            <element id="directory" name="json">
-              <element id="library" level="project" name="Maven: javax.json:javax.json-api:1.0" />
-              <element id="library" level="project" name="Maven: org.glassfish:javax.json:1.0.4" />
-            </element>
-            <element id="directory" name="algart">
-              <element id="library" level="project" name="Maven: net.algart.simagis:simagis-plane-pyramid-sdk:1.2.15" />
-              <element id="library" level="project" name="Maven: net.algart:algart:1.2.7" />
-              <element id="library" level="project" name="Maven: net.simagis.ext:json:0.1" />
-            </element>
-            <element id="directory" name="loci">
-              <element id="file-copy" path="$PROJECT_DIR$/test-launcher/readme.loci.txt" output-file-name="readme.txt" />
-            </element>
-            <element id="directory" name="openslide">
-              <element id="file-copy" path="$PROJECT_DIR$/test-launcher/readme.openslide.txt" output-file-name="readme.txt" />
-            </element>
+          <element id="directory" name="algart">
+            <element id="artifact" artifact-name="lib-algart" />
           </element>
-          <element id="directory" name="sdk">
-            <element id="artifact" artifact-name="pyramid-algart-based-with-test:jar" />
-            <element id="artifact" artifact-name="pyramid-common:jar" />
-            <element id="artifact" artifact-name="pyramid-http-server:jar" />
-            <element id="artifact" artifact-name="pyramid-api:jar" />
-            <element id="artifact" artifact-name="pyramid-http-control:jar" />
-            <element id="artifact" artifact-name="algart-http-proxy:jar" />
+          <element id="directory" name="grizzly">
+            <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-framework:2.3.28" />
+            <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-server:2.3.28" />
+            <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-servlet:2.3.28" />
+            <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http:2.3.28" />
+          </element>
+          <element id="directory" name="json">
+            <element id="library" level="project" name="Maven: javax.json:javax.json-api:1.0" />
+            <element id="library" level="project" name="Maven: org.glassfish:javax.json:1.0.4" />
+            <element id="library" level="project" name="Maven: net.simagis.ext:json:0.1" />
+          </element>
+          <element id="directory" name=".loci">
+            <element id="file-copy" path="$PROJECT_DIR$/build/readme.loci.txt" output-file-name="readme.txt" />
+          </element>
+          <element id="directory" name=".openslide">
+            <element id="file-copy" path="$PROJECT_DIR$/build/readme.openslide.txt" output-file-name="readme.txt" />
+          </element>
+          <element id="directory" name=".image-io">
+            <element id="library" level="project" name="Maven: com.github.jai-imageio:jai-imageio-core:1.3.1" />
           </element>
         </element>
-        <element id="file-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/.users.json" />
-        <element id="file-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/.upload.json" />
+        <element id="file-copy" path="$PROJECT_DIR$/build/pp-build/.upload.json" />
         <element id="directory" name="logging">
-          <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/logging" />
+          <element id="dir-copy" path="$PROJECT_DIR$/build/logging" />
         </element>
-        <element id="file-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/specific-server-settings-example.json" output-file-name="specific-server-settings.json" />
-        <element id="directory" name="ssl">
-          <element id="file-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-config/ssl/ssl-test-keystore.jks" />
+        <element id="directory" name="bin">
+          <element id="directory" name=".openslide">
+            <element id="file-copy" path="$PROJECT_DIR$/build/readme.openslide.bin.txt" output-file-name="readme.txt" />
+          </element>
         </element>
       </element>
       <element id="directory" name="pp-images">
-        <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-images" />
+        <element id="dir-copy" path="$PROJECT_DIR$/build/pp-images" />
       </element>
       <element id="directory" name="pp-links">
-        <element id="dir-copy" path="$PROJECT_DIR$/test-launcher/configuration/pp-links" />
+        <element id="dir-copy" path="$PROJECT_DIR$/build/pp-links" />
       </element>
-      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/CopyDemoFiles.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/JavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/FindJava.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/StartJavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/StopJavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/test-launcher/RestartJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/build/CopyDemoFiles.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/build/JavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/build/FindJava.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/build/StartJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/build/StopJavaServers.cmd" />
+      <element id="file-copy" path="$PROJECT_DIR$/build/RestartJavaServers.cmd" />
+      <element id="directory" name="server-configuration">
+        <element id="directory" name="ssl">
+          <element id="dir-copy" path="$PROJECT_DIR$/build/server-configuration/ssl" />
+        </element>
+        <element id="file-copy" path="$PROJECT_DIR$/build/server-configuration/specific-server-settings-example.json" output-file-name="specific-server-settings.json" />
+        <element id="file-copy" path="$PROJECT_DIR$/build/server-configuration/.users.json" />
+      </element>
     </root>
   </artifact>
 </component>

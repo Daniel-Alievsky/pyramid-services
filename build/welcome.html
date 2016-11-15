@@ -33,7 +33,7 @@
 <pre>
     CopyDemoFiles.cmd
 </pre>
-<p>This cmd-file will copy the subfolders pp-config, pp-links and pp-images into the root of your disk.
+<p>This cmd-file will copy the subfolders pp-build, pp-links and pp-images into the root of your disk.
     If it will fail due to insufficient permissions, please copy these folders into the root
     of the current disk manually.</p>
 
@@ -43,17 +43,6 @@
 </pre>
 <p>Note:</p>
 <ol>
-    <li><p>This cmd-file starts Java Machine via call</p>
-<pre>
-    java -Xmx8g -classpath %CP% net.algart.pyramid.standard.tests.OpenSourceImageFileAccessTest -gnu
-</pre>
-        <p>It means that java.exe <b>must be available in system paths</b>, and <b>it must be 64-bit</b> (not 32-bit).
-            If this call fails, please replace &quot;java&quot; by the full path to the last installed 64-bit JRE,
-            version 8 or higher, for example:</p>
-<pre>
-    "C:\Program Files\Java\jre1.8.0_91\bin\java.exe" -Xmx8g -classpath %CP% net.algart.pyramid.standard.tests.OpenSourceImageFileAccessTest -gnu
-</pre>
-    </li>
     <li>This cmd-file should be started <b>only once</b>. Attempt to start this file 2nd time will fail
         with an error message &quot;java.net.BindException: Address already in use: bind&quot;.
         If you want to stop previously started service, please switch to the console window when it is started
@@ -62,7 +51,7 @@
     <li>
         <p>
             <small>Also note: you need to have the following additional JARs from GNU library
-                in <i>pp-config/lib/maven</i> subfolder:</small>
+                in <i>pp-build/lib/.loci</i> subfolder:</small>
         </p>
 <pre>
     loci_tools-5.0.6.jar

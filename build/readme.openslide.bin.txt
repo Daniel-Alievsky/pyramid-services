@@ -1,0 +1,21 @@
+You can manually copy here GNU binaries for OpenSlide support, for example (Windows):
+    iconv.dll
+    libcairo-2.dll
+    libffi-6.dll
+    libgdk_pixbuf-2.0-0.dll
+    libgio-2.0-0.dll
+    libglib-2.0-0.dll
+    libgmodule-2.0-0.dll
+    libgobject-2.0-0.dll
+    libgthread-2.0-0.dll
+    libintl-8.dll
+    libjpeg-62.dll
+    libopenjp2.dll
+    libopenslide-0.dll
+    libpixman-1-0.dll
+    libpng16-16.dll
+    libsqlite3-0.dll
+    libtiff-5.dll
+    libxml2-2.dll
+    openslide-jni.dll
+    zlib1.dll

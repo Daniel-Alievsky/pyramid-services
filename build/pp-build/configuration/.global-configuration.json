@@ -1,9 +1,8 @@
 {
   "commonClassPath" : [
-    "../lib/sdk/*",
-    "../lib/maven/algart/*",
-    "../lib/maven/grizzly/*",
-    "../lib/maven/json/*"
+    "../lib/algart/*",
+    "../lib/grizzly/*",
+    "../lib/json/*"
   ],
   "commonVmOptions" : [
     "-ea"

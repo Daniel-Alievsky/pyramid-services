@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact name="lib-algart">
+    <output-path>$PROJECT_DIR$/out/artifacts/lib_algart</output-path>
+    <root id="root">
+      <element id="artifact" artifact-name="algart-http-proxy:jar" />
+      <element id="artifact" artifact-name="pyramid-algart-based:jar" />
+      <element id="artifact" artifact-name="pyramid-api:jar" />
+      <element id="artifact" artifact-name="pyramid-common:jar" />
+      <element id="artifact" artifact-name="pyramid-http-control:jar" />
+      <element id="artifact" artifact-name="pyramid-http-server:jar" />
+      <element id="library" level="project" name="Maven: net.algart:algart:1.2.7" />
+      <element id="library" level="project" name="Maven: net.algart.simagis:simagis-plane-pyramid-sdk:1.2.15" />
+    </root>
+  </artifact>
+</component>
