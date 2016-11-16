@@ -5,8 +5,8 @@
   "planePyramidFactoryConfiguration": "com.simagis.pyramid.loci.server.LociPlanePyramidSourceFactory",
   "port": 9510,
   "classPath": [
-    "../lib/.loci/loci_tools-5.0.6.jar",
-    "../lib/.loci/PlanePyramidSourceBioFormats.jar"
+    "lib/.loci/loci_tools-5.0.6.jar",
+    "lib/.loci/PlanePyramidSourceBioFormats.jar"
   ],
   "memory": "2g"
 }

@@ -5,7 +5,7 @@
   "planePyramidFactoryConfiguration": "net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory",
   "port": 9010,
   "classPath": [
-    "../lib/.image-io/*"
+    "lib/.image-io/*"
   ],
   "memory": "8g"
 }

@@ -10,7 +10,7 @@
                 <pathelement location="${dest}/pp-build/lib/json/*"/>
             </classpath>
             <arg value="-f"/>
-            <arg value="pp-build/configuration"/>
+            <arg value="pp-build"/>
         </java>
     </target>
 </project>

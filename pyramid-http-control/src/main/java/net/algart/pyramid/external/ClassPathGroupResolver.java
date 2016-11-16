@@ -90,7 +90,7 @@ public class ClassPathGroupResolver {
                 // java -cp syntax "somefolder/*" means all JARs in this folder
                 final Path jarFolder = Paths.get(path.substring(0, Math.max(0, path.length() - 2)));
                 // - Math.max for a case of single "*" (current folder)
-                final Path actualJarFolder = configuration.getRootFolder().resolve(jarFolder);
+                final Path actualJarFolder = configuration.getPyramidServicesFolder().resolve(jarFolder);
                 final List<String> jarNames = new ArrayList<>();
                 if (Files.exists(actualJarFolder)) {
                     try (final DirectoryStream<Path> jars = Files.newDirectoryStream(actualJarFolder, "*.jar")) {
@@ -158,14 +158,14 @@ public class ClassPathGroupResolver {
             readOnly = false;
         }
         if (args.length < startIndex + 1) {
-            System.out.printf("Usage: %s [-f] configurationFolder,%n"
+            System.out.printf("Usage: %s [-f] projectRoot%n"
                     + "Without -f flag, it works in read-only mode.%n",
                 ClassPathGroupResolver.class.getName());
             return;
         }
-        final Path configurationFolder = Paths.get(args[startIndex]);
+        final Path projectRoot = Paths.get(args[startIndex]);
         final HttpPyramidConfiguration configuration =
-            HttpPyramidConfiguration.readFromFolder(configurationFolder);
+            HttpPyramidConfiguration.readFromRootFolder(projectRoot);
         final Map<Path, JsonObject> correctedJsons = new ClassPathGroupResolver(configuration).resolveAllClassPaths();
         if (correctedJsons.isEmpty()) {
             System.out.printf("Nothing to do%n");

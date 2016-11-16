@@ -24,17 +24,17 @@
 
 package net.algart.pyramid.api.http;
 
+import net.algart.pyramid.api.common.PyramidConstants;
+
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
 import java.io.FileNotFoundException;
-import java.io.IOError;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -219,9 +219,9 @@ public class HttpPyramidConfiguration {
 
         public Path workingDirectory() {
             if (workingDirectory == null) {
-                return parentConfiguration.rootFolder.toAbsolutePath();
+                return parentConfiguration.pyramidServicesFolder.toAbsolutePath();
             } else {
-                return parentConfiguration.rootFolder.resolve(workingDirectory).toAbsolutePath();
+                return parentConfiguration.pyramidServicesFolder.resolve(workingDirectory).toAbsolutePath();
             }
         }
 
@@ -282,7 +282,8 @@ public class HttpPyramidConfiguration {
 
     private final Map<String, Process> processes;
     private final Map<String, Service> allServices;
-    private final Path rootFolder;
+    private final Path projectRoot;
+    private final Path pyramidServicesFolder;
     private final Path globalConfigurationFile;
     private final Set<String> commonClassPath;
     // - some common JARs used by all processes: common open-source API
@@ -293,13 +294,17 @@ public class HttpPyramidConfiguration {
     private String systemCommandsFolder;
 
     private HttpPyramidConfiguration(
-        Path rootFolder, Path globalConfigurationFile, JsonObject globalConfiguration, Map<String, Process> processes)
+        Path projectRoot,
+        Path globalConfigurationFile,
+        JsonObject globalConfiguration,
+        Map<String, Process> processes)
     {
-        Objects.requireNonNull(rootFolder);
+        Objects.requireNonNull(projectRoot);
         Objects.requireNonNull(globalConfigurationFile);
         Objects.requireNonNull(globalConfiguration);
         Objects.requireNonNull(processes);
-        this.rootFolder = rootFolder;
+        this.projectRoot = projectRoot;
+        this.pyramidServicesFolder = projectRoot.resolve(PyramidConstants.PYRAMID_SERVICES_IN_PROJECT_ROOT);
         this.globalConfigurationFile = globalConfigurationFile;
         this.processes = processes;
         final List<Process> processList = new ArrayList<>(processes.values());
@@ -343,12 +348,12 @@ public class HttpPyramidConfiguration {
         return processes.get(groupId);
     }
 
-    /**
-     * Returns proxy configuraion.
-     * @return proxy configuraion; may be <tt>null</tt>.
-     */
-    public Path getRootFolder() {
-        return rootFolder;
+    public Path getProjectRoot() {
+        return projectRoot;
+    }
+
+    public Path getPyramidServicesFolder() {
+        return pyramidServicesFolder;
     }
 
     public Path getGlobalConfigurationFile() {
@@ -380,7 +385,7 @@ public class HttpPyramidConfiguration {
     }
 
     public Path systemCommandsFolder() {
-        return rootFolder.resolve(systemCommandsFolder).toAbsolutePath();
+        return projectRoot.resolve(systemCommandsFolder).toAbsolutePath();
     }
 
     public String commonXmxOption() {
@@ -419,32 +424,37 @@ public class HttpPyramidConfiguration {
         return jsonToPrettyString(toJson(true));
     }
 
-    public static HttpPyramidConfiguration readFromFolder(Path configurationFolder)
-        throws IOException
-    {
-        Objects.requireNonNull(configurationFolder, "Null configurationFolder");
+    public static HttpPyramidConfiguration readFromRootFolder(Path projectRoot) throws IOException {
+        Objects.requireNonNull(projectRoot, "Null projectRoot");
+        final Path configurationFolder = projectRoot.resolve(
+            PyramidConstants.CONFIGURATION_FOLDER_IN_PROJECT_ROOT);
+        if (!Files.isDirectory(configurationFolder)) {
+            throw new FileNotFoundException("Configuration folder "
+                + configurationFolder + " is not an existing folder");
+        }
         final Path globalConfigurationFile = configurationFolder.resolve(GLOBAL_CONFIGURATION_FILE_NAME);
         try (final DirectoryStream<Path> files = Files.newDirectoryStream(
             configurationFolder, CONFIGURATION_FILE_MASK))
         {
-            return readFromFiles(configurationFolder, globalConfigurationFile, files);
+            return readFromFiles(projectRoot, globalConfigurationFile, files);
         }
     }
 
     public static HttpPyramidConfiguration readFromFiles(
-        Path configurationFolder,
+        Path projectRoot,
         Path globalConfigurationFile,
         Iterable<Path> configurationFiles)
         throws IOException
     {
-        Objects.requireNonNull(configurationFolder, "Null configurationFolder");
+        Objects.requireNonNull(projectRoot, "Null projectRoot");
         Objects.requireNonNull(globalConfigurationFile, "Null globalConfigurationFile");
         Objects.requireNonNull(configurationFiles, "Null configurationFiles");
-        if (!Files.isDirectory(configurationFolder)) {
-            throw new FileNotFoundException(configurationFolder + " is not an existing folder");
+        if (!Files.isDirectory(projectRoot)) {
+            throw new FileNotFoundException("Project root " + projectRoot + " is not an existing folder");
         }
         if (!Files.isRegularFile(globalConfigurationFile)) {
-            throw new FileNotFoundException(globalConfigurationFile + " is not an existing file");
+            throw new FileNotFoundException("Global configuration file "
+                + globalConfigurationFile + " is not an existing file");
         }
         final JsonObject globalConfiguration = readJson(globalConfigurationFile);
         final String globalConfigurationFileName = globalConfigurationFile.getFileName().toString();
@@ -468,47 +478,10 @@ public class HttpPyramidConfiguration {
             processes.put(groupId, new Process(groupId, entry.getValue()));
         }
         return new HttpPyramidConfiguration(
-            configurationFolder,
+            projectRoot,
             globalConfigurationFile,
             globalConfiguration,
             processes);
-    }
-
-    public static String getCurrentJREHome() {
-        String s = System.getProperty("java.home");
-        if (s == null) {
-            throw new InternalError("Null java.home system property");
-        }
-        return s;
-    }
-
-    public static Path getCurrentJREJavaExecutable() {
-        try {
-            return getJavaExecutable(HttpPyramidConfiguration.getCurrentJREHome());
-        } catch (FileNotFoundException e) {
-            // Currently running Java must exist always!
-            throw new IOError(e);
-        }
-    }
-
-    public static Path getJavaExecutable(String jreHome) throws FileNotFoundException {
-        // Finding executable file according http://docs.oracle.com/javase/1.5.0/docs/tooldocs/solaris/jdkfiles.html
-        if (jreHome == null) {
-            throw new NullPointerException("Null jreHome argument");
-        }
-        final Path jrePath = Paths.get(jreHome);
-        if (!Files.exists(jrePath)) {
-            throw new FileNotFoundException("JRE home directory " + jrePath + " does not exist");
-        }
-        Path javaBin = jrePath.resolve("bin");
-        Path javaFile = javaBin.resolve("java"); // Unix
-        if (!Files.exists(javaFile)) {
-            javaFile = javaBin.resolve("java.exe"); // Windows
-        }
-        if (!Files.exists(javaFile)) {
-            throw new FileNotFoundException("Cannot find java utility at " + javaFile);
-        }
-        return javaFile;
     }
 
     static String getRequiredString(JsonObject json, String name) {
@@ -564,7 +537,7 @@ public class HttpPyramidConfiguration {
     }
 
     private String resolveClassPath(String p) {
-        return rootFolder.resolve(p).toAbsolutePath().normalize().toString();
+        return pyramidServicesFolder.resolve(p).toAbsolutePath().normalize().toString();
     }
 
     private JsonObject toJson(boolean includeServices) {

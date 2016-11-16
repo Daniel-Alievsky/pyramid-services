@@ -1,8 +1,8 @@
 {
   "commonClassPath" : [
-    "../lib/algart/*",
-    "../lib/grizzly/*",
-    "../lib/json/*"
+    "lib/algart/*",
+    "lib/grizzly/*",
+    "lib/json/*"
   ],
   "commonVmOptions" : [
     "-ea"

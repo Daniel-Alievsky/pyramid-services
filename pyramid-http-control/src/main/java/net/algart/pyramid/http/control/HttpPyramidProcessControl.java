@@ -24,6 +24,7 @@
 
 package net.algart.pyramid.http.control;
 
+import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
@@ -106,7 +107,7 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
     @Override
     public Process startOnLocalhost() {
         final HttpPyramidConfiguration configuration = processConfiguration.parentConfiguration();
-        final Path javaPath = HttpPyramidConfiguration.getCurrentJREJavaExecutable();
+        final Path javaPath = PyramidApiTools.getCurrentJREJavaExecutable();
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
         command.addAll(processConfiguration.vmOptions());
@@ -126,7 +127,7 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
         command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVER_CLASS_NAME);
         command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG);
         command.add("--groupId=" + processConfiguration.getGroupId());
-        command.add(configuration.getRootFolder().toAbsolutePath().toString());
+        command.add(configuration.getProjectRoot().toAbsolutePath().toString());
         command.add(configuration.getGlobalConfigurationFile().toAbsolutePath().toString());
         for (HttpPyramidConfiguration.Service service : processConfiguration.getServices()) {
             command.add(service.getConfigurationFile().toAbsolutePath().toString());

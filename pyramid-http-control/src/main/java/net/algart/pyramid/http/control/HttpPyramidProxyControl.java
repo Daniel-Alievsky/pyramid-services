@@ -25,6 +25,7 @@
 package net.algart.pyramid.http.control;
 
 import net.algart.http.proxy.HttpProxy;
+import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
@@ -99,7 +100,7 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
 
     @Override
     public Process startOnLocalhost() {
-        final Path javaPath = HttpPyramidConfiguration.getCurrentJREJavaExecutable();
+        final Path javaPath = PyramidApiTools.getCurrentJREJavaExecutable();
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
         command.addAll(configuration.getCommonVmOptions());
@@ -118,10 +119,10 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
         command.add(cp.toString());
         command.add(HttpPyramidProxyServer.class.getName());
         command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG);
-        command.add(configuration.getRootFolder().toAbsolutePath().toString());
+        command.add(configuration.getProjectRoot().toAbsolutePath().toString());
         command.add(specificServerConfiguration.getSpecificServerConfigurationFile().toAbsolutePath().toString());
         ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.directory(configuration.getRootFolder().toAbsolutePath().toFile());
+        processBuilder.directory(configuration.getProjectRoot().toAbsolutePath().toFile());
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         LOG.info(JavaProcessControl.commandLineToString(processBuilder));

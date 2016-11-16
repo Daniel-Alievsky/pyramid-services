@@ -467,15 +467,15 @@ public final class HttpPyramidServersLauncher {
         if (args.length < startArgIndex + 3) {
             System.out.printf("Usage:%n");
             System.out.printf("    %s [--checkAlive] [--serviceMode] [--consoleWaiting] start|stop|restart "
-                    + "configurationFolder specificServerConfigurationFile%n",
+                    + "projectRoot specificServerConfigurationFile%n",
                 HttpPyramidServersLauncher.class.getName());
             return;
         }
         final String command = args[startArgIndex].toLowerCase();
-        final Path configurationFolder = Paths.get(args[startArgIndex + 1]);
+        final Path projectRoot = Paths.get(args[startArgIndex + 1]);
         final Path specificServerConfigurationFile = Paths.get(args[startArgIndex + 2]);
         final HttpPyramidServersLauncher launcher = new HttpPyramidServersLauncher(
-            HttpPyramidConfiguration.readFromFolder(configurationFolder),
+            HttpPyramidConfiguration.readFromRootFolder(projectRoot),
             HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile));
         try {
             long t1 = System.nanoTime();

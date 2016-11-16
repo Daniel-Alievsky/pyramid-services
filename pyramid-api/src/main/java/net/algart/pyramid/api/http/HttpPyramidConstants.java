@@ -25,6 +25,9 @@
 package net.algart.pyramid.api.http;
 
 public class HttpPyramidConstants {
+    private HttpPyramidConstants() {
+    }
+
     public static final String HTTP_PYRAMID_SERVER_CLASS_NAME =
         "net.algart.pyramid.http.server.HttpPyramidServer";
     public static final String HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG = "--serviceMode";
@@ -70,7 +73,7 @@ public class HttpPyramidConstants {
         private CommandPrefixes() {}
     }
 
-    public static final String DEFAULT_SYSTEM_COMMANDS_FOLDER = ".system.commands";
+    public static final String DEFAULT_SYSTEM_COMMANDS_FOLDER = "configuration/.system.commands"; //TODO!!
     /**
      * Names of key files in {@link #DEFAULT_SYSTEM_COMMANDS_FOLDER} start from this prefix,
      * where %d is replaced with the port number.
@@ -101,6 +104,4 @@ public class HttpPyramidConstants {
 
     public static final String ALIVE_RESPONSE = "Alive";
 
-    private HttpPyramidConstants() {
-    }
 }

@@ -31,6 +31,9 @@ import java.nio.file.Path;
 import java.util.Locale;
 
 public class HttpPyramidApiTools {
+    private HttpPyramidApiTools() {
+    }
+
     public static Path keyFile(Path systemCommandsFolder, String urlPrefix, int port) {
         final String keyFileFrefix = String.format(Locale.US, HttpPyramidConstants.SYSTEM_COMMANDS_FILE_PREFIX, port);
         return systemCommandsFolder.resolve(keyFileFrefix + urlPrefix.substring(1, urlPrefix.length()));
@@ -86,8 +89,5 @@ public class HttpPyramidApiTools {
 
     public static boolean isUriPyramidCommand(String uriPath) {
         return uriPath.matches(HttpPyramidConstants.CommandPrefixes.PREXIX_START_REG_EXP);
-    }
-
-    private HttpPyramidApiTools() {
     }
 }

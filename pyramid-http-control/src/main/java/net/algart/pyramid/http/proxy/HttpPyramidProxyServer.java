@@ -163,16 +163,16 @@ public final class HttpPyramidProxyServer {
         }
         if (args.length < startArgIndex + 2) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s configurationFolder specificServerConfigurationFile%n",
+            System.out.printf("    %s projectRoot specificServerConfigurationFile%n",
                 HttpPyramidProxyServer.class.getName());
             return;
         }
-        final Path configurationFolder = Paths.get(args[startArgIndex]);
+        final Path projectRoot = Paths.get(args[startArgIndex]);
         final Path specificServerConfigurationFile = Paths.get(args[startArgIndex + 1]);
         final HttpPyramidProxyServer server;
         try {
             final HttpPyramidConfiguration serviceConfiguration =
-                HttpPyramidConfiguration.readFromFolder(configurationFolder);
+                HttpPyramidConfiguration.readFromRootFolder(projectRoot);
             final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
                 HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
             server = new HttpPyramidProxyServer(serviceConfiguration, specificServerConfiguration);

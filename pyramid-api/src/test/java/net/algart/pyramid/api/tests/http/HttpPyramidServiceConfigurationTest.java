@@ -33,12 +33,12 @@ import java.nio.file.Paths;
 public class HttpPyramidServiceConfigurationTest {
     public static void main(String args[]) throws IOException {
         if (args.length == 0) {
-            System.out.printf("Usage: %s configurationFolder%n", HttpPyramidServiceConfigurationTest.class.getName());
+            System.out.printf("Usage: %s projectRoot%n", HttpPyramidServiceConfigurationTest.class.getName());
             return;
         }
-        final Path configurationFolder = Paths.get(args[0]);
+        final Path projectRoot = Paths.get(args[0]);
         final HttpPyramidConfiguration configuration =
-            HttpPyramidConfiguration.readFromFolder(configurationFolder);
+            HttpPyramidConfiguration.readFromRootFolder(projectRoot);
         System.out.println(configuration);
     }
 }

@@ -60,11 +60,11 @@ public class HttpPyramidServersManager {
     }
 
     public static HttpPyramidServersManager newInstance(
-        Path configurationFolder,
+        Path projectRoot,
         Path specificServerConfigurationFile) throws IOException
     {
         return new HttpPyramidServersManager(
-            HttpPyramidConfiguration.readFromFolder(configurationFolder),
+            HttpPyramidConfiguration.readFromRootFolder(projectRoot),
             HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile));
     }
 
@@ -97,13 +97,13 @@ public class HttpPyramidServersManager {
     public static void main(String[] args) throws IOException {
         if (args.length < 2) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s configurationFolder specificServerConfigurationFile%n",
+            System.out.printf("    %s projectRoot specificServerConfigurationFile%n",
                 HttpPyramidServersManager.class.getName());
             return;
         }
-        final Path configurationFolder = Paths.get(args[0]);
+        final Path projectRoot = Paths.get(args[0]);
         final Path specificServerConfigurationFile = Paths.get(args[1]);
-        final HttpPyramidServersManager manager = newInstance(configurationFolder, specificServerConfigurationFile);
+        final HttpPyramidServersManager manager = newInstance(projectRoot, specificServerConfigurationFile);
         manager.startAll();
 
         try {

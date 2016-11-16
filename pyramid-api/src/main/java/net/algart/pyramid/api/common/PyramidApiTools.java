@@ -29,6 +29,7 @@ import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.FileNotFoundException;
+import java.io.IOError;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -38,6 +39,9 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 public class PyramidApiTools {
+    private PyramidApiTools() {
+    }
+
     private static final boolean ENABLE_ALL_CHARACTERS_IN_PYRAMID_ID_FOR_DEBUG = false;
     // - must be false for secure working
 
@@ -108,6 +112,40 @@ public class PyramidApiTools {
         return pyramidFormatName;
     }
 
-    private PyramidApiTools() {
+    public static String getCurrentJREHome() {
+        String s = System.getProperty("java.home");
+        if (s == null) {
+            throw new InternalError("Null java.home system property");
+        }
+        return s;
+    }
+
+    public static Path getCurrentJREJavaExecutable() {
+        try {
+            return getJavaExecutable(getCurrentJREHome());
+        } catch (FileNotFoundException e) {
+            // Currently running Java must exist always!
+            throw new IOError(e);
+        }
+    }
+
+    public static Path getJavaExecutable(String jreHome) throws FileNotFoundException {
+        // Finding executable file according http://docs.oracle.com/javase/1.5.0/docs/tooldocs/solaris/jdkfiles.html
+        if (jreHome == null) {
+            throw new NullPointerException("Null jreHome argument");
+        }
+        final Path jrePath = Paths.get(jreHome);
+        if (!Files.exists(jrePath)) {
+            throw new FileNotFoundException("JRE home directory " + jrePath + " does not exist");
+        }
+        Path javaBin = jrePath.resolve("bin");
+        Path javaFile = javaBin.resolve("java"); // Unix
+        if (!Files.exists(javaFile)) {
+            javaFile = javaBin.resolve("java.exe"); // Windows
+        }
+        if (!Files.exists(javaFile)) {
+            throw new FileNotFoundException("Cannot find java utility at " + javaFile);
+        }
+        return javaFile;
     }
 }

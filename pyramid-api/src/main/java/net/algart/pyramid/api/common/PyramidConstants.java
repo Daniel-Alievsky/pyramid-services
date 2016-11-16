@@ -24,7 +24,18 @@
 
 package net.algart.pyramid.api.common;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class PyramidConstants {
+    private PyramidConstants() {
+    }
+
+    public static final Path PYRAMID_SERVICES_IN_PROJECT_ROOT = Paths.get(getStringEnv(
+        "NET_ALGART_PYRAMID_PYRAMID_SERVICES_IN_PROJECT_ROOT", "")); //TODO!!
+    public static final Path CONFIGURATION_FOLDER_IN_PROJECT_ROOT = Paths.get(getStringEnv(
+        "NET_ALGART_PYRAMID_CONFIGURATION_FOLDER_IN_PROJECT_ROOT", "configuration"));
+
     // The following constants usually do not change, but theoretically can be customized via
     // HttpPyramidConfiguration.GLOBAL_CONFIGURATION_FILE_NAME (json-file), "commonVmOptions" section.
     public static final String PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON = System.getProperty(
@@ -44,7 +55,12 @@ public class PyramidConstants {
     public static final String DEFAULT_IMAGES_ROOT_DIR = System.getProperty(
         "net.algart.pyramid.api.common.imagesRoot", "/pp-images");
 
-
-    private PyramidConstants() {
+    private static String getStringEnv(String envVarName, String defaultValue) {
+        try {
+            String s = System.getenv(envVarName);
+            return s != null ? s : defaultValue;
+        } catch (Exception ex) {
+            return defaultValue;
+        }
     }
 }

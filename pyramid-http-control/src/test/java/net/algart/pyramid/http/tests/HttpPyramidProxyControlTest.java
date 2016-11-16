@@ -35,16 +35,15 @@ import java.nio.file.Paths;
 public class HttpPyramidProxyControlTest {
     public static void main(String[] args) throws IOException {
         if (args.length < 4) {
-            System.out.printf("Usage: %s host start|alive|stop configurationFolder specificServerConfigurationFile%n",
+            System.out.printf("Usage: %s host start|alive|stop projectRoot specificServerConfigurationFile%n",
                 HttpPyramidProxyControlTest.class.getName());
             return;
         }
         final String host = args[0];
         final String command = args[1].toLowerCase();
-        final Path configurationFolder = Paths.get(args[2]);
+        final Path projectRoot = Paths.get(args[2]);
         final Path specificServerConfigurationFile = Paths.get(args[3]);
-        final HttpPyramidConfiguration configuration =
-            HttpPyramidConfiguration.readFromFolder(configurationFolder);
+        final HttpPyramidConfiguration configuration = HttpPyramidConfiguration.readFromRootFolder(projectRoot);
         final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
             HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
 

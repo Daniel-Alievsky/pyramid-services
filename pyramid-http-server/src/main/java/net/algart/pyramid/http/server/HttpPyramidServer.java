@@ -176,10 +176,10 @@ public class HttpPyramidServer {
         }
         if (args.length < startArgIndex + 2 || groupId == null) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s --groupId=com.xxxxxxx configurationFolder specificServerConfigurationFile%n"
+            System.out.printf("    %s --groupId=com.xxxxxxx projectRoot specificServerConfigurationFile%n"
                 , HttpPyramidServer.class.getName());
             System.out.printf("or%n");
-            System.out.printf("    %s --groupId=com.xxxxxxx configurationFolder somePath/.global-configuration.json "
+            System.out.printf("    %s --groupId=com.xxxxxxx projectRoot somePath/.global-configuration.json "
                 + "somePath/.format1.json somePath/.format2.json ... specificServerConfigurationFile%n",
                 HttpPyramidServer.class.getName());
             if (groupId == null) {
@@ -187,7 +187,7 @@ public class HttpPyramidServer {
             }
             return;
         }
-        final Path configurationFolder = Paths.get(args[startArgIndex]);
+        final Path projectRoot = Paths.get(args[startArgIndex]);
         final Path specificServerConfigurationFile = Paths.get(args[args.length - 1]);
         // Note: current version of HttpPyramidServer does not use specificServerConfigurationFile.
         final HttpPyramidConfiguration configuration;
@@ -199,10 +199,9 @@ public class HttpPyramidServer {
                 for (int index = startArgIndex + 2; index < args.length - 1; index++) {
                     files.add(Paths.get(args[index]));
                 }
-                configuration = HttpPyramidConfiguration.readFromFiles(
-                    configurationFolder, globalConfigurationFile, files);
+                configuration = HttpPyramidConfiguration.readFromFiles(projectRoot, globalConfigurationFile, files);
             } else {
-                configuration = HttpPyramidConfiguration.readFromFolder(configurationFolder);
+                configuration = HttpPyramidConfiguration.readFromRootFolder(projectRoot);
             }
             final HttpPyramidConfiguration.Process process = configuration.getProcess(groupId);
             if (process == null) {
