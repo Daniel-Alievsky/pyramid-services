@@ -10,7 +10,6 @@
     <root id="root">
       <element id="file-copy" path="$PROJECT_DIR$/build/welcome.html" />
       <element id="file-copy" path="$PROJECT_DIR$/build/AddImage.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/build/pp-root/LaunchJavaServers.cmd" />
       <element id="file-copy" path="$PROJECT_DIR$/build/pyramids.html" />
       <element id="directory" name="html">
         <element id="dir-copy" path="$PROJECT_DIR$/build/html" />
@@ -46,11 +45,6 @@
         <element id="dir-copy" path="$PROJECT_DIR$/build/pp-links" />
       </element>
       <element id="file-copy" path="$PROJECT_DIR$/build/CopyDemoFiles.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/build/pp-root/JavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/build/pp-root/FindJava.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/build/pp-root/StartJavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/build/pp-root/StopJavaServers.cmd" />
-      <element id="file-copy" path="$PROJECT_DIR$/build/pp-root/RestartJavaServers.cmd" />
     </root>
   </artifact>
 </component>

@@ -33,7 +33,7 @@
 <pre>
     CopyDemoFiles.cmd
 </pre>
-<p>This cmd-file will copy the subfolders pp-build, pp-links and pp-images into the root of your disk.
+<p>This cmd-file will copy the subfolders pp-root, pp-links and pp-images into the root of your disk.
     If it will fail due to insufficient permissions, please copy these folders into the root
     of the current disk manually.</p>
 
@@ -51,12 +51,10 @@
     <li>
         <p>
             <small>Also note: you need to have the following additional JARs from GNU library
-                in <i>pp-build/lib/.loci</i> subfolder:</small>
+                in <i>pp-root/pyramid-services/lib/.loci</i>,
+                <i>pp-root/pyramid-services/lib/.openslide</i>,
+                <i>pp-root/pyramid-services/bin/.openslide</i> subfolders.</small>
         </p>
-<pre>
-    loci_tools-5.0.6.jar
-    PlanePyramidSourceBioFormats.jar
-</pre>
         <p>
             <small>Usually this demo is distrubuted with these JARs. But if not, the cmd-file will start
                 anyway, but only standard formats (jpg, png, gif) will be available for viewing.</small>
