@@ -88,7 +88,7 @@ function inititializeViewer(newHost, newMapTagName, newMacroTagName, newInformat
  * when the server answers, it initializes new pyramid.
  *
  * Note that in professional version the port should be detected automatically by pyramidId
- * in the server-side script (ASP, JSP, ...) by analysis of /pp-control folder and formatName from .pp.json
+ * in the server-side script (ASP, JSP, ...) by analysis of /pp-root folder and formatName from .pp.json
  *
  * @param newPyramidId pyramidId (name of subfolder in /pp-links directory)
  * @param newPort      port for opening this pyramid

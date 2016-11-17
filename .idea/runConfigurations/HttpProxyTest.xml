@@ -7,7 +7,7 @@
       </pattern>
     </extension>
     <option name="MAIN_CLASS_NAME" value="net.algart.http.proxy.tests.HttpProxyTest" />
-    <option name="VM_PARAMETERS" value="-D_java.util.logging.config.file=out\artifacts\_pyramid_services\pp-build\logging\logging.debug.properties" />
+    <option name="VM_PARAMETERS" value="-Djava.util.logging.config.file=out\artifacts\_pyramid_services\pp-root\host-conf-example\logging.debug.properties" />
     <option name="PROGRAM_PARAMETERS" value="localhost 82 83 30000" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
