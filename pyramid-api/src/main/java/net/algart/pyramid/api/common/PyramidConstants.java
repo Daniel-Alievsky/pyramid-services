@@ -32,9 +32,9 @@ public class PyramidConstants {
     }
 
     public static final Path PYRAMID_SERVICES_IN_PROJECT_ROOT = Paths.get(getStringEnv(
-        "NET_ALGART_PYRAMID_PYRAMID_SERVICES_IN_PROJECT_ROOT", "")); //TODO!!
+        "NET_ALGART_PYRAMID_PYRAMID_SERVICES_IN_PROJECT_ROOT", "pyramid-services"));
     public static final Path CONFIGURATION_FOLDER_IN_PROJECT_ROOT = Paths.get(getStringEnv(
-        "NET_ALGART_PYRAMID_CONFIGURATION_FOLDER_IN_PROJECT_ROOT", "configuration"));
+        "NET_ALGART_PYRAMID_CONFIGURATION_FOLDER_IN_PROJECT_ROOT", "pyramid-services/conf/services"));
 
     // The following constants usually do not change, but theoretically can be customized via
     // HttpPyramidConfiguration.GLOBAL_CONFIGURATION_FILE_NAME (json-file), "commonVmOptions" section.

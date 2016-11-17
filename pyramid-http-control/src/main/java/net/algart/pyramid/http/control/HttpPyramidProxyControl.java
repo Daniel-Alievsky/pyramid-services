@@ -122,7 +122,7 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
         command.add(configuration.getProjectRoot().toAbsolutePath().toString());
         command.add(specificServerConfiguration.getSpecificServerConfigurationFile().toAbsolutePath().toString());
         ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.directory(configuration.getProjectRoot().toAbsolutePath().toFile());
+        processBuilder.directory(configuration.getPyramidServicesFolder().toAbsolutePath().toFile());
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         LOG.info(JavaProcessControl.commandLineToString(processBuilder));

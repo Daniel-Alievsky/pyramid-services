@@ -9,7 +9,8 @@
 *.xml text
 *.iml text
 # Data
-*.json text    
+*.json text
+*.txt text
 # Web
 *.js text
 *.scss text
