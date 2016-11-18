@@ -94,30 +94,6 @@ public class HttpPyramidServersManager {
     }
 
 
-    public static void main(String[] args) throws IOException {
-        if (args.length < 2) {
-            System.out.printf("Usage:%n");
-            System.out.printf("    %s projectRoot specificServerConfigurationFile%n",
-                HttpPyramidServersManager.class.getName());
-            return;
-        }
-        final Path projectRoot = Paths.get(args[0]);
-        final Path specificServerConfigurationFile = Paths.get(args[1]);
-        final HttpPyramidServersManager manager = newInstance(projectRoot, specificServerConfigurationFile);
-        manager.startAll();
-
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException ignored) {
-        }
-        System.out.printf("Press \"ENTER\" to stop all started servers...%n%n");
-        try {
-            System.in.read();
-        } catch (IOException ignored) {
-        }
-        manager.stopAll();
-    }
-
     private class RevivingThread extends Thread {
 
         @Override
@@ -172,6 +148,41 @@ public class HttpPyramidServersManager {
                     serviceCount, processCount));
             }).waitFor();
         }
+    }
+
+    public static void main(String[] args) throws IOException {
+        if (args.length < 2) {
+            System.out.printf("Usage:%n");
+            System.out.printf("    %s projectRoot specificServerConfigurationFile%n",
+                HttpPyramidServersManager.class.getName());
+            return;
+        }
+        final Path projectRoot = Paths.get(args[0]);
+        final Path specificServerConfigurationFile = Paths.get(args[1]);
+        final HttpPyramidServersManager manager = newInstance(projectRoot, specificServerConfigurationFile);
+        try {
+            manager.startAll();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            System.err.printf("%n%nStarting failed; attempt to stop all started processes...%n%n");
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ignored) {
+            }
+            manager.launcher.stopAll(false).waitFor();
+            System.exit(1);
+        }
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException ignored) {
+        }
+        System.out.printf("%nPress \"ENTER\" to stop all started servers...%n%n");
+        try {
+            System.in.read();
+        } catch (IOException ignored) {
+        }
+        manager.stopAll();
     }
 }
 

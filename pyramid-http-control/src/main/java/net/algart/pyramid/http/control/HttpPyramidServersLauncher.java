@@ -43,9 +43,11 @@ public final class HttpPyramidServersLauncher {
     private static final int SUCCESS_STOP_TIMEOUT_IN_MS =
         HttpPyramidConstants.SYSTEM_COMMANDS_DELAY +
             HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH +
-            200;
-    // - note that services and the proxy don't stop immediately, but may delay exiting during
-    // someTime + SYSTEM_COMMANDS_DELAY_AFTER_FINISH ms, where someTime <= SYSTEM_COMMANDS_DELAY
+            1000;
+    // - Note that services and the proxy don't stop immediately, but may delay exiting during
+    // someTime + SYSTEM_COMMANDS_DELAY_AFTER_FINISH ms, where someTime <= SYSTEM_COMMANDS_DELAY.
+    // But even in this case we need to give one or several additional seconds to the process, because
+    // it can now work over a lot of reading tasks.
     private static final int FORCIBLE_STOP_DELAY_IN_MS = 500;
 
     private static final int PROBLEM_DELAY_IN_MS = 3000;
@@ -75,8 +77,11 @@ public final class HttpPyramidServersLauncher {
     }
 
     /**
-     * Starts all pyramid processes and proxy.
-     * Good for starting all service at the very beginning, for example, as OS services.
+     * <p>Starts all pyramid processes and proxy.
+     * Good for starting all service at the very beginning, for example, as OS services.</p>
+     *
+     * <p>Note: if all configuration files are correct, this method should not throw exceptions.
+     * In a case of an exception, it is possible that this method will start only part of necessary processes.</p>
      *
      * @param skipAlreadyAlive if <tt>true</tt>, the processes, which are already alive, are skipped;
      *                         if not, alive processes will probably lead to exception  "cannot start process".
@@ -123,7 +128,7 @@ public final class HttpPyramidServersLauncher {
                     serviceCount += configuration.numberOfProcessServices(allGroupId.get(i));
                 }
             }
-            LOG.info(String.format("%n%d services in %d processes stopped, %s",
+            LOG.info(String.format("%n%d services in %d processes normally stopped, %s",
                 serviceCount, processCount, proxyCommand != null && proxyCommand.isAccepted() ?
                     "1 proxy stopped" :
                     specificServerConfiguration.hasProxy() ? "1 proxy FAILED to stop" : "proxy absent"));
@@ -424,7 +429,7 @@ public final class HttpPyramidServersLauncher {
         }
     }
 
-    private static void printExceptionWaitForEnterKeyAndExit(Throwable exception) {
+    private static void printExceptionAndWaitForEnterKey(Throwable exception) {
         System.err.printf("%nSome problems occured! Error message:%n%s%n%nStack trace:%n",
             exception.getMessage());
         exception.printStackTrace();
@@ -435,8 +440,6 @@ public final class HttpPyramidServersLauncher {
             // should not occur
             e.printStackTrace();
         }
-
-        System.exit(1);
     }
 
     private static boolean waitFor(Process javaProcess, int timeoutInMilliseconds) {
@@ -506,10 +509,10 @@ public final class HttpPyramidServersLauncher {
                 e.printStackTrace();
                 System.exit(1);
             } else {
-                printExceptionWaitForEnterKeyAndExit(e);
+                printExceptionAndWaitForEnterKey(e);
+                launcher.stopAll(false);
+                System.exit(1);
             }
-            return;
-            // - this operator will never executed
         }
         if (consoleWaiting && !command.equals("stop")) {
             launcher.printWelcomeAndWaitForEnterKey();

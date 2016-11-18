@@ -18,23 +18,24 @@
         <element id="dir-copy" path="$PROJECT_DIR$/build/pp-root" />
         <element id="directory" name="pyramid-services">
           <element id="directory" name="lib">
-            <element id="directory" name="algart">
-              <element id="artifact" artifact-name="lib-algart" />
-            </element>
-            <element id="directory" name="grizzly">
-              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-framework:2.3.28" />
-              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-server:2.3.28" />
-              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-servlet:2.3.28" />
-              <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http:2.3.28" />
-            </element>
-            <element id="directory" name="json">
-              <element id="library" level="project" name="Maven: javax.json:javax.json-api:1.0" />
-              <element id="library" level="project" name="Maven: org.glassfish:javax.json:1.0.4" />
-              <element id="library" level="project" name="Maven: net.simagis.ext:json:0.1" />
-            </element>
             <element id="directory" name=".image-io">
               <element id="library" level="project" name="Maven: com.github.jai-imageio:jai-imageio-core:1.3.1" />
             </element>
+            <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-servlet:2.3.28" />
+            <element id="library" level="project" name="Maven: net.simagis.ext:json:0.1" />
+            <element id="library" level="project" name="Maven: javax.json:javax.json-api:1.0" />
+            <element id="library" level="project" name="Maven: org.glassfish:javax.json:1.0.4" />
+            <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-framework:2.3.28" />
+            <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http-server:2.3.28" />
+            <element id="library" level="project" name="Maven: org.glassfish.grizzly:grizzly-http:2.3.28" />
+            <element id="artifact" artifact-name="algart-http-proxy:jar" />
+            <element id="artifact" artifact-name="pyramid-algart-based:jar" />
+            <element id="artifact" artifact-name="pyramid-api:jar" />
+            <element id="artifact" artifact-name="pyramid-common:jar" />
+            <element id="artifact" artifact-name="pyramid-http-control:jar" />
+            <element id="artifact" artifact-name="pyramid-http-server:jar" />
+            <element id="library" level="project" name="Maven: net.algart:algart:1.2.7" />
+            <element id="library" level="project" name="Maven: net.algart.simagis:simagis-plane-pyramid-sdk:1.2.15" />
           </element>
         </element>
       </element>

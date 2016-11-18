@@ -537,7 +537,20 @@ public class HttpPyramidConfiguration {
     }
 
     private String resolveClassPath(String p) {
-        return pyramidServicesFolder.resolve(p).toAbsolutePath().normalize().toString();
+        final boolean endsWithSlashAsterisk = p.endsWith("/*");
+        // - it is allowed form for JVM class path
+        if (endsWithSlashAsterisk) {
+            p = p.substring(0, p.length() - 2);
+        }
+        String result = pyramidServicesFolder.resolve(p).toAbsolutePath().normalize().toString();
+        if (endsWithSlashAsterisk) {
+            if (!result.endsWith("/")) {
+                result += "/";
+                // - to be on the safe side
+            }
+            result += "*";
+        }
+        return result;
     }
 
     private JsonObject toJson(boolean includeServices) {

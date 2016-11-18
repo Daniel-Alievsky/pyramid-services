@@ -101,11 +101,7 @@ public class ClassPathGroupResolver {
                 }
                 if (jarNames.isEmpty()) {
                     result.add(path);
-                    //TODO!! difference between invalid and empty directory: 1st is a bug, 2nd must be processed
                     // Special case: preserving "*" in for empty or non-existing directory.
-                    // It will be a signal for the service loader that something configured wrong.
-                    // (Throwing exception here will be ignored by artifact builder.)
-
                     // Maybe, the administrator will add some JARs there later,
                     // and JVM will be able to understand this without resolving.
                 } else {
