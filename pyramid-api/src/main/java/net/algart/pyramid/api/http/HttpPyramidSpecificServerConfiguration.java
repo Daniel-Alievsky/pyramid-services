@@ -24,14 +24,15 @@
 
 package net.algart.pyramid.api.http;
 
+import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.common.PyramidConstants;
 
-import javax.json.Json;
-import javax.json.JsonException;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import javax.json.*;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -39,6 +40,43 @@ import java.util.Objects;
  * Customized by system administrator for each server.
  */
 public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
+    public static class JRE extends ConvertibleToJson {
+        public static String DEFAULT_NAME = "default";
+
+        private final String name;
+        private final String homePath;
+        private final HttpPyramidSpecificServerConfiguration parentConfiguration;
+
+        public JRE(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
+            this.name = HttpPyramidConfiguration.getRequiredString(json, "name");
+            this.homePath = HttpPyramidConfiguration.getRequiredString(json, "homePath");
+            this.parentConfiguration = parentConfiguration;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getHomePath() {
+            return homePath;
+        }
+
+        public HttpPyramidSpecificServerConfiguration parentConfiguration() {
+            return parentConfiguration;
+        }
+
+        public String toJsonString() {
+            return toJson().toString();
+        }
+
+        JsonObject toJson() {
+            final JsonObjectBuilder builder = Json.createObjectBuilder();
+            builder.add("name", name);
+            builder.add("homePath", homePath);
+            return builder.build();
+        }
+    }
+
     public static class SSLSettings extends ConvertibleToJson {
         private final String keystoreFile;
         private final String keystorePassword;
@@ -157,6 +195,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
     private final String imagesRootDir;
     // - note that "imagesRootDir" is not used by pyramid services,
     // but can be useful for upload and user management systems
+    private final Map<String, JRE> jreMap;
     private final boolean proxy;
     private final ProxySettings proxySettings;
     private final SSLSettings sslSettings;
@@ -168,6 +207,16 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         this.configRootDir = json.getString("configRootDir", PyramidConstants.DEFAULT_CONFIG_ROOT_DIR);
         this.configFileName = json.getString("configFileName", PyramidConstants.DEFAULT_CONFIG_FILE_NAME);
         this.imagesRootDir = json.getString("imagesRootDir", PyramidConstants.DEFAULT_IMAGES_ROOT_DIR);
+        this.jreMap = new LinkedHashMap<>();
+        final JsonArray jreListJson = json.getJsonArray("jre");
+        if (jreListJson != null) {
+            for (JsonValue jreJson : jreListJson) {
+                if (jreJson instanceof JsonObject) {
+                    final JRE jre = new JRE(this, ((JsonObject) jreJson));
+                    this.jreMap.put(jre.name, jre);
+                }
+            }
+        }
         this.proxy = json.getBoolean("proxy", false);
         final JsonObject proxySettingsJson = json.getJsonObject("proxySettings");
         if (proxy && proxySettingsJson == null) {
@@ -208,6 +257,35 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         return specificServerConfigurationFile;
     }
 
+    public String jreHome() {
+        final JRE jre = jreMap.get(JRE.DEFAULT_NAME);
+        return jre != null ? jre.getHomePath() : PyramidApiTools.currentJREHome();
+    }
+
+    public String jreHome(String jreName) {
+        if (jreName == null) {
+            return jreHome();
+        }
+        final JRE jre = jreMap.get(jreName);
+        return jre != null ? jre.getHomePath() : jreHome();
+    }
+
+    public Path javaExecutable() {
+        return javaExecutable(null);
+    }
+
+    public Path javaExecutable(String jreName) {
+        final String jreHome = jreHome(jreName);
+        try {
+            return PyramidApiTools.javaExecutable(jreHome);
+        } catch (FileNotFoundException e) {
+            // Currently running Java must exist always!
+            throw new JsonException("Invalid "
+                + (jreName == null ? "default JRE" : "JRE \"" + jreName + "\"")
+                + ": the path \"" + jreHome + "\" does not contain correct Java Runtime Envitonment", e);
+        }
+    }
+
     public String toJsonString() {
         return toJson().toString();
     }
@@ -230,6 +308,11 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         builder.add("configRootDir", configRootDir);
         builder.add("configFileName", configFileName);
         builder.add("imagesRootDir", imagesRootDir);
+        final JsonArrayBuilder jreBuilder = Json.createArrayBuilder();
+        for (JRE jre : this.jreMap.values()) {
+            jreBuilder.add(jre.toJson());
+        }
+        builder.add("jre", jreBuilder.build());
         builder.add("proxy", proxy);
         if (proxySettings != null) {
             builder.add("proxySettings", proxySettings.toJson());

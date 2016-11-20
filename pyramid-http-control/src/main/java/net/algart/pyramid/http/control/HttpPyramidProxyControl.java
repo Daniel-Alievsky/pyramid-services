@@ -100,7 +100,7 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
 
     @Override
     public Process startOnLocalhost() {
-        final Path javaPath = PyramidApiTools.getCurrentJREJavaExecutable();
+        final Path javaPath = specificServerConfiguration.javaExecutable();
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
         command.addAll(configuration.getCommonVmOptions());

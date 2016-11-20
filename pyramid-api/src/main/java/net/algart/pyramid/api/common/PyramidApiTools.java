@@ -112,24 +112,15 @@ public class PyramidApiTools {
         return pyramidFormatName;
     }
 
-    public static String getCurrentJREHome() {
+    public static String currentJREHome() {
         String s = System.getProperty("java.home");
         if (s == null) {
-            throw new InternalError("Null java.home system property");
+            throw new IllegalStateException("Null java.home system property");
         }
         return s;
     }
 
-    public static Path getCurrentJREJavaExecutable() {
-        try {
-            return getJavaExecutable(getCurrentJREHome());
-        } catch (FileNotFoundException e) {
-            // Currently running Java must exist always!
-            throw new IOError(e);
-        }
-    }
-
-    public static Path getJavaExecutable(String jreHome) throws FileNotFoundException {
+    public static Path javaExecutable(String jreHome) throws FileNotFoundException {
         // Finding executable file according http://docs.oracle.com/javase/1.5.0/docs/tooldocs/solaris/jdkfiles.html
         if (jreHome == null) {
             throw new NullPointerException("Null jreHome argument");

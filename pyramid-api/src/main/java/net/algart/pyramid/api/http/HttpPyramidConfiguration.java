@@ -55,6 +55,7 @@ public class HttpPyramidConfiguration {
         private final String groupId;
         private final String planePyramidFactory;
         private final String planePyramidFactoryConfiguration;
+        private final String jreName;
         private final Set<String> classPath;
         private final Set<String> vmOptions;
         // - classPath and vmOptions of all services of the single processes are joined
@@ -72,6 +73,7 @@ public class HttpPyramidConfiguration {
             this.groupId = getRequiredString(json, "groupId");
             this.planePyramidFactory = getRequiredString(json, "planePyramidFactory");
             this.planePyramidFactoryConfiguration = json.getString("planePyramidFactoryConfiguration", null);
+            this.jreName = json.getString("jreName", null);
             final JsonArray classPath = getRequiredJsonArray(json, CLASS_PATH_FIELD);
             this.classPath = new TreeSet<>();
             for (int k = 0, n = classPath.size(); k < n; k++) {
@@ -115,6 +117,10 @@ public class HttpPyramidConfiguration {
             return planePyramidFactoryConfiguration;
         }
 
+        public String getJREName() {
+            return jreName;
+        }
+
         public Collection<String> getClassPath() {
             return Collections.unmodifiableSet(classPath);
         }
@@ -149,6 +155,9 @@ public class HttpPyramidConfiguration {
             builder.add("groupId", groupId);
             builder.add("planePyramidFactory", planePyramidFactory);
             builder.add("planePyramidFactoryConfiguration", planePyramidFactoryConfiguration);
+            if (jreName != null) {
+                builder.add("jreName", jreName);
+            }
             builder.add("classPath", toJsonArray(classPath));
             builder.add("vmOptions", toJsonArray(vmOptions));
             if (memory != null) {
@@ -162,6 +171,7 @@ public class HttpPyramidConfiguration {
     public static class Process extends ConvertibleToJson {
         private final String groupId;
         private final List<Service> services;
+        private final String jreName;
         private final String workingDirectory;
         private final long requiredMemory;
         private HttpPyramidConfiguration parentConfiguration;
@@ -172,9 +182,22 @@ public class HttpPyramidConfiguration {
             for (Service service : services) {
                 service.parentProcess = this;
             }
+            String jreName = null;
             String workingDirectory = null;
             long requiredMemory = 0;
             for (Service service : services) {
+                if (service.jreName != null) {
+                    if (jreName == null) {
+                        jreName = service.jreName;
+                    } else {
+                        if (!jreName.equals(service.jreName)) {
+                            throw new JsonException("Invalid configuration JSON:"
+                                + " two services of the process with groupId=\"" + groupId
+                                + "\" require different JRE names \""
+                                + jreName + "\" and \"" + service.jreName+ "\"");
+                        }
+                    }
+                }
                 if (service.workingDirectory != null) {
                     if (workingDirectory == null) {
                         workingDirectory = service.workingDirectory;
@@ -189,6 +212,7 @@ public class HttpPyramidConfiguration {
                 }
                 requiredMemory += service.memory == null ? 0 : service.memory;
             }
+            this.jreName = jreName;
             this.workingDirectory = workingDirectory;
             this.requiredMemory = requiredMemory;
         }
@@ -215,6 +239,10 @@ public class HttpPyramidConfiguration {
                 result.add(service.getPort());
             }
             return result;
+        }
+
+        public String jreName() {
+            return jreName;
         }
 
         public Path workingDirectory() {
@@ -265,6 +293,9 @@ public class HttpPyramidConfiguration {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
             builder.add("groupId", groupId);
             builder.add("services", toJsonArray(services));
+            if (jreName != null) {
+                builder.add("jreName", jreName);
+            }
             if (workingDirectory != null) {
                 builder.add("workingDirectory", workingDirectory);
             }

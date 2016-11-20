@@ -107,7 +107,7 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
     @Override
     public Process startOnLocalhost() {
         final HttpPyramidConfiguration configuration = processConfiguration.parentConfiguration();
-        final Path javaPath = PyramidApiTools.getCurrentJREJavaExecutable();
+        final Path javaPath = specificServerConfiguration.javaExecutable(processConfiguration.jreName());
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
         command.addAll(processConfiguration.vmOptions());

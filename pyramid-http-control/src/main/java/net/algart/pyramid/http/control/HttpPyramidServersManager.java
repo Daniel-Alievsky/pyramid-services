@@ -144,7 +144,7 @@ public class HttpPyramidServersManager {
                         serviceCount += launcher.getConfiguration().numberOfProcessServices(allGroupId.get(i));
                     }
                 }
-                LOG.info(String.format("%n%d services in %d processes successfully revivied",
+                LOG.info(String.format("%n%d services in %d processes successfully revived",
                     serviceCount, processCount));
             }).waitFor();
         }

@@ -1,6 +1,12 @@
 {
   "configRootDir": "/pp-links",
   "configFileName": "config.json",
+  "jre": [
+    {
+      "name": "default",
+      "homePath": "C:/Program Files/Java/jre1.8.0_111"
+    }
+  ],
   "proxy": true,
   "proxySettings": {
     "proxyPort": 100,
