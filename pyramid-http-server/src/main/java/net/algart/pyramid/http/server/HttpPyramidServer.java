@@ -123,8 +123,7 @@ public class HttpPyramidServer {
                     System.out.printf("Press \"Ctrl+C\" or \"ENTER\" to kill the server, "
                         + "or wait when it will be finished normally by the system command...%n%n");
                     System.in.read();
-                } catch (Exception e) {
-                    // should not occur
+                } catch (Exception ignored) {
                 }
                 System.exit(2);
             }
@@ -225,5 +224,9 @@ public class HttpPyramidServer {
             server.printWelcomeAndKillOnEnterKey();
         }
         server.waitForFinishAndProcessSystemCommands();
+        System.exit(0);
+        // - force quick exiting the server after "finish" command
+        // (maybe, there is some "heavy" computations are performed now in some threads,
+        // but they are absolutely useless after "finish" command)
     }
 }

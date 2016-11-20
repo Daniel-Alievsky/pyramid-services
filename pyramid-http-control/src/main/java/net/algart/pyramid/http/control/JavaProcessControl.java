@@ -67,15 +67,21 @@ abstract class JavaProcessControl {
      * <p>This method does not wait for actual finishing.
      * You should wait for actual finishing with help of {@link AsyncPyramidCommand#waitFor()} method.</p>
      *
-     * @param timeoutInMilliseconds timeout in milliseconds; if the command was not accepted in this period,
-     *                              {@link AsyncPyramidCommand#isAccepted()} will return <tt>false</tt>.
+     * @param timeoutInMilliseconds        timeout in milliseconds; if the command was not accepted in this period,
+     *                                     {@link AsyncPyramidCommand#isAccepted()} will return <tt>false</tt>.
+     * @param delayAfterStopInMilliseconds delay after success; if the command was successfully accepted,
+     *                                     it will be concidered {@link AsyncPyramidCommand#isFinished() finished}
+     *                                     not immetidately, but after this delay (it can be useful, for example,
+     *                                     to be sure that the OS process was really finished).
      * @return {@link AsyncPyramidCommand} object allowing to wait for actual finishing the process.
      * @throws InvalidFileConfigurationException in a case of disk problems. Usually this method should not
      *                                           throw exceptions, besides a rare case when configuration
-     *                                           of the file system prevents creating or deleting any files
+     *                                           of the file system prevents creating or deleting some files
      *                                           (for example, the system folder for key files does not really exist).
      */
-    public abstract AsyncPyramidCommand stopOnLocalhost(int timeoutInMilliseconds)
+    public abstract AsyncPyramidCommand stopOnLocalhostRequest(
+        int timeoutInMilliseconds,
+        int delayAfterStopInMilliseconds)
         throws InvalidFileConfigurationException;
 
     static String commandLineToString(ProcessBuilder processBuilder) {

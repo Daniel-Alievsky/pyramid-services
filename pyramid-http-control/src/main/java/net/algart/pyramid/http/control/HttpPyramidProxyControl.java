@@ -135,12 +135,16 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
     }
 
     @Override
-    public final AsyncPyramidCommand stopOnLocalhost(int timeoutInMilliseconds)
+    public final AsyncPyramidCommand stopOnLocalhostRequest(int timeoutInMilliseconds, int delayAfterStopInMilliseconds)
         throws InvalidFileConfigurationException
     {
         LOG.info("Stopping " + processName() + " on localhost...");
         return new AsyncPyramidSystemCommand(
-            HttpProxy.FINISH_COMMAND, proxyPort, systemCommandsFolder, timeoutInMilliseconds);
+            HttpProxy.FINISH_COMMAND,
+            proxyPort,
+            systemCommandsFolder,
+            timeoutInMilliseconds,
+            delayAfterStopInMilliseconds);
     }
 
     public final boolean isProxyAlive(boolean logWhenFails) {

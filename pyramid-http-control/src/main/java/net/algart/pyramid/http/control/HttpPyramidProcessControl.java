@@ -148,11 +148,13 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
 
 
     @Override
-    public AsyncPyramidCommand stopOnLocalhost(int timeoutInMilliseconds) throws InvalidFileConfigurationException {
+    public AsyncPyramidCommand stopOnLocalhostRequest(int timeoutInMilliseconds, int delayAfterStopInMilliseconds)
+        throws InvalidFileConfigurationException
+    {
         LOG.info("Stopping " + processName() + " on localhost...");
         final List<AsyncPyramidCommand> subTasks = new ArrayList<>();
         for (HttpPyramidServiceControl serviceControl : serviceControls) {
-            subTasks.add(serviceControl.stopServiceOnLocalhost(timeoutInMilliseconds));
+            subTasks.add(serviceControl.stopServiceOnLocalhostRequest(timeoutInMilliseconds, delayAfterStopInMilliseconds));
         }
         return new MultipleAsyncPyramidCommand(subTasks);
     }

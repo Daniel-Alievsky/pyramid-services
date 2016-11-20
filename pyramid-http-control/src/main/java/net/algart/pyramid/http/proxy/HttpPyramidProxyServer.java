@@ -192,5 +192,7 @@ public final class HttpPyramidProxyServer {
             server.printWelcomeAndKillOnEnterKey();
         }
         server.waitForFinish();
+        System.exit(0);
+        // - force quick exiting the server after "finish" command
     }
 }

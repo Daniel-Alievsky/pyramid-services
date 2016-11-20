@@ -92,10 +92,15 @@ public final class HttpPyramidServiceControl {
         }
     }
 
-    public final AsyncPyramidCommand stopServiceOnLocalhost(int timeoutInMilliseconds)
+    public final AsyncPyramidCommand stopServiceOnLocalhostRequest(
+        int timeoutInMilliseconds, 
+        int delayAfterStopInMilliseconds)
         throws InvalidFileConfigurationException
     {
-        return requestSystemCommand(HttpPyramidConstants.CommandPrefixes.FINISH, timeoutInMilliseconds);
+        return requestSystemCommand(
+            HttpPyramidConstants.CommandPrefixes.FINISH,
+            timeoutInMilliseconds,
+            delayAfterStopInMilliseconds);
     }
 
     public final PlanePyramidInformation information(String pyramidId) throws IOException {
@@ -119,10 +124,18 @@ public final class HttpPyramidServiceControl {
         return openCustomConnection(pathAndQuery, requestMethod, host, port, https);
     }
 
-    public final AsyncPyramidCommand requestSystemCommand(String commandPrefix, int timeoutInMilliseconds)
+    public final AsyncPyramidCommand requestSystemCommand(
+        String commandPrefix,
+        int timeoutInMilliseconds,
+        int delayAfterStopInMilliseconds)
         throws InvalidFileConfigurationException
     {
-        return new AsyncPyramidSystemCommand(commandPrefix, port, systemCommandsFolder, timeoutInMilliseconds);
+        return new AsyncPyramidSystemCommand(
+            commandPrefix,
+            port,
+            systemCommandsFolder,
+            timeoutInMilliseconds,
+            delayAfterStopInMilliseconds);
     }
 
     private void checkHttpOk(HttpURLConnection connection) throws IOException {

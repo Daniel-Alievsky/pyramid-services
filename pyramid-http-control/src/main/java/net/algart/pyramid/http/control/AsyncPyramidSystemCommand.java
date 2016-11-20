@@ -41,8 +41,17 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
     private final int port;
     private final Path keyFile;
     private final long timeoutStamp;
+    private final long delayAfterStopInMilliseconds;
+    private volatile long finishStamp;
+    private volatile boolean waitingBeforeFinish = false;
 
-    AsyncPyramidSystemCommand(String command, int port, Path systemCommandsFolder, int timeoutInMilliseconds)
+    AsyncPyramidSystemCommand(
+        String command,
+        int port,
+        Path systemCommandsFolder,
+        int timeoutInMilliseconds,
+        int delayAfterStopInMilliseconds
+    )
         throws InvalidFileConfigurationException
     {
         Objects.requireNonNull(command, "Null command");
@@ -69,23 +78,39 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
             throw new InvalidFileConfigurationException(e);
         }
         this.timeoutStamp = System.currentTimeMillis() + timeoutInMilliseconds;
+        this.delayAfterStopInMilliseconds = delayAfterStopInMilliseconds;
     }
 
     void check() {
-        if (!isFinished()) {
-            setAccepted(!Files.exists(keyFile));
+        if (isFinished()) {
+            return;
         }
-        if (isAccepted() || System.currentTimeMillis() >= timeoutStamp) {
-            setFinished(true);
-            if (!isAccepted()) {
-                try {
-                    Files.deleteIfExists(keyFile);
-                    // - necessary to remove file even if the process did not react to it:
-                    // in other case, this file will lead to problems while new starting that process
-                } catch (IOException ignored) {
-                }
+        if (waitingBeforeFinish) {
+            if (System.currentTimeMillis() > finishStamp) {
+                waitingBeforeFinish = false;
+                setFinished(true);
+                LOG.info(this + " was finished (command was " + (isAccepted() ? "accepted" : "ignored") + ")");
             }
-            LOG.info(this + " was " + (isAccepted() ? "accepted" : "IGNORED"));
+            return;
+        }
+        if (System.currentTimeMillis() > timeoutStamp) {
+            try {
+                Files.deleteIfExists(keyFile);
+                // - necessary to remove file even if the process did not react to it:
+                // in other case, this file will lead to problems while new starting the process
+            } catch (IOException ignored) {
+            }
+            setFinished(true);
+            LOG.info(this + " was IGNORED");
+            return;
+        }
+        final boolean accepted = !Files.exists(keyFile);
+        if (accepted) {
+            waitingBeforeFinish = true;
+            setAccepted(true);
+            this.finishStamp = System.currentTimeMillis() + delayAfterStopInMilliseconds;
+            LOG.info(this + " was accepted");
+            return;
         }
     }
 

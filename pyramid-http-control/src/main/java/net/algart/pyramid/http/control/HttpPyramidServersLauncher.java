@@ -41,13 +41,13 @@ public final class HttpPyramidServersLauncher {
 
     private static final int SUCCESS_START_DELAY_IN_MS = 1000;
     private static final int SUCCESS_STOP_TIMEOUT_IN_MS =
-        HttpPyramidConstants.SYSTEM_COMMANDS_DELAY +
-            HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH +
-            1000;
-    // - Note that services and the proxy don't stop immediately, but may delay exiting during
-    // someTime + SYSTEM_COMMANDS_DELAY_AFTER_FINISH ms, where someTime <= SYSTEM_COMMANDS_DELAY.
-    // But even in this case we need to give one or several additional seconds to the process, because
-    // it can now work over a lot of reading tasks.
+        HttpPyramidConstants.SYSTEM_COMMANDS_DELAY + 1000;
+    // - We need to give one or several additional seconds to the process,
+    // because it can now work over a lot of reading tasks.
+    private static final int DELAY_AFTER_SUCCESS_STOP_IN_MS =
+        HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH + 500;
+    // - Note that services and the proxy don't stop immediately, but will delay exiting
+    // during SYSTEM_COMMANDS_DELAY_AFTER_FINISH ms.
     private static final int FORCIBLE_STOP_DELAY_IN_MS = 500;
 
     private static final int PROBLEM_DELAY_IN_MS = 3000;
@@ -105,17 +105,17 @@ public final class HttpPyramidServersLauncher {
                 specificServerConfiguration.hasProxy() ? "1 proxy FAILED" : "proxy absent"));
     }
 
-    public AsyncPyramidCommand stopAll(boolean skipNotAlive) throws InvalidFileConfigurationException {
+    public AsyncPyramidCommand stopAllRequest(boolean skipNotAlive) throws InvalidFileConfigurationException {
         final List<AsyncPyramidCommand> allSubCommands = new ArrayList<>();
         final List<AsyncPyramidCommand> serviceCommands = new ArrayList<>();
         final List<String> allGroupId = new ArrayList<>(configuration.allGroupId());
         for (String groupId : allGroupId) {
-            serviceCommands.add(stopPyramidServicesGroup(groupId, skipNotAlive));
+            serviceCommands.add(stopPyramidServicesGroupRequest(groupId, skipNotAlive));
         }
         allSubCommands.addAll(serviceCommands);
         final AsyncPyramidCommand proxyCommand;
         if (specificServerConfiguration.hasProxy()) {
-            proxyCommand = stopPyramidProxy(skipNotAlive);
+            proxyCommand = stopPyramidProxyRequest(skipNotAlive);
             allSubCommands.add(proxyCommand);
         } else {
             proxyCommand = null;
@@ -135,17 +135,17 @@ public final class HttpPyramidServersLauncher {
         });
     }
 
-    public AsyncPyramidCommand restartAll(boolean skipAlreadyAlive) throws IOException {
+    public AsyncPyramidCommand restartAllRequest(boolean skipAlreadyAlive) throws IOException {
         final List<AsyncPyramidCommand> allSubCommands = new ArrayList<>();
         final List<AsyncPyramidCommand> serviceCommands = new ArrayList<>();
         final List<String> allGroupId = new ArrayList<>(configuration.allGroupId());
         for (String groupId : allGroupId) {
-            serviceCommands.add(restartPyramidServicesGroup(groupId, skipAlreadyAlive));
+            serviceCommands.add(restartPyramidServicesGroupRequest(groupId, skipAlreadyAlive));
         }
         allSubCommands.addAll(serviceCommands);
         final AsyncPyramidCommand proxyCommand;
         if (specificServerConfiguration.hasProxy()) {
-            proxyCommand = restartPyramidProxy(skipAlreadyAlive);
+            proxyCommand = restartPyramidProxyRequest(skipAlreadyAlive);
             allSubCommands.add(proxyCommand);
         } else {
             proxyCommand = null;
@@ -173,19 +173,19 @@ public final class HttpPyramidServersLauncher {
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
     }
 
-    public AsyncPyramidCommand stopPyramidServicesGroup(String groupId, boolean skipIfNotAlive)
+    public AsyncPyramidCommand stopPyramidServicesGroupRequest(String groupId, boolean skipIfNotAlive)
         throws InvalidFileConfigurationException
     {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
-        return stopProcess(new HttpPyramidProcessControl(
+        return stopProcessRequest(new HttpPyramidProcessControl(
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfNotAlive);
     }
 
-    public AsyncPyramidCommand restartPyramidServicesGroup(String groupId, boolean skipIfAlive)
+    public AsyncPyramidCommand restartPyramidServicesGroupRequest(String groupId, boolean skipIfAlive)
         throws InvalidFileConfigurationException
     {
         final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
-        return restartProcess(new HttpPyramidProcessControl(
+        return restartProcessRequest(new HttpPyramidProcessControl(
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
     }
 
@@ -196,17 +196,17 @@ public final class HttpPyramidServersLauncher {
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
     }
 
-    public AsyncPyramidCommand stopPyramidProxy(boolean skipIfNotAlive)
+    public AsyncPyramidCommand stopPyramidProxyRequest(boolean skipIfNotAlive)
         throws InvalidFileConfigurationException
     {
-        return stopProcess(new HttpPyramidProxyControl(
+        return stopProcessRequest(new HttpPyramidProxyControl(
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfNotAlive);
     }
 
-    public AsyncPyramidCommand restartPyramidProxy(boolean skipIfAlive)
+    public AsyncPyramidCommand restartPyramidProxyRequest(boolean skipIfAlive)
         throws InvalidFileConfigurationException
     {
-        return restartProcess(new HttpPyramidProxyControl(
+        return restartProcessRequest(new HttpPyramidProxyControl(
             HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
     }
 
@@ -264,7 +264,7 @@ public final class HttpPyramidServersLauncher {
         }
     }
 
-    private AsyncPyramidCommand stopProcess(JavaProcessControl control, boolean skipIfNotAlive)
+    private AsyncPyramidCommand stopProcessRequest(JavaProcessControl control, boolean skipIfNotAlive)
         throws InvalidFileConfigurationException
     {
         if (skipIfNotAlive && !control.isAtLeastSomeHttpServiceAlive(true)) {
@@ -277,10 +277,11 @@ public final class HttpPyramidServersLauncher {
         // method. Note that we need to remove it BEFORE attempts to stop it.
         return new AsyncPyramidCommand() {
             int remainingAttemptsCount = javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1;
-            AsyncPyramidCommand subCommand = control.stopOnLocalhost(SUCCESS_STOP_TIMEOUT_IN_MS);
+            AsyncPyramidCommand subCommand = control.stopOnLocalhostRequest(
+                SUCCESS_STOP_TIMEOUT_IN_MS, DELAY_AFTER_SUCCESS_STOP_IN_MS);
             volatile long sleepEndTimeStamp;
-            volatile boolean delayAfterFailure = false;
-            volatile boolean delayAfterDestroyForcibly = false;
+            volatile boolean waitingAfterFailure = false;
+            volatile boolean waitingAfterDestroyForcibly = false;
 
             @Override
             public void check() throws InvalidFileConfigurationException {
@@ -289,15 +290,16 @@ public final class HttpPyramidServersLauncher {
                 }
                 assert !isAccepted();
                 // - if accepted==true, then finished==true, but finished was checked in the beginning of the method
-                if (delayAfterFailure || delayAfterDestroyForcibly) {
+                if (waitingAfterFailure || waitingAfterDestroyForcibly) {
                     // delaying stage after failure
                     if (System.currentTimeMillis() > sleepEndTimeStamp) {
-                        if (delayAfterFailure) {
-                            subCommand = control.stopOnLocalhost(SUCCESS_STOP_TIMEOUT_IN_MS);
-                            delayAfterFailure = false;
+                        if (waitingAfterFailure) {
+                            subCommand = control.stopOnLocalhostRequest(
+                                SUCCESS_STOP_TIMEOUT_IN_MS, DELAY_AFTER_SUCCESS_STOP_IN_MS);
+                            waitingAfterFailure = false;
                             // new attempt
                         } else {
-                            delayAfterDestroyForcibly = false;
+                            waitingAfterDestroyForcibly = false;
                             setFinished(true);
                         }
                     }
@@ -319,7 +321,7 @@ public final class HttpPyramidServersLauncher {
                 remainingAttemptsCount--;
                 if (remainingAttemptsCount > 0) {
                     sleepEndTimeStamp = System.currentTimeMillis() + PROBLEM_DELAY_IN_MS;
-                    delayAfterFailure = true;
+                    waitingAfterFailure = true;
                     LOG.info("Cannot stop process " + control.processName() + " in "
                         + SUCCESS_STOP_TIMEOUT_IN_MS / 1000.0 + " seconds; "
                         + "making " + PROBLEM_DELAY_IN_MS / 1000.0 + " seconds delay (remaining attempts: "
@@ -337,7 +339,7 @@ public final class HttpPyramidServersLauncher {
                             + " by system command, killing it FORCIBLY");
                         javaProcess.destroyForcibly();
                         sleepEndTimeStamp = System.currentTimeMillis() + FORCIBLE_STOP_DELAY_IN_MS;
-                        delayAfterDestroyForcibly = true;
+                        waitingAfterDestroyForcibly = true;
                         // - waiting for better guarantee
                     }
                 }
@@ -345,14 +347,14 @@ public final class HttpPyramidServersLauncher {
         };
     }
 
-    private AsyncPyramidCommand restartProcess(JavaProcessControl control, boolean skipIfAlive)
+    private AsyncPyramidCommand restartProcessRequest(JavaProcessControl control, boolean skipIfAlive)
         throws InvalidFileConfigurationException
     {
         if (skipIfAlive && control.areAllHttpServicesAlive(true)) {
             return new ImmediatePyramidCommand(false);
         }
         return new AsyncPyramidCommand() {
-            AsyncPyramidCommand subCommand = stopProcess(control, false);
+            AsyncPyramidCommand subCommand = stopProcessRequest(control, false);
 
             @Override
             public void check() throws InvalidFileConfigurationException {
@@ -406,7 +408,7 @@ public final class HttpPyramidServersLauncher {
                     synchronized (runningProcesses) {
 //                        System.out.println(runningProcesses);
                         hasAliveProcesses = runningProcesses.isEmpty();
-                        // runningProcess can become empty as a result of direct call of stopAll
+                        // runningProcess can become empty as a result of direct call of stopAllRequest
                         for (Process process : runningProcesses.values()) {
                             hasAliveProcesses |= process.isAlive();
                         }
@@ -488,12 +490,12 @@ public final class HttpPyramidServersLauncher {
                     break;
                 }
                 case "stop": {
-                    launcher.stopAll(checkAlive).waitFor();
+                    launcher.stopAllRequest(checkAlive).waitFor();
                     // get() method allows to print welcome message after ACTUAL performing the command
                     break;
                 }
                 case "restart": {
-                    launcher.restartAll(checkAlive).waitFor();
+                    launcher.restartAllRequest(checkAlive).waitFor();
                     break;
                 }
                 default: {
@@ -510,13 +512,13 @@ public final class HttpPyramidServersLauncher {
                 System.exit(1);
             } else {
                 printExceptionAndWaitForEnterKey(e);
-                launcher.stopAll(false);
+                launcher.stopAllRequest(false).waitFor();
                 System.exit(1);
             }
         }
         if (consoleWaiting && !command.equals("stop")) {
             launcher.printWelcomeAndWaitForEnterKey();
-            launcher.stopAll(false);
+            launcher.stopAllRequest(false).waitFor();
         }
     }
 }

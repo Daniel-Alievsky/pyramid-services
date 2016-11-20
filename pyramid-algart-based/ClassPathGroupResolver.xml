@@ -6,8 +6,7 @@
               classname="net.algart.pyramid.external.ClassPathGroupResolver"
               fork="true">
             <classpath>
-                <pathelement location="${dest}/pp-root/pyramid-services/lib/algart/*"/>
-                <pathelement location="${dest}/pp-root/pyramid-services/lib/json/*"/>
+                <pathelement location="${dest}/pp-root/pyramid-services/lib/*"/>
             </classpath>
             <arg value="-f"/>
             <arg value="pp-root"/>

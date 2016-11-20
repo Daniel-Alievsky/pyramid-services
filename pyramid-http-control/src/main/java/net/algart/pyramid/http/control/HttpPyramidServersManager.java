@@ -118,7 +118,7 @@ public class HttpPyramidServersManager {
                 }
             }
             try {
-                launcher.stopAll(false).waitFor();
+                launcher.stopAllRequest(false).waitFor();
             } catch (Throwable e) {
                 LOG.log(Level.SEVERE, "CANNOT STOP PYRAMID SERVICES! Probably the file structure is corrupted! "
                     + "Please reboot the server and check all confiration files and folders", e);
@@ -130,7 +130,7 @@ public class HttpPyramidServersManager {
         final List<AsyncPyramidCommand> serviceCommands = new ArrayList<>();
         final List<String> allGroupId = new ArrayList<>(launcher.getConfiguration().allGroupId());
         for (String groupId : allGroupId) {
-            final AsyncPyramidCommand command = launcher.restartPyramidServicesGroup(groupId, true);
+            final AsyncPyramidCommand command = launcher.restartPyramidServicesGroupRequest(groupId, true);
             if (!(command instanceof ImmediatePyramidCommand)) {
                 serviceCommands.add(command);
             }
@@ -169,7 +169,7 @@ public class HttpPyramidServersManager {
                 Thread.sleep(2000);
             } catch (InterruptedException ignored) {
             }
-            manager.launcher.stopAll(false).waitFor();
+            manager.launcher.stopAllRequest(false).waitFor();
             System.exit(1);
         }
 
