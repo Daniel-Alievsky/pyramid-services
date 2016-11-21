@@ -3,7 +3,7 @@
     <output-path>$PROJECT_DIR$/out/artifacts/_pyramid_services</output-path>
     <properties id="ant-postprocessing">
       <options enabled="true">
-        <file>file://$PROJECT_DIR$/pyramid-algart-based/ClassPathGroupResolver.xml</file>
+        <file>file://$PROJECT_DIR$/pyramid-http-control/ClassPathGroupResolver.xml</file>
         <target>resolve</target>
       </options>
     </properties>
