@@ -25,11 +25,9 @@
 package net.algart.pyramid.http.control;
 
 import net.algart.http.proxy.HttpProxy;
-import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
-import net.algart.pyramid.http.proxy.HttpPyramidProxyServer;
 
 import java.io.File;
 import java.io.IOError;
@@ -43,7 +41,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HttpPyramidProxyControl extends JavaProcessControl {
-    public static final String PROXY_PROCESS_ID = "ProcessId~~~~." + HttpPyramidProxyServer.class.getName();
+    public static final String PROXY_PROCESS_ID = "ProcessId~~~~." + HttpPyramidProxyControl.class.getName();
 
     private static final Logger LOG = Logger.getLogger(HttpPyramidProxyControl.class.getName());
 
@@ -117,8 +115,8 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
         }
         command.add("-cp");
         command.add(cp.toString());
-        command.add(HttpPyramidProxyServer.class.getName());
-        command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG);
+        command.add(HttpPyramidConstants.HTTP_PYRAMID_PROXY_SERVER_CLASS_NAME);
+        command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVICE_MODE_FLAG);
         command.add(configuration.getProjectRoot().toAbsolutePath().toString());
         command.add(specificServerConfiguration.getSpecificServerConfigurationFile().toAbsolutePath().toString());
         ProcessBuilder processBuilder = new ProcessBuilder(command);

@@ -164,7 +164,7 @@ public class HttpPyramidServer {
         boolean serviceMode = false;
         String groupId = null;
         if (args.length > startArgIndex && args[startArgIndex].equals(
-            HttpPyramidConstants.HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG))
+            HttpPyramidConstants.HTTP_PYRAMID_SERVICE_MODE_FLAG))
         {
             serviceMode = true;
             startArgIndex++;

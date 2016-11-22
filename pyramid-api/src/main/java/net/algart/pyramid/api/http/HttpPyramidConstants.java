@@ -30,7 +30,9 @@ public class HttpPyramidConstants {
 
     public static final String HTTP_PYRAMID_SERVER_CLASS_NAME =
         "net.algart.pyramid.http.server.HttpPyramidServer";
-    public static final String HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG = "--serviceMode";
+    public static final String HTTP_PYRAMID_PROXY_SERVER_CLASS_NAME =
+        "net.algart.pyramid.http.proxy.HttpPyramidProxyServer";
+    public static final String HTTP_PYRAMID_SERVICE_MODE_FLAG = "--serviceMode";
 
     public static final String LOCAL_HOST = System.getProperty(
         "net.algart.pyramid.http.localHost", "localhost");

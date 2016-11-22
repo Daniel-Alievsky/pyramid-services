@@ -24,7 +24,6 @@
 
 package net.algart.pyramid.http.control;
 
-import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
@@ -125,7 +124,7 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
         command.add("-cp");
         command.add(cp.toString());
         command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVER_CLASS_NAME);
-        command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG);
+        command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVICE_MODE_FLAG);
         command.add("--groupId=" + processConfiguration.getGroupId());
         command.add(configuration.getProjectRoot().toAbsolutePath().toString());
         command.add(configuration.getGlobalConfigurationFile().toAbsolutePath().toString());

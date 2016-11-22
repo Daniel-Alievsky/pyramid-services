@@ -41,6 +41,13 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 public final class HttpPyramidProxyServer {
+    static {
+        if (!HttpPyramidProxyServer.class.getName().equals(
+            HttpPyramidConstants.HTTP_PYRAMID_PROXY_SERVER_CLASS_NAME))
+        {
+            throw new AssertionError("Invalid constant HTTP_PYRAMID_PROXY_SERVER_CLASS_NAME");
+        }
+    }
 
     static final Logger LOG = Logger.getLogger(HttpPyramidProxyServer.class.getName());
 
@@ -156,7 +163,7 @@ public final class HttpPyramidProxyServer {
         int startArgIndex = 0;
         boolean serviceMode = false;
         if (args.length > startArgIndex && args[startArgIndex].equals(
-            HttpPyramidConstants.HTTP_PYRAMID_SERVER_SERVICE_MODE_FLAG))
+            HttpPyramidConstants.HTTP_PYRAMID_SERVICE_MODE_FLAG))
         {
             serviceMode = true;
             startArgIndex++;

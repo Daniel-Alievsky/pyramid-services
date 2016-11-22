@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="pyramid-http-proxy:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/pyramid_http_proxy_jar</output-path>
+    <root id="archive" name="pyramid-http-proxy.jar">
+      <element id="module-output" name="pyramid-http-proxy" />
+    </root>
+  </artifact>
+</component>
