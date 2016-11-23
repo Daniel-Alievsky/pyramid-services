@@ -133,7 +133,7 @@ Professional version should use while color #FFFFFF -->
         for (var y = 0; y < tmsYCount; y++) {
             tmsHTML += "Line y=" + y + "<br/>";
             for (var x = 0; x < tmsXCount; x++) {
-                args = PYRAMID_ID_PREFIX_IN_PATHNAME + currentPyramidId + PYRAMID_ID_POSTFIX_IN_PATHNAME
+                args = PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME + currentPyramidId
                     + "/" + tmsZ + "/" + x + "/" + y;
                 tmsHTML += '<img border="1" src="' + urlStart + 'tms/' + args + '">&nbsp;';
             }

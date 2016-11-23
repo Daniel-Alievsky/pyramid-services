@@ -65,7 +65,7 @@ public class TmsHttpPyramidCommand extends HttpPyramidCommand {
                 + "but actual path consists of " + components.length + " parts: http://some-server.com:NNNN/" + path);
         }
         // path[0] is the command prefix "pp-tms"
-        final String pyramidId = HttpPyramidApiTools.extractPyramidIdFromAppendedIdForURLPath(components[1]);
+        final String pyramidId = HttpPyramidApiTools.removePrefixBeforePyramidIdFromURLPath(components[1]);
         final int z = Integer.parseInt(components[2]);
         final int x = Integer.parseInt(components[3]);
         final int y = Integer.parseInt(removeExtension(components[4]));

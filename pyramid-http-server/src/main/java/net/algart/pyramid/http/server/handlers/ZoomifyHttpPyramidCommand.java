@@ -62,7 +62,7 @@ public class ZoomifyHttpPyramidCommand extends HttpPyramidCommand {
                 + "/tileGroupXXX/z-x-y.jpg; "
                 + "but actual path consists of " + components.length + " parts: http://some-server.com:NNNN/" + path);
         }
-        final String pyramidId = HttpPyramidApiTools.extractPyramidIdFromAppendedIdForURLPath(components[1]);
+        final String pyramidId = HttpPyramidApiTools.removePrefixBeforePyramidIdFromURLPath(components[1]);
         final String[] zxy = components[3].split("-");
         final int z = Integer.parseInt(zxy[0]);
         final int x = Integer.parseInt(zxy[1]);

@@ -40,51 +40,48 @@ public class HttpPyramidApiTools {
     }
 
     /**
-     * Appends pyramid ID by special prefix and postfix. It is useful when the pyramid ID is not a separate
+     * <p>Appends pyramid ID by special prefix and separator. It is useful when the pyramid ID is not a separate
      * argument with name {@link HttpPyramidConstants#PYRAMID_ID_PARAMETER_NAME}, but a part of path
-     * (like in TMS request). It allows to find pyramid ID in URL by 3rd party services like proxy.
+     * (like in TMS request). It allows to find pyramid ID in URL by 3rd party services like proxy.</p>
+     *
+     * <p>This function is used mostly for debugging and error messages.</p>
      *
      * @param pyramidId the pyramid unique identifier.
-     * @return          this ID appedned by {@link HttpPyramidConstants#PYRAMID_ID_PREFIX_IN_PATHNAME}
-     *                  and {@link HttpPyramidConstants#PYRAMID_ID_POSTFIX_IN_PATHNAME}.
+     * @return          this ID appended by {@link HttpPyramidConstants#PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME}
+     *                  and {@link HttpPyramidConstants#SEPARATOR_AFTER_PYRAMID_ID_IN_PATHNAME}.
      */
     public static String appendPyramidIdForURLPath(String pyramidId) {
-        return HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME
+        return HttpPyramidConstants.PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME
             + pyramidId
-            + HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME;
+            + HttpPyramidConstants.SEPARATOR_AFTER_PYRAMID_ID_IN_PATHNAME;
     }
 
-    public static String extractPyramidIdFromAppendedIdForURLPath(String urlEncodedAppendedId) {
-        final String appendedId;
+    public static String removePrefixBeforePyramidIdFromURLPath(String urlEncodedPrefixedId) {
+        final String prefixedId;
         try {
-            appendedId = URLDecoder.decode(urlEncodedAppendedId, StandardCharsets.UTF_8.name());
+            prefixedId = URLDecoder.decode(urlEncodedPrefixedId, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
             throw new AssertionError("UTF-8 encoding not found");
         }
-        if (!appendedId.startsWith(HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME)
-            || !appendedId.endsWith(HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME))
-        {
+        if (!prefixedId.startsWith(HttpPyramidConstants.PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME)) {
             throw new IllegalArgumentException("Invalid path syntax: pyramid ID must be written as \""
-                + appendPyramidIdForURLPath("XXXXXXXX")
-                + "\", but it is actually written as \"" + appendedId + "\"");
+                + HttpPyramidConstants.PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME + "XXXXXXXX"
+                + "\", but it is actually written as \"" + prefixedId + "\"");
         }
-        return appendedId.substring(
-            HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME.length(),
-            appendedId.length() - HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME.length());
+        return prefixedId.substring(HttpPyramidConstants.PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME.length());
     }
 
     public static String tryToFindPyramidIdInURLPath(String path) {
-        int p = path.indexOf(HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME);
+        int p = path.indexOf(HttpPyramidConstants.PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME);
         if (p == -1) {
             return null;
         }
-        int q = path.indexOf(HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME,
-            p + HttpPyramidConstants.PYRAMID_ID_PREFIX_IN_PATHNAME.length());
+        int q = path.indexOf(HttpPyramidConstants.SEPARATOR_AFTER_PYRAMID_ID_IN_PATHNAME,
+            p + HttpPyramidConstants.PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME.length());
         if (q == -1) {
             return null;
         }
-        q += HttpPyramidConstants.PYRAMID_ID_POSTFIX_IN_PATHNAME.length();
-        return extractPyramidIdFromAppendedIdForURLPath(path.substring(p, q));
+        return removePrefixBeforePyramidIdFromURLPath(path.substring(p, q));
     }
 
     public static boolean isUriPyramidCommand(String uriPath) {
