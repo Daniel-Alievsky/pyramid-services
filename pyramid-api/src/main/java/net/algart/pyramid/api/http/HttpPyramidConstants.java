@@ -90,20 +90,9 @@ public class HttpPyramidConstants {
      * in other case proxy will not find it. Or the client must pass {@link #SERVER_PORT_PARAMETER_NAME}
      * as an additional GET argument.</p>
      *
-     * <p>Can be omitted, if it is passed inside URI path between {@link #PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME} and
-     * {@link #SEPARATOR_AFTER_PYRAMID_ID_IN_PATHNAME}.</p>
+     * <p>Can be omitted, if it is passed inside URI path according some of {@link HttpPyramidIdFinder} objects.</p>
      */
     public static final String PYRAMID_ID_PARAMETER_NAME = "pyramidId";
-
-    /**
-     * Recommended prefix before pyramid ID in query (if pyramid ID is not passed via usual query parameter).
-     */
-    public static final String PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME = "~~~PyramidID~~~";
-
-    /**
-     * Recommended separator after pyramid ID in query (if pyramid ID is not passed via usual query parameter).
-     */
-    public static final String SEPARATOR_AFTER_PYRAMID_ID_IN_PATHNAME = "/";
 
     /**
      * Specifies the server port in a case of proxy. Usually it is not necessary: if pyramid ID is available

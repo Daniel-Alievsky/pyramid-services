@@ -56,7 +56,6 @@ var changingPyramid = false;
 
 // really constants:
 var DEFAULT_OBJECTIVE = 40;
-var PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME = "~~~PyramidID~~~";
 
 
 /**
@@ -200,7 +199,7 @@ function initOpenLayers() {
 
     var source = new ol.source.Zoomify({
         url: (useSSL ? "https://" : "http://") + host + ":" + currentPort
-        + "/pp-zoomify/" + PREFIX_BEFORE_PYRAMID_ID_IN_PATHNAME + currentPyramidId + "/",
+        + "/pp-zoomify/" + currentPyramidId + "/",
         size: [imgWidth, imgHeight],
         crossOrigin: 'anonymous'
     });

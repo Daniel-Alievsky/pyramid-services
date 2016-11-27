@@ -27,10 +27,7 @@ package net.algart.pyramid.http.proxy;
 import net.algart.http.proxy.HttpProxy;
 import net.algart.http.proxy.HttpServerAddress;
 import net.algart.http.proxy.HttpServerFailureHandler;
-import net.algart.pyramid.api.http.HttpPyramidApiTools;
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
-import net.algart.pyramid.api.http.HttpPyramidConstants;
-import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.api.http.*;
 
 import java.io.IOError;
 import java.io.IOException;
@@ -66,9 +63,15 @@ public final class HttpPyramidProxyServer {
         }
         this.serviceConfiguration = configuration;
         this.specificServerConfiguration = specificServerConfiguration;
+        final StandardPyramidServerResolver serverResolver = new StandardPyramidServerResolver(
+            configuration, specificServerConfiguration);
+        serverResolver.addPyramidIdFinder(new HttpPyramidIdFinderBetweenSlashsAfterPrefix(
+            HttpPyramidConstants.CommandPrefixes.TMS + "/"));
+        serverResolver.addPyramidIdFinder(new HttpPyramidIdFinderBetweenSlashsAfterPrefix(
+            HttpPyramidConstants.CommandPrefixes.ZOOMIFY + "/"));
         this.proxy = new HttpProxy(
             specificServerConfiguration.getProxySettings().getProxyPort(),
-            new StandardPyramidServerResolver(configuration, specificServerConfiguration),
+            serverResolver,
             new HttpServerFailureHandler() {
                 @Override
                 public void onConnectionFailed(HttpServerAddress address, Throwable throwable) {
@@ -88,6 +91,7 @@ public final class HttpPyramidProxyServer {
                 specificServerConfiguration.getSslSettings().getKeyPassword());
         }
     }
+
 
     public void start() throws IOException {
         proxy.start();

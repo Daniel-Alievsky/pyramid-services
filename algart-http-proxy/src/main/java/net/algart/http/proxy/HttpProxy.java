@@ -316,7 +316,7 @@ public final class HttpProxy {
     private class HttpProxyHandler extends HttpHandler {
         @Override
         public void service(Request request, Response response) {
-//            System.out.println("Proxying " + request.getRequestURI() + " - " + request.getRequestURL());
+            System.out.println("Proxying " + request.getRequestURI() + " - " + request.getRequestURL());
 //            System.out.println("  request server name: " + request.getServerName());
 //            System.out.println("  request server port: " + request.getServerPort());
 //            System.out.println("  request remote host: " + request.getRemoteHost());

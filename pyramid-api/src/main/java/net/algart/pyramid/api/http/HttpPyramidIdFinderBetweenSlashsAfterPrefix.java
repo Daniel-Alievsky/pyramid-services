@@ -26,7 +26,7 @@ package net.algart.pyramid.api.http;
 
 import java.util.Objects;
 
-public class HttpPyramidIdFinderBetweenSlashsAfterPrefix implements HttpPyraimidIdFinder {
+public class HttpPyramidIdFinderBetweenSlashsAfterPrefix implements HttpPyramidIdFinder {
     private final String requiredURLPrefix;
 
     public HttpPyramidIdFinderBetweenSlashsAfterPrefix(String requiredURLPrefix) {

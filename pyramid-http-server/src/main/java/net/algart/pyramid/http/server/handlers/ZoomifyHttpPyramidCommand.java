@@ -57,12 +57,10 @@ public class ZoomifyHttpPyramidCommand extends HttpPyramidCommand {
         final String[] components = path.split("/");
         if (components.length != 4) {
             throw new IllegalArgumentException("Zoomify path must contain 4 parts separated by /: "
-                + "http://some-server.com:NNNN/some-prefix/"
-                + HttpPyramidApiTools.appendPyramidIdForURLPath("(pyramidId)")
-                + "/tileGroupXXX/z-x-y.jpg; "
+                + "http://some-server.com:NNNN/some-prefix/(pyramidId)/tileGroupXXX/z-x-y.jpg; "
                 + "but actual path consists of " + components.length + " parts: http://some-server.com:NNNN/" + path);
         }
-        final String pyramidId = HttpPyramidApiTools.removePrefixBeforePyramidIdFromURLPath(components[1]);
+        final String pyramidId = components[1];
         final String[] zxy = components[3].split("-");
         final int z = Integer.parseInt(zxy[0]);
         final int x = Integer.parseInt(zxy[1]);

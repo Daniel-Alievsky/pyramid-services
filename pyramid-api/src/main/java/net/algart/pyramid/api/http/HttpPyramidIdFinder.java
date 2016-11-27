@@ -24,6 +24,6 @@
 
 package net.algart.pyramid.api.http;
 
-public interface HttpPyraimidIdFinder {
+public interface HttpPyramidIdFinder {
     String findPyramidId(String urlPath);
 }

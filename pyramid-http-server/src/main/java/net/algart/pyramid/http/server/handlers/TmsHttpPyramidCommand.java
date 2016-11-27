@@ -60,12 +60,11 @@ public class TmsHttpPyramidCommand extends HttpPyramidCommand {
         final String[] components = path.split("/");
         if (components.length != 5) {
             throw new IllegalArgumentException("TMS path must contain 5 parts separated by /: "
-                + "http://some-server.com:NNNN/some-prefix/"
-                + HttpPyramidApiTools.appendPyramidIdForURLPath("(pyramidId)") + "/z/x/y.jpg; "
+                + "http://some-server.com:NNNN/some-prefix/(pyramidId)/z/x/y.jpg; "
                 + "but actual path consists of " + components.length + " parts: http://some-server.com:NNNN/" + path);
         }
         // path[0] is the command prefix "pp-tms"
-        final String pyramidId = HttpPyramidApiTools.removePrefixBeforePyramidIdFromURLPath(components[1]);
+        final String pyramidId = components[1];
         final int z = Integer.parseInt(components[2]);
         final int x = Integer.parseInt(components[3]);
         final int y = Integer.parseInt(removeExtension(components[4]));

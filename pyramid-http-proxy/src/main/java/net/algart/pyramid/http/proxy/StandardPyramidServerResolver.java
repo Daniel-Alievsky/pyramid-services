@@ -27,17 +27,13 @@ package net.algart.pyramid.http.proxy;
 import net.algart.http.proxy.HttpServerAddress;
 import net.algart.http.proxy.HttpServerResolver;
 import net.algart.pyramid.api.common.PyramidApiTools;
-import net.algart.pyramid.api.http.HttpPyramidApiTools;
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
-import net.algart.pyramid.api.http.HttpPyramidConstants;
-import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.api.http.*;
 import org.glassfish.grizzly.http.util.Parameters;
 
 import javax.json.JsonObject;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 class StandardPyramidServerResolver implements HttpServerResolver {
@@ -50,6 +46,7 @@ class StandardPyramidServerResolver implements HttpServerResolver {
     private final HttpPyramidConfiguration configuration;
     private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final HttpPyramidSpecificServerConfiguration.ProxySettings proxyConfiguration;
+    private final List<HttpPyramidIdFinder> pyramidIdFinders = new ArrayList<>();
     private final Object lock = new Object();
 
     StandardPyramidServerResolver(
@@ -61,6 +58,11 @@ class StandardPyramidServerResolver implements HttpServerResolver {
         this.configuration = configuration;
         this.specificServerConfiguration = specificServerConfiguration;
         this.proxyConfiguration = specificServerConfiguration.getProxySettings();
+    }
+
+    public void addPyramidIdFinder(HttpPyramidIdFinder pyramidIdFinder) {
+        Objects.requireNonNull(pyramidIdFinder, "Null pyramidIdFinder");
+        this.pyramidIdFinders.add(pyramidIdFinder);
     }
 
     @Override
@@ -112,20 +114,27 @@ class StandardPyramidServerResolver implements HttpServerResolver {
         return new HttpServerAddress(proxyConfiguration.getPyramidHost(), service.getPort());
     }
 
+    private String findPyramidId(String requestURI, Parameters queryParameters) {
+        final String[] values = queryParameters.getParameterValues(HttpPyramidConstants.PYRAMID_ID_PARAMETER_NAME);
+        if (values != null && values.length >= 1) {
+            return values[0];
+        }
+        for (HttpPyramidIdFinder finder : pyramidIdFinders) {
+            final String pyramidId = finder.findPyramidId(requestURI);
+            if (pyramidId != null) {
+                return pyramidId;
+            }
+        }
+        return null;
+    }
+
+
     private static Integer findServerPort(Parameters queryParameters) {
         final String[] values = queryParameters.getParameterValues(HttpPyramidConstants.SERVER_PORT_PARAMETER_NAME);
         if (values != null && values.length >= 1) {
             return Integer.valueOf(values[0]);
         }
         return null;
-    }
-
-    private static String findPyramidId(String requestURI, Parameters queryParameters) {
-        final String[] values = queryParameters.getParameterValues(HttpPyramidConstants.PYRAMID_ID_PARAMETER_NAME);
-        if (values != null && values.length >= 1) {
-            return values[0];
-        }
-        return HttpPyramidApiTools.tryToFindPyramidIdInURLPath(requestURI);
     }
 
     private static class ServerAddressHashMap extends LinkedHashMap<String, HttpServerAddress> {
