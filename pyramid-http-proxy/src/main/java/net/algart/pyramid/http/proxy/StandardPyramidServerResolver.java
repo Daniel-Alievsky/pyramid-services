@@ -87,10 +87,14 @@ class StandardPyramidServerResolver implements HttpServerResolver {
                 return result;
             }
         }
-        HttpServerAddress result = new HttpServerAddress(
-            proxyConfiguration.getDefaultHost(), proxyConfiguration.getDefaultPort());
-        LOG.config("Proxying " + requestURI + " to default server " + result);
-        return result;
+        if (proxyConfiguration.getDefaultServer().isEnable()) {
+            HttpServerAddress result = new HttpServerAddress(
+                proxyConfiguration.getDefaultServer().getHost(), proxyConfiguration.getDefaultServer().getPort());
+            LOG.config("Proxying " + requestURI + " to default server " + result);
+            return result;
+        } else {
+            return null;
+        }
     }
 
     @Override

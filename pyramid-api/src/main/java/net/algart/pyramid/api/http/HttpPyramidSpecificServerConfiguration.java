@@ -125,14 +125,64 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
     }
 
     public static class ProxySettings extends ConvertibleToJson {
+        public static class DefaultServer extends ConvertibleToJson {
+            private final boolean enable;
+            private final String host;
+            private final int port;
+            private final ProxySettings parentProxySettings;
+
+            private DefaultServer(ProxySettings parentProxySettings, JsonObject json) {
+                Objects.requireNonNull(parentProxySettings);
+                if (json == null) {
+                    json = Json.createObjectBuilder().build();
+                }
+                this.enable = json.getBoolean("enable", false);
+                this.host = json.getString("host", "localhost");
+                this.port = json.getInt("port", 80);
+                if (port <= 0) {
+                    throw new JsonException("Invalid proxy configuration JSON:"
+                        + " zero or negative default server port number " + port);
+                }
+                this.parentProxySettings = parentProxySettings;
+            }
+
+            public boolean isEnable() {
+                return enable;
+            }
+
+            public String getHost() {
+                return host;
+            }
+
+            public int getPort() {
+                return port;
+            }
+
+            public String toJsonString() {
+                return toJson().toString();
+            }
+
+            public ProxySettings parentProxySettings() {
+                return parentProxySettings;
+            }
+
+            JsonObject toJson() {
+                final JsonObjectBuilder builder = Json.createObjectBuilder();
+                builder.add("enable", enable);
+                builder.add("host", host);
+                builder.add("port", port);
+                return builder.build();
+            }
+        }
+
         private final int proxyPort;
         private final String pyramidHost;
-        private final String defaultHost;
-        private final int defaultPort;
         private final boolean ssl;
+        private final DefaultServer defaultServer;
         private final HttpPyramidSpecificServerConfiguration parentConfiguration;
 
         private ProxySettings(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
+            Objects.requireNonNull(parentConfiguration);
             Objects.requireNonNull(json);
             this.proxyPort = HttpPyramidConfiguration.getRequiredInt(json, "proxyPort");
             if (proxyPort <= 0 || proxyPort > HttpPyramidConstants.MAX_ALLOWED_PORT) {
@@ -141,13 +191,8 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
                     + " (must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT + ")");
             }
             this.pyramidHost = json.getString("pyramidHost", "localhost");
-            this.defaultHost = json.getString("defaultHost", "localhost");
-            this.defaultPort = json.getInt("defaultPort", 80);
-            if (defaultPort <= 0) {
-                throw new JsonException("Invalid proxy configuration JSON:"
-                    + " zero or negative default server port number " + defaultPort);
-            }
             this.ssl = json.getBoolean("ssl", false);
+            this.defaultServer = new DefaultServer(this, json.getJsonObject("defaultServer"));
             this.parentConfiguration = parentConfiguration;
         }
 
@@ -159,16 +204,12 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             return pyramidHost;
         }
 
-        public String getDefaultHost() {
-            return defaultHost;
-        }
-
-        public int getDefaultPort() {
-            return defaultPort;
-        }
-
         public boolean isSsl() {
             return ssl;
+        }
+
+        public DefaultServer getDefaultServer() {
+            return defaultServer;
         }
 
         public String toJsonString() {
@@ -183,8 +224,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
             builder.add("proxyPort", proxyPort);
             builder.add("pyramidHost", pyramidHost);
-            builder.add("defaultHost", defaultHost);
-            builder.add("defaultPort", defaultPort);
+            builder.add("defaultServer", defaultServer.toJson());
             builder.add("ssl", ssl);
             return builder.build();
         }

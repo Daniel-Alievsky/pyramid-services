@@ -5,12 +5,5 @@
   "commonVmOptions" : [
     "-ea"
   ],
-  "commonMemory" : "1g",
-  "proxy" : {
-    "proxyPort" : 100,
-    "defaultServer" : {
-      "host" : "localhost",
-      "port" : 80
-    }
-  }
+  "commonMemory" : "1g"
 }

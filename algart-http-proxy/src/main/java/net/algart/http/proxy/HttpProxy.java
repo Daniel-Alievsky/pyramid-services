@@ -348,6 +348,9 @@ public final class HttpProxy {
                 }
                 final Parameters queryParameters = parseQueryOnly(request);
                 final HttpServerAddress serverAddress = serverResolver.findServer(requestURI, queryParameters);
+                if (serverAddress == null) {
+                    throw new IllegalArgumentException("Proxy cannot resolve URI " + requestURI);
+                }
                 if (serverAddress.serverHost().equals(proxyHost) && serverAddress.serverPort() == proxyPort) {
                     throw new IllegalStateException("Infinite loop: server resolver returns host:port, "
                         + "identical to the proxy host:port " + serverAddress);

@@ -10,9 +10,12 @@
   "proxy": true,
   "proxySettings": {
     "proxyPort": 100,
-    "defaultHost": "localhost",
-    "defaultPort": 80,
-    "ssl": false
+    "ssl": false,
+    "defaultServer": {
+      "enable": true,
+      "host": "localhost",
+      "port": 80
+    }
   },
   "sslSettings": {
     "keystoreFile": "ssl/ssl-test-keystore.jks",
