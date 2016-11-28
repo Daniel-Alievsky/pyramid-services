@@ -24,7 +24,6 @@
 
 package net.algart.pyramid.http.control;
 
-import net.algart.http.proxy.HttpProxy;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
@@ -41,6 +40,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HttpPyramidProxyControl extends JavaProcessControl {
+    // Note: the following 2 constats must be identical to the same constants in HttpProxy class.
+    public static final String ALIVE_STATUS_COMMAND = "/~~~~.net.algart.http.proxy.alive-status";
+    public static final String FINISH_COMMAND = "/~~~~.net.algart.http.proxy.finish";
+
     public static final String PROXY_PROCESS_ID = "ProcessId~~~~." + HttpPyramidProxyControl.class.getName();
 
     private static final Logger LOG = Logger.getLogger(HttpPyramidProxyControl.class.getName());
@@ -138,7 +141,7 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
     {
         LOG.info("Stopping " + processName() + " on localhost...");
         return new AsyncPyramidSystemCommand(
-            HttpProxy.FINISH_COMMAND,
+            FINISH_COMMAND,
             proxyPort,
             systemCommandsFolder,
             timeoutInMilliseconds,
@@ -149,7 +152,7 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
         final boolean useSSL = specificServerConfiguration.getProxySettings().isSsl();
         try {
             final HttpURLConnection connection = HttpPyramidServiceControl.openCustomConnection(
-                HttpProxy.ALIVE_STATUS_COMMAND, "GET", proxyHost, proxyPort, useSSL);
+                ALIVE_STATUS_COMMAND, "GET", proxyHost, proxyPort, useSSL);
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
             // - getResponseCode() actually waits for results
         } catch (IOException e) {
