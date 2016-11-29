@@ -160,6 +160,9 @@ public class HttpPyramidConfiguration {
             }
             builder.add("classPath", toJsonArray(classPath));
             builder.add("vmOptions", toJsonArray(vmOptions));
+            if (workingDirectory != null) {
+                builder.add("workingDirectory", workingDirectory);
+            }
             if (memory != null) {
                 builder.add("memory", memory);
             }
