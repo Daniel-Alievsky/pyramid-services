@@ -111,7 +111,7 @@ public class HttpPyramidService {
     public final void addHandler(HttpPyramidCommand command) {
         Objects.requireNonNull(command, "Null HTTP-pyramid command");
         serverConfiguration.addHttpHandler(new HttpPyramidHandler(command.urlPrefix, command), command.urlPrefix);
-        LOG.info("Adding HTTP handler for " + command.urlPrefix);
+        LOG.config("Adding HTTP handler for " + command.urlPrefix);
     }
 
     public final void addStandardHandlers() {
@@ -197,7 +197,7 @@ public class HttpPyramidService {
     private void addSystemHandler(SystemCommand command) {
         Objects.requireNonNull(command, "Null HTTP-pyramid command");
         systemHandlers.add(command);
-        LOG.info("Adding file-managed handler for " + command.urlPrefix);
+        LOG.config("Adding file-managed handler for " + command.urlPrefix);
     }
 
     private class FinishCommand extends SystemCommand {

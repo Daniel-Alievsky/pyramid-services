@@ -55,7 +55,7 @@ final class ReadThreadPool {
         for (int k = 0; k < threads.length; k++) {
             threads[k] = new ReadImageThread();
             threads[k].start();
-            LOG.info("Starting make-image thread #" + k);
+            LOG.config("Starting make-image thread #" + k);
         }
         this.cleaningThread = new CleaningTasksThread();
         this.cleaningThread.start();
