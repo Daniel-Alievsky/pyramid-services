@@ -122,9 +122,8 @@ public final class HttpPyramidProxyServer {
 
     private Path finishKeyFile() {
         return HttpPyramidApiTools.keyFile(
-            serviceConfiguration.systemCommandsFolder(),
-            HttpProxy.FINISH_COMMAND,
-            proxy.getProxyPort());
+            HttpProxy.FINISH_COMMAND, proxy.getProxyPort(), serviceConfiguration.systemCommandsFolder()
+        );
     }
 
     private void printWelcomeAndKillOnEnterKey() {

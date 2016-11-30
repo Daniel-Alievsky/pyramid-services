@@ -103,6 +103,11 @@ public final class HttpPyramidServiceControl {
             delayAfterStopInMilliseconds);
     }
 
+    public final void removeFinishSystemCommandFile() throws InvalidFileConfigurationException {
+        AsyncPyramidSystemCommand.removeSystemCommandFile(
+            HttpPyramidConstants.CommandPrefixes.FINISH, port, systemCommandsFolder);
+    }
+
     public final PlanePyramidInformation information(String pyramidId) throws IOException {
         final HttpURLConnection connection = openCustomConnection(
             HttpPyramidConstants.CommandPrefixes.INFORMATION + "?" + HttpPyramidConstants.PYRAMID_ID_PARAMETER_NAME

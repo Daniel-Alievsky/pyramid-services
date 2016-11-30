@@ -100,7 +100,7 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
     }
 
     @Override
-    public Process startOnLocalhost() {
+    public Process startOnLocalhost() throws InvalidFileConfigurationException {
         final Path javaPath = specificServerConfiguration.javaExecutable();
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
@@ -127,6 +127,9 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         LOG.info(JavaProcessControl.commandLineToString(processBuilder));
+        AsyncPyramidSystemCommand.removeSystemCommandFile(FINISH_COMMAND, proxyPort, systemCommandsFolder);
+        // - the key file must be removed BEFORE attempt to start new process,
+        // for a case if it was kept from the previous failed attemt to stop the process
         try {
             return processBuilder.start();
         } catch (IOException e) {

@@ -47,8 +47,8 @@ abstract class SystemCommand {
 
     Path keyFile() {
         return HttpPyramidApiTools.keyFile(
-            httpPyramidService.getSystemCommandsFolder(),
             urlPrefix,
-            httpPyramidService.getPort());
+            httpPyramidService.getPort(),
+            httpPyramidService.getSystemCommandsFolder());
     }
 }

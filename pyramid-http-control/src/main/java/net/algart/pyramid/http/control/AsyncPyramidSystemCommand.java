@@ -59,17 +59,8 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
 
         this.command = command;
         this.port = port;
-        this.keyFile = HttpPyramidApiTools.keyFile(systemCommandsFolder, command, port);
-        if (!Files.isDirectory(systemCommandsFolder)) {
-            throw new InvalidFileConfigurationException(
-                new FileNotFoundException("System command folder not found or not a directory: "
-                    + systemCommandsFolder.toAbsolutePath()));
-        }
-        try {
-            Files.deleteIfExists(keyFile);
-            // - to be on the safe side; removing key file does not affect services
-        } catch (IOException ignored) {
-        }
+        this.keyFile = removeSystemCommandFile(command, port, systemCommandsFolder);
+        // - remove file to be on the safe side; removing key file does not affect services
         try {
             Files.createFile(keyFile);
         } catch (FileAlreadyExistsException e) {
@@ -117,5 +108,22 @@ class AsyncPyramidSystemCommand extends AsyncPyramidCommand {
     @Override
     public String toString() {
         return "system command " + command + ":" + port;
+    }
+
+    public static Path removeSystemCommandFile(String command, int port, Path systemCommandsFolder)
+        throws InvalidFileConfigurationException
+    {
+        if (!Files.isDirectory(systemCommandsFolder)) {
+            throw new InvalidFileConfigurationException(
+                new FileNotFoundException("System command folder not found or not a directory: "
+                    + systemCommandsFolder.toAbsolutePath()));
+        }
+        final Path keyFile = HttpPyramidApiTools.keyFile(command, port, systemCommandsFolder);
+        try {
+            Files.deleteIfExists(keyFile);
+            // - to be on the safe side; removing key file does not affect services
+        } catch (IOException ignored) {
+        }
+        return keyFile;
     }
 }

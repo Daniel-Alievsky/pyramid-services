@@ -104,7 +104,7 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
     }
 
     @Override
-    public Process startOnLocalhost() {
+    public Process startOnLocalhost() throws InvalidFileConfigurationException {
         final HttpPyramidConfiguration configuration = processConfiguration.parentConfiguration();
         final Path javaPath = specificServerConfiguration.javaExecutable(processConfiguration.jreName());
         List<String> command = new ArrayList<>();
@@ -137,6 +137,11 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         LOG.info(JavaProcessControl.commandLineToString(processBuilder));
+        for (HttpPyramidServiceControl serviceControl : serviceControls) {
+            serviceControl.removeFinishSystemCommandFile();
+            // - the key files must be removed BEFORE attempt to start new process,
+            // for a case if it was kept from the previous failed attemt to stop the process
+        }
         try {
             return processBuilder.start();
         } catch (IOException e) {

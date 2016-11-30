@@ -36,8 +36,12 @@ abstract class JavaProcessControl {
      * after this you should use HTTP checks to be sure that the process is really started.</p>
      *
      * <p>For simple and stable processes, like lightweight
-     * {@link net.algart.pyramid.http.proxy.HttpPyramidProxyServer HttpPyramidProxyServer},
+     * <tt>net.algart.pyramid.http.proxy.HttpPyramidProxyServer</tt>,
      * this method should return <tt>false</tt>.</p>
+     *
+     * <p>Note, that if the started process may use SSL protocol (like <tt>HttpPyramidProxyServer</tt>),
+     * we <b>do not recommend</b> return <tt>true</tt> in this method,
+     * to avoid possible problems with access via HTTTS.</p>
      *
      * @return whether additional check via HTTP is recommended after starting the process.
      */
@@ -56,8 +60,12 @@ abstract class JavaProcessControl {
      * method for starting an external application.</p>
      *
      * @return OS process with newly started JVM
+     * @throws InvalidFileConfigurationException in a case of disk problems. Usually this method should not
+     *                                           throw exceptions, besides a rare case when configuration
+     *                                           of the file system prevents creating or deleting some files
+     *                                           (for example, the system folder for key files does not really exist).
      */
-    public abstract Process startOnLocalhost();
+    public abstract Process startOnLocalhost() throws InvalidFileConfigurationException;
 
     /**
      * <p>Initiates finishing this process on the current computer.</p>

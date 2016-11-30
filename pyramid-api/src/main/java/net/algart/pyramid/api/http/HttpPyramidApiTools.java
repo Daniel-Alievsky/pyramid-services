@@ -31,7 +31,7 @@ public class HttpPyramidApiTools {
     private HttpPyramidApiTools() {
     }
 
-    public static Path keyFile(Path systemCommandsFolder, String urlPrefix, int port) {
+    public static Path keyFile(String urlPrefix, int port, Path systemCommandsFolder) {
         final String keyFileFrefix = String.format(Locale.US, HttpPyramidConstants.SYSTEM_COMMANDS_FILE_PREFIX, port);
         return systemCommandsFolder.resolve(keyFileFrefix + urlPrefix.substring(1, urlPrefix.length()));
     }
