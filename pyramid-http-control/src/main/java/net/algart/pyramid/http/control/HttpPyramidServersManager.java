@@ -40,7 +40,6 @@ public class HttpPyramidServersManager {
     private static final int REVIVING_DELAY_IN_MILLISECONDS = 3000;
 
     private final HttpPyramidServersLauncher launcher;
-    private boolean revivingProxy = false;
 
     private volatile boolean shutdown = false;
     private volatile boolean revivingActive = false;
@@ -79,24 +78,6 @@ public class HttpPyramidServersManager {
 
     public HttpPyramidSpecificServerConfiguration getSpecificServerConfiguration() {
         return launcher.getSpecificServerConfiguration();
-    }
-
-    public boolean isRevivingProxy() {
-        return revivingProxy;
-    }
-
-    /**
-     * <p>Specifies whether this manager should also revive proxy. (Usual services are revived always.)</p>
-     *
-     * <p>Note: we DO NOT recoomend to set this if the proxy is SSL, because attempt to check its state
-     * can lead to an exception.</p>
-     *
-     * @param revivingProxy whether the manager should revive stopped proxy.
-     * @return
-     */
-    public HttpPyramidServersManager setRevivingProxy(boolean revivingProxy) {
-        this.revivingProxy = revivingProxy;
-        return this;
     }
 
     public void startAll() throws IOException {
@@ -170,7 +151,9 @@ public class HttpPyramidServersManager {
         allSubCommands.addAll(serviceCommands);
         final AsyncPyramidCommand proxyCommand;
         final boolean hasProxy = launcher.getSpecificServerConfiguration().hasProxy();
-        if (hasProxy && revivingProxy) {
+        final boolean revivingByManager = hasProxy
+            && launcher.getSpecificServerConfiguration().getProxySettings().isAutoRevivingByManager();
+        if (revivingByManager) {
             proxyCommand = launcher.restartPyramidProxyRequest(true);
             if (!(proxyCommand instanceof ImmediatePyramidCommand)) {
                 allSubCommands.add(proxyCommand);
@@ -190,8 +173,8 @@ public class HttpPyramidServersManager {
                 LOG.info(String.format("%n%d services in %d processes successfully revived, %s",
                     serviceCount, processCount, proxyCommand != null && proxyCommand.isAccepted() ?
                         "1 proxy successfully revived" :
-                        hasProxy && revivingProxy ? "0 proxy successfully revived" :
-                            revivingProxy ? "proxy absent" : "proxy not checked"));
+                        revivingByManager ? "0 proxy successfully revived" :
+                            !hasProxy ? "proxy absent" : "proxy not checked"));
             }).waitFor();
         }
     }
@@ -206,7 +189,6 @@ public class HttpPyramidServersManager {
         final Path projectRoot = Paths.get(args[0]);
         final Path specificServerConfigurationFile = Paths.get(args[1]);
         final HttpPyramidServersManager manager = newInstance(projectRoot, specificServerConfigurationFile);
-//        manager.setRevivingProxy(true);
         try {
             manager.startAll();
         } catch (Throwable e) {

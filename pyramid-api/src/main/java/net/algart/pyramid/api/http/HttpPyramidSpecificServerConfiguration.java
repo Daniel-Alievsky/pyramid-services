@@ -179,6 +179,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         private final String pyramidHost;
         private final boolean ssl;
         private final DefaultServer defaultServer;
+        private final boolean autoRevivingByManager;
         private final HttpPyramidSpecificServerConfiguration parentConfiguration;
 
         private ProxySettings(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
@@ -193,6 +194,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             this.pyramidHost = json.getString("pyramidHost", "localhost");
             this.ssl = json.getBoolean("ssl", false);
             this.defaultServer = new DefaultServer(this, json.getJsonObject("defaultServer"));
+            this.autoRevivingByManager = json.getBoolean("autoRevivingByManager", false);
             this.parentConfiguration = parentConfiguration;
         }
 
@@ -212,6 +214,18 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             return defaultServer;
         }
 
+        /**
+         * <p>Whether the manager should also revive proxy. (Usual services are revived always.)</p>
+         *
+         * <p>Note: we DO NOT recoomend to set this if the proxy is SSL, because attempt to check its state
+         * can lead to an exception.</p>
+         *
+         * @return whether the manager should also revive proxy.
+         */
+        public boolean isAutoRevivingByManager() {
+            return autoRevivingByManager;
+        }
+
         public String toJsonString() {
             return toJson().toString();
         }
@@ -226,6 +240,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             builder.add("pyramidHost", pyramidHost);
             builder.add("defaultServer", defaultServer.toJson());
             builder.add("ssl", ssl);
+            builder.add("autoRevivingByManager", autoRevivingByManager);
             return builder.build();
         }
     }
