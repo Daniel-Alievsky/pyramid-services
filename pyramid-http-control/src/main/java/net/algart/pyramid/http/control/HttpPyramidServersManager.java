@@ -40,6 +40,7 @@ public class HttpPyramidServersManager {
     private static final int REVIVING_DELAY_IN_MILLISECONDS = 3000;
 
     private final HttpPyramidServersLauncher launcher;
+    private boolean revivingProxy = false;
 
     private volatile boolean shutdown = false;
     private volatile boolean revivingActive = false;
@@ -66,6 +67,36 @@ public class HttpPyramidServersManager {
         return new HttpPyramidServersManager(
             HttpPyramidConfiguration.readFromRootFolder(projectRoot),
             HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile));
+    }
+
+    public HttpPyramidServersLauncher getLauncher() {
+        return launcher;
+    }
+
+    public HttpPyramidConfiguration getConfiguration() {
+        return launcher.getConfiguration();
+    }
+
+    public HttpPyramidSpecificServerConfiguration getSpecificServerConfiguration() {
+        return launcher.getSpecificServerConfiguration();
+    }
+
+    public boolean isRevivingProxy() {
+        return revivingProxy;
+    }
+
+    /**
+     * <p>Specifies whether this manager should also revive proxy. (Usual services are revived always.)</p>
+     *
+     * <p>Note: we DO NOT recoomend to set this if the proxy is SSL, because attempt to check its state
+     * can lead to an exception.</p>
+     *
+     * @param revivingProxy whether the manager should revive stopped proxy.
+     * @return
+     */
+    public HttpPyramidServersManager setRevivingProxy(boolean revivingProxy) {
+        this.revivingProxy = revivingProxy;
+        return this;
     }
 
     public void startAll() throws IOException {
@@ -127,6 +158,7 @@ public class HttpPyramidServersManager {
     }
 
     private void reviveAll() throws InvalidFileConfigurationException {
+        final List<AsyncPyramidCommand> allSubCommands = new ArrayList<>();
         final List<AsyncPyramidCommand> serviceCommands = new ArrayList<>();
         final List<String> allGroupId = new ArrayList<>(launcher.getConfiguration().allGroupId());
         for (String groupId : allGroupId) {
@@ -135,8 +167,19 @@ public class HttpPyramidServersManager {
                 serviceCommands.add(command);
             }
         }
-        if (!serviceCommands.isEmpty()) {
-            new MultipleAsyncPyramidCommand(serviceCommands).setFinishHandler(() -> {
+        allSubCommands.addAll(serviceCommands);
+        final AsyncPyramidCommand proxyCommand;
+        final boolean hasProxy = launcher.getSpecificServerConfiguration().hasProxy();
+        if (hasProxy && revivingProxy) {
+            proxyCommand = launcher.restartPyramidProxyRequest(true);
+            if (!(proxyCommand instanceof ImmediatePyramidCommand)) {
+                allSubCommands.add(proxyCommand);
+            }
+        } else {
+            proxyCommand = null;
+        }
+        if (!allSubCommands.isEmpty()) {
+            new MultipleAsyncPyramidCommand(allSubCommands).setFinishHandler(() -> {
                 int serviceCount = 0, processCount = 0;
                 for (int i = 0; i < serviceCommands.size(); i++) {
                     if (serviceCommands.get(i).isAccepted()) {
@@ -144,8 +187,11 @@ public class HttpPyramidServersManager {
                         serviceCount += launcher.getConfiguration().numberOfProcessServices(allGroupId.get(i));
                     }
                 }
-                LOG.info(String.format("%n%d services in %d processes successfully revived",
-                    serviceCount, processCount));
+                LOG.info(String.format("%n%d services in %d processes successfully revived, %s",
+                    serviceCount, processCount, proxyCommand != null && proxyCommand.isAccepted() ?
+                        "1 proxy successfully revived" :
+                        hasProxy && revivingProxy ? "0 proxy successfully revived" :
+                            revivingProxy ? "proxy absent" : "proxy not checked"));
             }).waitFor();
         }
     }
@@ -160,6 +206,7 @@ public class HttpPyramidServersManager {
         final Path projectRoot = Paths.get(args[0]);
         final Path specificServerConfigurationFile = Paths.get(args[1]);
         final HttpPyramidServersManager manager = newInstance(projectRoot, specificServerConfigurationFile);
+//        manager.setRevivingProxy(true);
         try {
             manager.startAll();
         } catch (Throwable e) {
