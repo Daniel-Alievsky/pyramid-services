@@ -5,5 +5,5 @@
   "commonVmOptions" : [
     "-ea"
   ],
-  "commonMemory" : "1g"
+  "commonMemory" : "3g"
 }

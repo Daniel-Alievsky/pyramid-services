@@ -87,7 +87,7 @@ public class HttpPyramidConfiguration {
                 }
             }
             this.workingDirectory = json.getString("workingDirectory", null);
-            final String memory = json.getString("memory", null);
+            final String memory = getStringOrInt(json, "memory");
             this.memory = memory != null ? parseLongWithMetricalSuffixes(memory) : null;
             this.port = getRequiredInt(json, "port");
             if (port <= 0 || port > HttpPyramidConstants.MAX_ALLOWED_PORT) {
@@ -359,7 +359,7 @@ public class HttpPyramidConfiguration {
                 this.commonVmOptions.add(commonVmOptions.getString(k));
             }
         }
-        final String commonMemory = globalConfiguration.getString("commonMemory", null);
+        final String commonMemory = getStringOrInt(globalConfiguration, "commonMemory");
         this.commonMemory = commonMemory != null ? parseLongWithMetricalSuffixes(commonMemory) : null;
         this.systemCommandsFolder = globalConfiguration.getString("systemCommandsFolder",
             HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER);
@@ -516,6 +516,17 @@ public class HttpPyramidConfiguration {
             globalConfigurationFile,
             globalConfiguration,
             processes);
+    }
+
+    static String getStringOrInt(JsonObject json, String name) {
+        final JsonValue jsonValue = json.get(name);
+        if (jsonValue instanceof JsonString) {
+            return ((JsonString) jsonValue).getString();
+        }
+        if (jsonValue instanceof JsonNumber) {
+            return jsonValue.toString();
+        }
+        return null;
     }
 
     static String getRequiredString(JsonObject json, String name) {
