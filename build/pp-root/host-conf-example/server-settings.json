@@ -9,7 +9,7 @@
   ],
   "proxy": true,
   "proxySettings": {
-    "proxyPort": 100,
+    "proxyPort": 8089,
     "ssl": false,
     "defaultServer": {
       "enable": true,
