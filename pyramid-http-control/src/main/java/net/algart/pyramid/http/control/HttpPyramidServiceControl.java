@@ -110,7 +110,8 @@ public final class HttpPyramidServiceControl {
 
     public final PlanePyramidInformation information(String pyramidId) throws IOException {
         final HttpURLConnection connection = openCustomConnection(
-            HttpPyramidConstants.CommandPrefixes.INFORMATION + "?" + HttpPyramidConstants.PYRAMID_ID_PARAMETER_NAME
+            HttpPyramidConstants.CommandPrefixes.INFORMATION
+                + "?" + HttpPyramidConstants.PYRAMID_ID_PARAMETER_NAME
                 + "=" + URLEncoder.encode(pyramidId, StandardCharsets.UTF_8.name()),
             "GET");
         checkHttpOk(connection);
