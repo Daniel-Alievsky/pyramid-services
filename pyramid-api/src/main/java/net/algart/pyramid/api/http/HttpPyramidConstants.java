@@ -67,10 +67,10 @@ public class HttpPyramidConstants {
         public static final String GC = PREXIX_START + "gc";
         public static final String ALIVE_STATUS = PREXIX_START + "alive-status";
         public static final String INFORMATION = PREXIX_START + "information";
+        public static final String READ_SPECIAL_IMAGE = PREXIX_START + "read-special-image";
         public static final String READ_RECTANGLE = PREXIX_START + "read-rectangle";
         public static final String TMS = PREXIX_START + "tms";
         public static final String ZOOMIFY = PREXIX_START + "zoomify";
-        public static final String READ_SPECIAL_IMAGE = PREXIX_START + "read-special-image";
 
         private CommandPrefixes() {}
     }

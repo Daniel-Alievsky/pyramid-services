@@ -25,15 +25,13 @@
 package net.algart.pyramid.http.control;
 
 import net.algart.pyramid.PlanePyramidInformation;
+import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -79,8 +77,10 @@ public final class HttpPyramidServiceControl {
 
     public final boolean isServiceAlive(boolean logWhenFails) {
         try {
-            final HttpURLConnection connection = openCustomConnection(
-                HttpPyramidConstants.CommandPrefixes.ALIVE_STATUS, "GET");
+            final HttpURLConnection connection = HttpPyramidApiTools.openConnection(
+                connectionURL(HttpPyramidConstants.CommandPrefixes.ALIVE_STATUS),
+                "GET",
+                false);
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
             // - getResponseCode() actually waits for results
         } catch (IOException e) {
@@ -93,7 +93,7 @@ public final class HttpPyramidServiceControl {
     }
 
     public final AsyncPyramidCommand stopServiceOnLocalhostRequest(
-        int timeoutInMilliseconds, 
+        int timeoutInMilliseconds,
         int delayAfterStopInMilliseconds)
         throws InvalidFileConfigurationException
     {
@@ -109,12 +109,10 @@ public final class HttpPyramidServiceControl {
     }
 
     public final PlanePyramidInformation information(String pyramidId) throws IOException {
-        final HttpURLConnection connection = openCustomConnection(
-            HttpPyramidConstants.CommandPrefixes.INFORMATION
-                + "?" + HttpPyramidConstants.PYRAMID_ID_PARAMETER_NAME
-                + "=" + URLEncoder.encode(pyramidId, StandardCharsets.UTF_8.name()),
-            "GET");
-        checkHttpOk(connection);
+        final HttpURLConnection connection = HttpPyramidApiTools.openConnection(connectionURL(
+            HttpPyramidApiTools.informationPathAndQuery(pyramidId)),
+            "GET",
+            true);
         try (final InputStreamReader reader = new InputStreamReader(connection.getInputStream(),
             StandardCharsets.UTF_8))
         {
@@ -122,12 +120,16 @@ public final class HttpPyramidServiceControl {
         }
     }
 
-    public final HttpURLConnection openCustomConnection(
-        String pathAndQuery,
-        String requestMethod)
-        throws IOException
-    {
-        return openCustomConnection(pathAndQuery, requestMethod, host, port, https);
+    public final HttpURLConnection openPostConnection(String pathAndQuery) throws IOException {
+        return HttpPyramidApiTools.openConnection(connectionURL(pathAndQuery), "POST", true);
+    }
+
+    public final URL connectionURL(String pathAndQuery) {
+        try {
+            return new URL(https ? "https" : "http", host, port, pathAndQuery);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Invalid URL path/query: " + pathAndQuery, e);
+        }
     }
 
     public final AsyncPyramidCommand requestSystemCommand(
@@ -142,48 +144,6 @@ public final class HttpPyramidServiceControl {
             systemCommandsFolder,
             timeoutInMilliseconds,
             delayAfterStopInMilliseconds);
-    }
-
-    private void checkHttpOk(HttpURLConnection connection) throws IOException {
-        if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-            throw new IOException("Invalid response: code " + connection.getResponseCode()
-                + ", message " + connection.getResponseMessage());
-        }
-    }
-
-    static String protocol(boolean https) {
-        return https ? "https" : "http";
-    }
-
-    static HttpURLConnection openCustomConnection(
-        String pathAndQuery,
-        String requestMethod,
-        String host,
-        int port,
-        boolean https
-    )
-        throws IOException
-    {
-        final URL url = new URL(protocol(https), host, port, pathAndQuery);
-        final URLConnection connection = url.openConnection();
-        connection.setConnectTimeout(HttpPyramidConstants.CLIENT_CONNECTION_TIMEOUT);
-        connection.setReadTimeout(HttpPyramidConstants.CLIENT_READ_TIMEOUT);
-        // In future, if necessary, we will maybe provide better timeouts:
-        // http://stackoverflow.com/questions/3163693/java-urlconnection-timeout
-        if (!(connection instanceof HttpURLConnection)) {
-            throw new AssertionError("Invalid type of URL connection (not HttpURLConnection)");
-        }
-        final HttpURLConnection result = (HttpURLConnection) connection;
-//        if (result instanceof HttpsURLConnection) {
-//            ((HttpsURLConnection)result).setHostnameVerifier(new HostnameVerifier() {
-//                @Override
-//                public boolean verify(String s, SSLSession sslSession) {
-//                    return true;
-//                }
-//            });
-//        }
-        result.setRequestMethod(requestMethod);
-        return result;
     }
 
 }

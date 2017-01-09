@@ -24,6 +24,7 @@
 
 package net.algart.pyramid.http.control;
 
+import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
@@ -32,6 +33,8 @@ import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -152,10 +155,11 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
     }
 
     public final boolean isProxyAlive(boolean logWhenFails) {
-        final boolean useSSL = specificServerConfiguration.getProxySettings().isSsl();
         try {
-            final HttpURLConnection connection = HttpPyramidServiceControl.openCustomConnection(
-                ALIVE_STATUS_COMMAND, "GET", proxyHost, proxyPort, useSSL);
+            final HttpURLConnection connection = HttpPyramidApiTools.openConnection(
+                connectionURL(ALIVE_STATUS_COMMAND),
+                "GET",
+                false);
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
             // - getResponseCode() actually waits for results
         } catch (IOException e) {
@@ -163,9 +167,21 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
             // Unfortunately, some other exceptions like javax.net.ssl.SSLHandshakeException can lead to the same.
             if (logWhenFails) {
                 LOG.log(Level.INFO, "Cannot connect to proxy " +
-                    HttpPyramidServiceControl.protocol(useSSL) + "://" + proxyHost + ":" + proxyPort + ": " + e);
+                    (specificServerConfiguration.getProxySettings().isSsl() ? "https" : "http")
+                    + "://" + proxyHost + ":" + proxyPort + ": " + e);
             }
             return false;
         }
     }
+
+    public final URL connectionURL(String pathAndQuery) {
+        final boolean useSSL = specificServerConfiguration.getProxySettings().isSsl();
+        try {
+            return new URL(useSSL ? "https" : "http", proxyHost, proxyPort, pathAndQuery);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Invalid URL path/query: " + pathAndQuery, e);
+        }
+    }
+
+
 }
