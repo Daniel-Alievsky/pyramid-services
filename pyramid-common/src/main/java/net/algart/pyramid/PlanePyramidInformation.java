@@ -27,6 +27,7 @@ package net.algart.pyramid;
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -36,9 +37,13 @@ public final class PlanePyramidInformation extends PlanePyramidData {
     private final long zeroLevelDimX;
     private final long zeroLevelDimY;
     private final Class<?> elementType;
+    private volatile String pyramidFormatName = null;
+    private volatile String renderingFormatName = null;
     private volatile Double pixelSizeInMicrons = null;
     private volatile Double magnification = null;
     private volatile Set<String> existingSpecialImages = new LinkedHashSet<>();
+    private volatile String actualAreas = null;
+    // - usually JSON
     private volatile String additionalMetadata = null;
     // - usually JSON
 
@@ -88,6 +93,14 @@ public final class PlanePyramidInformation extends PlanePyramidData {
             getRequiredLong(json, "zeroLevelDimX"),
             getRequiredLong(json, "zeroLevelDimY"),
             elementType);
+        final String pyramidFormatName = json.getString("pyramidFormatName", null);
+        if (pyramidFormatName != null) {
+            result.setPyramidFormatName(pyramidFormatName);
+        }
+        final String renderingFormatName = json.getString("renderingFormatName", null);
+        if (renderingFormatName != null) {
+            result.setRenderingFormatName(renderingFormatName);
+        }
         final JsonNumber pixelSizeInMicrons = json.getJsonNumber("pixelSizeInMicrons");
         if (pixelSizeInMicrons != null) {
             result.setPixelSizeInMicrons(pixelSizeInMicrons.doubleValue());
@@ -97,9 +110,13 @@ public final class PlanePyramidInformation extends PlanePyramidData {
             result.setMagnification(magnification.doubleValue());
         }
         result.setExistingSpecialImages(toStringList(getRequiredJsonArray(json, "existingSpecialImages")));
-        final JsonString additionalMetadata = json.getJsonString("additionalMetadata");
+        final JsonObject actualAreas = json.getJsonObject("actualAreas");
+        if (actualAreas != null) {
+            result.setActualAreas(actualAreas.toString());
+        }
+        final JsonObject additionalMetadata = json.getJsonObject("additionalMetadata");
         if (additionalMetadata != null) {
-            result.setAdditionalMetadata(additionalMetadata.getString());
+            result.setAdditionalMetadata(additionalMetadata.toString());
         }
         return result;
     }
@@ -118,6 +135,22 @@ public final class PlanePyramidInformation extends PlanePyramidData {
 
     public Class<?> getElementType() {
         return elementType;
+    }
+
+    public String getRenderingFormatName() {
+        return renderingFormatName;
+    }
+
+    public void setRenderingFormatName(String renderingFormatName) {
+        this.renderingFormatName = renderingFormatName;
+    }
+
+    public String getPyramidFormatName() {
+        return pyramidFormatName;
+    }
+
+    public void setPyramidFormatName(String pyramidFormatName) {
+        this.pyramidFormatName = pyramidFormatName;
     }
 
     public Double getPixelSizeInMicrons() {
@@ -150,6 +183,14 @@ public final class PlanePyramidInformation extends PlanePyramidData {
         Objects.requireNonNull(existingSpecialImages, "Null existingSpecialImages (use empty set instead");
         this.existingSpecialImages.clear();
         this.existingSpecialImages.addAll(existingSpecialImages);
+    }
+
+    public String getActualAreas() {
+        return actualAreas;
+    }
+
+    public void setActualAreas(String actualAreas) {
+        this.actualAreas = actualAreas;
     }
 
     /**
@@ -212,6 +253,12 @@ public final class PlanePyramidInformation extends PlanePyramidData {
         builder.add("zeroLevelDimX", zeroLevelDimX);
         builder.add("zeroLevelDimY", zeroLevelDimY);
         builder.add("elementType", elementType.toString());
+        if (pyramidFormatName != null) {
+            builder.add("pyramidFormatName", pyramidFormatName);
+        }
+        if (renderingFormatName != null) {
+            builder.add("renderingFormatName", renderingFormatName);
+        }
         if (pixelSizeInMicrons != null) {
             builder.add("pixelSizeInMicrons", pixelSizeInMicrons);
         }
@@ -223,8 +270,11 @@ public final class PlanePyramidInformation extends PlanePyramidData {
             arrayBuilder.add(name);
         }
         builder.add("existingSpecialImages", arrayBuilder.build());
+        if (actualAreas != null) {
+            builder.add("actualAreas", toJson(actualAreas));
+        }
         if (additionalMetadata != null) {
-            builder.add("additionalMetadata", additionalMetadata);
+            builder.add("additionalMetadata", toJson(additionalMetadata));
         }
         return builder.build();
     }
@@ -267,5 +317,11 @@ public final class PlanePyramidInformation extends PlanePyramidData {
             throw new JsonException("Invalid pyramid information JSON: \"" + name + "\" value required");
         }
         return result;
+    }
+
+    private static JsonObject toJson(String json) {
+        try (JsonReader jsonReader = Json.createReader(new StringReader(json))) {
+            return jsonReader.readObject();
+        }
     }
 }

@@ -3,7 +3,7 @@
   "groupId": "com.simagis.pyramid.openslide",
   "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
   "planePyramidFactoryConfiguration": "com.simagis.pyramid.openslide.server.OpenSlidePlanePyramidSourceFactory",
-  "port": 9520,
+  "port": 20020,
   "classPath": [
     "lib/.openslide/OpenSlide.jar",
     "lib/.openslide/PlanePyramidSourceOpenSlide.jar"

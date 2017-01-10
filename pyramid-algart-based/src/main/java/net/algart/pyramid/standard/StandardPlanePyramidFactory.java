@@ -57,7 +57,10 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
         final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
         final Path pyramidDir = PyramidApiTools.getPyramidPath(config);
         final JsonObject pyramidJson = PyramidApiTools.readPyramidConfiguration(pyramidDir);
-        final String fileName = pyramidJson.getString("fileName");
+        final String fileName = pyramidJson.getString("fileName", null);
+        if (fileName == null) {
+            throw new IOException("Invalid pyramid configuration json: no fileName value <<<" + pyramidJson + ">>>");
+        }
         final Path pyramidFile = pyramidDir.resolve(fileName);
         if (!Files.exists(pyramidFile)) {
             throw new IOException("Pyramid file at " + pyramidFile + " does not exist");
@@ -72,7 +75,8 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
             pyramidFile.toAbsolutePath().toString(),
             pyramidJson.toString(),
             rendererJson.toString());
-        return new StandardPlanePyramid(planePyramidSource, rendererJson, rawBytes, cacheable, pyramidConfiguration);
+        return new StandardPlanePyramid(
+            planePyramidSource, pyramidJson, rendererJson, rawBytes, cacheable, pyramidConfiguration);
     }
 
     @Override

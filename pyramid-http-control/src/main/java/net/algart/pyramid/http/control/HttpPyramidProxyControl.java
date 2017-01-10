@@ -42,7 +42,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class HttpPyramidProxyControl extends JavaProcessControl {
+public class HttpPyramidProxyControl extends JavaProcessControl implements PyramidAccessControl {
     // Note: the following 2 constats must be identical to the same constants in HttpProxy class.
     public static final String ALIVE_STATUS_COMMAND = "/~~~~.net.algart.http.proxy.alive-status";
     public static final String FINISH_COMMAND = "/~~~~.net.algart.http.proxy.finish";
@@ -182,6 +182,4 @@ public class HttpPyramidProxyControl extends JavaProcessControl {
             throw new IllegalArgumentException("Invalid URL path/query: " + pathAndQuery, e);
         }
     }
-
-
 }

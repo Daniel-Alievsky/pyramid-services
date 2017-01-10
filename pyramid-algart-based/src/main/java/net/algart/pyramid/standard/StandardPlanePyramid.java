@@ -28,6 +28,8 @@ import net.algart.arrays.Matrices;
 import net.algart.arrays.Matrix;
 import net.algart.arrays.PArray;
 import net.algart.external.MatrixToBufferedImageConverter;
+import net.algart.math.IPoint;
+import net.algart.math.IRectangularArea;
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidImageData;
 import net.algart.pyramid.PlanePyramidInformation;
@@ -38,8 +40,7 @@ import net.algart.simagis.pyramid.sources.ScalablePlanePyramidSource;
 
 import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
+import javax.json.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -61,10 +62,11 @@ class StandardPlanePyramid implements PlanePyramid {
 
     private final String pyramidConfiguration;
     private final ScalablePlanePyramidSource source;
+    private final String pyramidFormatName;
     private final String renderingFormatName;
     private final Color renderingBackgroundColor;
     private final MatrixToBufferedImageConverter converter;
-    private final MatrixToBufferedImageConverter specialImageCconverter;
+    private final MatrixToBufferedImageConverter specialImageConverter;
     private final boolean rawBytes;
     private final boolean cacheable;
 
@@ -73,15 +75,23 @@ class StandardPlanePyramid implements PlanePyramid {
 
     StandardPlanePyramid(
         PlanePyramidSource parentSource,
+        JsonObject pyramidJson,
         JsonObject rendererJson,
         boolean rawBytes,
         boolean cacheable,
         String pyramidConfiguration)
+        throws IOException
     {
         Objects.requireNonNull(parentSource, "Null plane pyramid source");
+        Objects.requireNonNull(pyramidJson, "Null pyramid JSON");
         Objects.requireNonNull(rendererJson, "Null renderer JSON");
         Objects.requireNonNull(pyramidConfiguration, "Null pyramid configuration");
         this.source = ScalablePlanePyramidSource.newInstance(parentSource);
+        this.pyramidFormatName = pyramidJson.getString("formatName", null);
+        if (pyramidFormatName == null) {
+            throw new IOException("Invalid pyramid configuration json: no pyramidFormatName value <<<"
+                + pyramidJson + ">>>");
+        }
         this.renderingFormatName = rendererJson.getString("format", "png");
         final boolean transparencySupported = transparencySupported(renderingFormatName);
         final JsonNumber opacity = rendererJson.getJsonNumber("opacity");
@@ -95,7 +105,7 @@ class StandardPlanePyramid implements PlanePyramid {
             opacity != null ? opacity.doubleValue() : 1.0,
             transparencySupported);
         // - opacity is not used in DEFAULT renderer
-        this.specialImageCconverter = new MatrixToBufferedImageConverter.Packed3DToPackedRGB(transparencySupported);
+        this.specialImageConverter = new MatrixToBufferedImageConverter.Packed3DToPackedRGB(transparencySupported);
         this.rawBytes = rawBytes;
         this.cacheable = cacheable;
         this.pyramidConfiguration = pyramidConfiguration;
@@ -127,6 +137,8 @@ class StandardPlanePyramid implements PlanePyramid {
                     this.source.dimY(),
                     this.source.elementType()
                 );
+                information.setPyramidFormatName(pyramidFormatName);
+                information.setRenderingFormatName(renderingFormatName);
                 information.setPixelSizeInMicrons(this.source.pixelSizeInMicrons());
                 information.setMagnification(this.source.magnification());
                 final List<String> specialImageNames = new ArrayList<>();
@@ -137,7 +149,10 @@ class StandardPlanePyramid implements PlanePyramid {
                 }
                 information.setExistingSpecialImages(specialImageNames);
                 information.setAdditionalMetadata(this.source.additionalMetadata());
-                //TODO!! JSON metadata zeroLevelActualRectangles, zeroLevelActualAreaBoundaries
+                final JsonObject actualAreas = actualAreasToJson(this.source);
+                if (actualAreas != null) {
+                    information.setActualAreas(actualAreas.toString());
+                }
             }
             return information;
         }
@@ -152,7 +167,7 @@ class StandardPlanePyramid implements PlanePyramid {
         final long toX = imageRequest.getZeroLevelToX();
         final long toY = imageRequest.getZeroLevelToY();
         if (rawBytes) {
-            //TODO!! return RGBRGB bytes/short/... froe readImage method
+            //TODO!! return RGBRGB bytes/short/... from readImage method
         }
         BufferedImage bufferedImage = source.readBufferedImage(compression, fromX, fromY, toX, toY, converter);
         return bufferedImageToBytes(bufferedImage, renderingFormatName);
@@ -182,7 +197,7 @@ class StandardPlanePyramid implements PlanePyramid {
             }
             m = Matrices.asResized(Matrices.ResizingMethod.POLYLINEAR_AVERAGING, m, m.dim(0), width, height);
         }
-        final BufferedImage bufferedImage = specialImageCconverter.toBufferedImage(m);
+        final BufferedImage bufferedImage = specialImageConverter.toBufferedImage(m);
         return bufferedImageToBytes(bufferedImage, renderingFormatName);
     }
 
@@ -224,6 +239,44 @@ class StandardPlanePyramid implements PlanePyramid {
         stream.flush();
         this.lastAccessTime = System.currentTimeMillis();
         return new PlanePyramidImageData(stream.toByteArray(), this);
+    }
+
+    private static JsonObject actualAreasToJson(PlanePyramidSource source) {
+        final List<IRectangularArea> actualRectangles = source.zeroLevelActualRectangles();
+        final List<List<List<IPoint>>> actualAreaBoundaries = source.zeroLevelActualAreaBoundaries();
+        if (actualRectangles == null && actualAreaBoundaries == null) {
+            return null;
+        }
+        final JsonObjectBuilder builder = Json.createObjectBuilder();
+        if (actualRectangles != null) {
+            final JsonArrayBuilder jsonRectangles = Json.createArrayBuilder();
+            for (IRectangularArea r : actualRectangles) {
+                final JsonObjectBuilder jsonRectangle = Json.createObjectBuilder();
+                jsonRectangle.add("minX", r.min(0));
+                jsonRectangle.add("minY", r.min(1));
+                jsonRectangle.add("maxX", r.max(0));
+                jsonRectangle.add("maxY", r.max(1));
+                jsonRectangles.add(jsonRectangle);
+            }
+            builder.add("actualRectangles", jsonRectangles);
+        }
+        if (actualAreaBoundaries != null) {
+            final JsonArrayBuilder jsonActualAreaBoundaries = Json.createArrayBuilder();
+            for (List<List<IPoint>> area : actualAreaBoundaries) {
+                final List<IPoint> externalBoundary = area.get(0);
+                // Note: this class ignores possible holes in polygonal areas
+                final JsonArrayBuilder jsonExternalBoundary = Json.createArrayBuilder();
+                for (IPoint p : externalBoundary) {
+                    final JsonObjectBuilder jsonPoint = Json.createObjectBuilder();
+                    jsonPoint.add("x", p.x());
+                    jsonPoint.add("y", p.y());
+                    jsonExternalBoundary.add(jsonPoint);
+                }
+                jsonActualAreaBoundaries.add(jsonExternalBoundary);
+            }
+            builder.add("actualAreaBoundaries", jsonActualAreaBoundaries);
+        }
+        return builder.build();
     }
 
     private static boolean transparencySupported(String formatName) {

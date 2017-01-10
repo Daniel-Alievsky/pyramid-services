@@ -24,21 +24,20 @@
 
 package net.algart.pyramid.http.control;
 
-import net.algart.pyramid.PlanePyramidInformation;
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public final class HttpPyramidServiceControl {
+public final class HttpPyramidServiceControl implements PyramidAccessControl {
     private static final Logger LOG = Logger.getLogger(HttpPyramidServiceControl.class.getName());
 
     private final String host;
@@ -106,22 +105,6 @@ public final class HttpPyramidServiceControl {
     public final void removeFinishSystemCommandFile() throws InvalidFileConfigurationException {
         AsyncPyramidSystemCommand.removeSystemCommandFile(
             HttpPyramidConstants.CommandPrefixes.FINISH, port, systemCommandsFolder);
-    }
-
-    public final PlanePyramidInformation information(String pyramidId) throws IOException {
-        final HttpURLConnection connection = HttpPyramidApiTools.openConnection(connectionURL(
-            HttpPyramidApiTools.informationPathAndQuery(pyramidId)),
-            "GET",
-            true);
-        try (final InputStreamReader reader = new InputStreamReader(connection.getInputStream(),
-            StandardCharsets.UTF_8))
-        {
-            return PlanePyramidInformation.valueOf(reader);
-        }
-    }
-
-    public final HttpURLConnection openPostConnection(String pathAndQuery) throws IOException {
-        return HttpPyramidApiTools.openConnection(connectionURL(pathAndQuery), "POST", true);
     }
 
     public final URL connectionURL(String pathAndQuery) {

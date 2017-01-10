@@ -55,7 +55,7 @@ public class HttpPyramidApiTools {
             + "=" + encodePyramidId(pyramidId);
     }
 
-    public final String readSpecialImagePathAndQuery(
+    public static String readSpecialImagePathAndQuery(
         String pyramidId,
         String specialImageName,
         Integer width,
@@ -71,7 +71,7 @@ public class HttpPyramidApiTools {
             + (!savingMemory ? "" : "&savigMemory=true");
     }
 
-    public final String readRectanglePathAndQuery(
+    public static String readRectanglePathAndQuery(
         String pyramidId,
         double compression,
         long fromX,
