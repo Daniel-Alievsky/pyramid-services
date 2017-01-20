@@ -25,19 +25,15 @@
 package net.algart.pyramid.http.tests;
 
 import net.algart.pyramid.PlanePyramidInformation;
-import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import net.algart.pyramid.http.control.HttpPyramidProxyControl;
 import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
 public class HttpPyramidProxyAccessTest {
     public static void main(String[] args) throws IOException {
@@ -59,27 +55,18 @@ public class HttpPyramidProxyAccessTest {
             host,
             configuration,
             specificServerConfiguration);
+
         final PlanePyramidInformation information = client.information(pyramidId);
         System.out.printf("Pyramid information:%n%s%n", information);
 
-        HttpURLConnection connection = client.openGetConnection(HttpPyramidApiTools.readSpecialImagePathAndQuery(
+        byte[] bytes = client.readSpecialImage(
             pyramidId,
             PlanePyramidReadSpecialImageRequest.WHOLE_SLIDE,
-            null, null, false));
-        try (final InputStream stream = connection.getInputStream()) {
-            Files.copy(stream, outputFolder.resolve("whole_slide." + information.getRenderingFormatName()),
-                StandardCopyOption.REPLACE_EXISTING);
-        }
-        connection = client.openGetConnection(HttpPyramidApiTools.readRectanglePathAndQuery(
-            pyramidId,
-            64.0,
-            0,
-            0,
-            information.getZeroLevelDimX(),
-            information.getZeroLevelDimY()));
-        try (final InputStream stream = connection.getInputStream()) {
-            Files.copy(stream, outputFolder.resolve("compression_64." + information.getRenderingFormatName()),
-                StandardCopyOption.REPLACE_EXISTING);
-        }
+            null, null, false);
+        Files.write(outputFolder.resolve("whole_slide." + information.getRenderingFormatName()), bytes);
+
+        bytes = client.readRectangle(pyramidId, 64.0, 0, 0, information.getZeroLevelDimX(),
+            information.getZeroLevelDimY());
+        Files.write(outputFolder.resolve("compression_64." + information.getRenderingFormatName()), bytes);
     }
 }

@@ -27,7 +27,9 @@ package net.algart.pyramid.http.control;
 import net.algart.pyramid.PlanePyramidInformation;
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -43,6 +45,66 @@ interface PyramidAccessControl {
         }
     }
 
+    default InputStream openReadRectangleStream(
+        String pyramidId,
+        double compression,
+        long fromX,
+        long fromY,
+        long toX,
+        long toY)
+        throws IOException
+    {
+        final HttpURLConnection connection = openGetConnection(HttpPyramidApiTools.readRectanglePathAndQuery(
+            pyramidId, compression, fromX, fromY, toX, toY));
+        return connection.getInputStream();
+    }
+
+    // In future, this method will use more efficient tools than standard Java connection
+    default byte[] readRectangle(
+        String pyramidId,
+        double compression,
+        long fromX,
+        long fromY,
+        long toX,
+        long toY)
+        throws IOException
+    {
+        try (InputStream inputStream = openReadRectangleStream(
+            pyramidId, compression, fromX, fromY, toX, toY))
+        {
+            return streamToBytes(inputStream);
+        }
+    }
+
+    default InputStream openReadSpecialImageStream(
+        String pyramidId,
+        String specialImageName,
+        Integer width,
+        Integer height,
+        boolean savingMemory)
+        throws IOException
+    {
+        final HttpURLConnection connection = openGetConnection(HttpPyramidApiTools.readSpecialImagePathAndQuery(
+            pyramidId, specialImageName, width, height, savingMemory));
+        return connection.getInputStream();
+    }
+
+    // In future, this method will use more efficient tools than standard Java connection
+    default byte[] readSpecialImage(
+        String pyramidId,
+        String specialImageName,
+        Integer width,
+        Integer height,
+        boolean savingMemory)
+        throws IOException
+    {
+        try (InputStream inputStream = openReadSpecialImageStream(
+            pyramidId, specialImageName, width, height, savingMemory))
+        {
+            return streamToBytes(inputStream);
+        }
+    }
+
     default HttpURLConnection openGetConnection(String pathAndQuery) throws IOException {
         return HttpPyramidApiTools.openConnection(connectionURL(pathAndQuery), "GET", true);
     }
@@ -53,4 +115,14 @@ interface PyramidAccessControl {
 
     URL connectionURL(String pathAndQuery);
 
+    static byte[] streamToBytes(InputStream inputStream) throws IOException {
+        final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] data = new byte[16384];
+        int len;
+        while ((len = inputStream.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, len);
+        }
+        buffer.flush();
+        return buffer.toByteArray();
+    }
 }
