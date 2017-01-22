@@ -32,9 +32,7 @@ import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -157,7 +155,7 @@ public class HttpPyramidProxyControl extends JavaProcessControl implements Pyram
     public final boolean isProxyAlive(boolean logWhenFails) {
         try {
             final HttpURLConnection connection = HttpPyramidApiTools.openConnection(
-                connectionURL(ALIVE_STATUS_COMMAND),
+                connectionURI(ALIVE_STATUS_COMMAND),
                 "GET",
                 false);
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
@@ -174,11 +172,11 @@ public class HttpPyramidProxyControl extends JavaProcessControl implements Pyram
         }
     }
 
-    public final URL connectionURL(String pathAndQuery) {
+    public final URI connectionURI(String pathAndQuery) {
         final boolean useSSL = specificServerConfiguration.getProxySettings().isSsl();
         try {
-            return new URL(useSSL ? "https" : "http", proxyHost, proxyPort, pathAndQuery);
-        } catch (MalformedURLException e) {
+            return new URL(useSSL ? "https" : "http", proxyHost, proxyPort, pathAndQuery).toURI();
+        } catch (MalformedURLException | URISyntaxException e) {
             throw new IllegalArgumentException("Invalid URL path/query: " + pathAndQuery, e);
         }
     }

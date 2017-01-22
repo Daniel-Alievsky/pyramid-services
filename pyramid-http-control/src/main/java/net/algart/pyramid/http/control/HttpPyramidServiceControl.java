@@ -29,9 +29,7 @@ import net.algart.pyramid.api.http.HttpPyramidConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -77,7 +75,7 @@ public final class HttpPyramidServiceControl implements PyramidAccessControl {
     public final boolean isServiceAlive(boolean logWhenFails) {
         try {
             final HttpURLConnection connection = HttpPyramidApiTools.openConnection(
-                connectionURL(HttpPyramidConstants.CommandPrefixes.ALIVE_STATUS),
+                connectionURI(HttpPyramidConstants.CommandPrefixes.ALIVE_STATUS),
                 "GET",
                 false);
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
@@ -107,10 +105,10 @@ public final class HttpPyramidServiceControl implements PyramidAccessControl {
             HttpPyramidConstants.CommandPrefixes.FINISH, port, systemCommandsFolder);
     }
 
-    public final URL connectionURL(String pathAndQuery) {
+    public final URI connectionURI(String pathAndQuery) {
         try {
-            return new URL(https ? "https" : "http", host, port, pathAndQuery);
-        } catch (MalformedURLException e) {
+            return new URL(https ? "https" : "http", host, port, pathAndQuery).toURI();
+        } catch (MalformedURLException | URISyntaxException e) {
             throw new IllegalArgumentException("Invalid URL path/query: " + pathAndQuery, e);
         }
     }

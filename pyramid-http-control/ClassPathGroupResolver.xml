@@ -6,10 +6,10 @@
               classname="net.algart.pyramid.external.ClassPathGroupResolver"
               fork="true">
             <classpath>
-                <pathelement location="${dest}/pp-root/pyramid-services/lib/*"/>
+                <pathelement location="${dest}/demo-root/pyramid-services/lib/*"/>
             </classpath>
             <arg value="-f"/>
-            <arg value="pp-root"/>
+            <arg value="demo-root"/>
         </java>
     </target>
 </project>

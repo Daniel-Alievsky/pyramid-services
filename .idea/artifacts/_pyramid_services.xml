@@ -14,8 +14,8 @@
       <element id="directory" name="html">
         <element id="dir-copy" path="$PROJECT_DIR$/build/html" />
       </element>
-      <element id="directory" name="pp-root">
-        <element id="dir-copy" path="$PROJECT_DIR$/build/pp-root" />
+      <element id="directory" name="demo-root">
+        <element id="dir-copy" path="$PROJECT_DIR$/build/demo-root" />
         <element id="directory" name="pyramid-services">
           <element id="directory" name="lib">
             <element id="directory" name=".image-io">

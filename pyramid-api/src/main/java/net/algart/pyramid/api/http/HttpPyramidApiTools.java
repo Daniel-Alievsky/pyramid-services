@@ -26,10 +26,7 @@ package net.algart.pyramid.api.http;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Locale;
@@ -90,10 +87,10 @@ public class HttpPyramidApiTools {
     }
 
 
-    public static HttpURLConnection openConnection(URL url, String requestMethod, boolean checkStatus)
+    public static HttpURLConnection openConnection(URI uri, String requestMethod, boolean checkStatus)
         throws IOException
     {
-        final URLConnection connection = url.openConnection();
+        final URLConnection connection = uri.toURL().openConnection();
         connection.setConnectTimeout(HttpPyramidConstants.CLIENT_CONNECTION_TIMEOUT);
         connection.setReadTimeout(HttpPyramidConstants.CLIENT_READ_TIMEOUT);
         // In future, if necessary, we will maybe provide better timeouts:

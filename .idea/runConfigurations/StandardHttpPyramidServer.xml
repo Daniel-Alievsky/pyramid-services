@@ -8,7 +8,7 @@
     </extension>
     <option name="MAIN_CLASS_NAME" value="net.algart.pyramid.standard.tests.StandardHttpPyramidServer" />
     <option name="VM_PARAMETERS" value="-Xmx512m -Xmx1g -Dnet.algart.pyramid.http.enableAllCharactersInPyramidId_=true" />
-    <option name="PROGRAM_PARAMETERS" value="--groupId=net.algart.simagis.pyramid.sources.imageio  C:\simagis\opensource\pyramid-services\out\artifacts\_pyramid_services\pp-root\  C:\simagis\opensource\pyramid-services\out\artifacts\_pyramid_services\pp-root\host-conf-example\server-settings.json" />
+    <option name="PROGRAM_PARAMETERS" value="--groupId=net.algart.simagis.pyramid.sources.imageio  C:\simagis\opensource\pyramid-services\out\artifacts\_pyramid_services\demo-root\  C:\simagis\opensource\pyramid-services\out\artifacts\_pyramid_services\demo-root\host-conf-example\server-settings.json" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" />

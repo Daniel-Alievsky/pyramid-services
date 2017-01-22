@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 interface PyramidAccessControl {
@@ -106,14 +106,14 @@ interface PyramidAccessControl {
     }
 
     default HttpURLConnection openGetConnection(String pathAndQuery) throws IOException {
-        return HttpPyramidApiTools.openConnection(connectionURL(pathAndQuery), "GET", true);
+        return HttpPyramidApiTools.openConnection(connectionURI(pathAndQuery), "GET", true);
     }
 
     default HttpURLConnection openPostConnection(String pathAndQuery) throws IOException {
-        return HttpPyramidApiTools.openConnection(connectionURL(pathAndQuery), "POST", true);
+        return HttpPyramidApiTools.openConnection(connectionURI(pathAndQuery), "POST", true);
     }
 
-    URL connectionURL(String pathAndQuery);
+    URI connectionURI(String pathAndQuery);
 
     static byte[] streamToBytes(InputStream inputStream) throws IOException {
         final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
