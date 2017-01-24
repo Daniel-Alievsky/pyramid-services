@@ -37,8 +37,9 @@ import java.nio.file.Paths;
 
 public class HttpPyramidProxyAccessTest {
     public static void main(String[] args) throws IOException {
-        if (args.length < 5) {
-            System.out.printf("Usage: %s host projectRoot specificServerConfigurationFile pyramidId outputFolder%n",
+        if (args.length < 6) {
+            System.out.printf("Usage: %s "
+                    + "host projectRoot specificServerConfigurationFile pyramidId outputFolder compression%n",
                 HttpPyramidProxyControlTest.class.getName());
             return;
         }
@@ -47,6 +48,7 @@ public class HttpPyramidProxyAccessTest {
         final Path specificServerConfigurationFile = Paths.get(args[2]);
         final String pyramidId = args[3];
         final Path outputFolder = Paths.get(args[4]);
+        final double compression = Double.parseDouble(args[5]);
         final HttpPyramidConfiguration configuration = HttpPyramidConfiguration.readFromRootFolder(projectRoot);
         final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
             HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
@@ -70,10 +72,11 @@ public class HttpPyramidProxyAccessTest {
         System.out.printf("%nSpecial image loaded in %.3f ms and saved in %s%n", (t2 - t1) * 1e-6, wholeSlideFile);
 
         t1 = System.nanoTime();
-        bytes = client.readRectangle(pyramidId, 64.0, 0, 0, information.getZeroLevelDimX(),
+        bytes = client.readRectangle(pyramidId, compression, 0, 0, information.getZeroLevelDimX(),
             information.getZeroLevelDimY());
         t2 = System.nanoTime();
-        final Path pyramidFile = outputFolder.resolve("compression_64." + information.getRenderingFormatName());
+        final Path pyramidFile = outputFolder.resolve("compression_"
+            + compression + "." + information.getRenderingFormatName());
         Files.write(pyramidFile, bytes);
         System.out.printf("Pyramid image loaded in %.3f ms and saved in %s%n", (t2 - t1) * 1e-6, pyramidFile);
     }
