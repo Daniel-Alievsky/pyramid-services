@@ -57,7 +57,7 @@ public abstract class PlanePyramidData {
 
     /**
      * Returns this data in a form of byte sequence, suitable for sending as HTTP or other response.
-     * For example, for image it can be a sequence of byte of png-file.
+     * For example, for image it can be a sequence of bytes of PNG-file.
      *
      * @return this data in a form of byte sequence; never <tt>null</tt>.
      */

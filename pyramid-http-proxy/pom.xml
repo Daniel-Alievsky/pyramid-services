@@ -29,7 +29,7 @@
     <parent>
         <artifactId>pyramid-services</artifactId>
         <groupId>net.algart.pyramid</groupId>
-        <version>1.0.5</version>
+        <version>1.0.6</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -39,14 +39,18 @@
         <dependency>
             <groupId>net.algart.pyramid</groupId>
             <artifactId>pyramid-api</artifactId>
-            <version>1.0.5</version>
+            <version>1.0.6</version>
         </dependency>
         <dependency>
             <groupId>net.algart</groupId>
             <artifactId>algart-http-proxy</artifactId>
-            <version>1.0.5</version>
+            <version>1.0.6</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>1.0.4</version>
+        </dependency>
     </dependencies>
 
 </project>

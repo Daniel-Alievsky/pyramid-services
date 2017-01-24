@@ -59,14 +59,22 @@ public class HttpPyramidProxyAccessTest {
         final PlanePyramidInformation information = client.information(pyramidId);
         System.out.printf("Pyramid information:%n%s%n", information);
 
+        long t1 = System.nanoTime();
         byte[] bytes = client.readSpecialImage(
             pyramidId,
             PlanePyramidReadSpecialImageRequest.WHOLE_SLIDE,
             null, null, false);
-        Files.write(outputFolder.resolve("whole_slide." + information.getRenderingFormatName()), bytes);
+        long t2 = System.nanoTime();
+        final Path wholeSlideFile = outputFolder.resolve("whole_slide." + information.getRenderingFormatName());
+        Files.write(wholeSlideFile, bytes);
+        System.out.printf("%nSpecial image loaded in %.3f ms and saved in %s%n", (t2 - t1) * 1e-6, wholeSlideFile);
 
+        t1 = System.nanoTime();
         bytes = client.readRectangle(pyramidId, 64.0, 0, 0, information.getZeroLevelDimX(),
             information.getZeroLevelDimY());
-        Files.write(outputFolder.resolve("compression_64." + information.getRenderingFormatName()), bytes);
+        t2 = System.nanoTime();
+        final Path pyramidFile = outputFolder.resolve("compression_64." + information.getRenderingFormatName());
+        Files.write(pyramidFile, bytes);
+        System.out.printf("Pyramid image loaded in %.3f ms and saved in %s%n", (t2 - t1) * 1e-6, pyramidFile);
     }
 }
