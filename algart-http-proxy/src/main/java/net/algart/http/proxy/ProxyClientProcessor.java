@@ -49,6 +49,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 class ProxyClientProcessor extends BaseFilter {
+    private static final boolean DEBUG_MODE = false;
+
     private final HttpProxy proxy;
     private final Request request;
     // - for logging needs
@@ -66,6 +68,7 @@ class ProxyClientProcessor extends BaseFilter {
     private volatile boolean allClosed = false;
 
     private final Object lock = new Object();
+    private final StringBuilder debugStringBuilder = DEBUG_MODE ? new StringBuilder() : null;
 
     ProxyClientProcessor(
         HttpProxy proxy,
@@ -243,8 +246,8 @@ class ProxyClientProcessor extends BaseFilter {
                                 request, serverAddress);
                             HttpProxy.LOG.info("Redirection to " + headerValue + " catched: "
                                 + (newLocation.equals(headerValue) ?
-                                    "not changed" :
-                                    "changed to " + newLocation)
+                                "not changed" :
+                                "changed to " + newLocation)
                                 + " (proxying " + request.getRequestURL() + " to " + serverAddress + ")");
                             headerValue = newLocation;
                         }
@@ -258,7 +261,22 @@ class ProxyClientProcessor extends BaseFilter {
         HttpProxy.LOG.config("Notifying about sending " + contentBuffer + (last ? " (LAST)" : ""));
         // Events in notifyCanWrite are internally synchronized,
         // and all calls of onWritePossible will be in proper order.
-        outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, last));
+        if (debugStringBuilder != null) {
+            synchronized (lock) {
+                debugStringBuilder.append("N");
+            }
+        }
+        final ProxyWriteHandler handler = new ProxyWriteHandler(contentBuffer, last);
+        outputStreamToClient.notifyCanWrite(handler);
+        synchronized (lock) {
+            while (!handler.writingStarted) {
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    // just exiting
+                }
+            }
+        }
         return ctx.getStopAction();
     }
 
@@ -333,6 +351,9 @@ class ProxyClientProcessor extends BaseFilter {
                 response.resume();
                 HttpProxy.LOG.config("Response is resumed");
                 allClosed = true;
+                if (DEBUG_MODE) {
+                    System.out.println(debugStringBuilder);
+                }
             }
         }
     }
@@ -346,6 +367,7 @@ class ProxyClientProcessor extends BaseFilter {
     private class ProxyWriteHandler implements WriteHandler {
         private final Buffer contentBuffer;
         private final boolean last;
+        private volatile boolean writingStarted = false;
 
         ProxyWriteHandler(Buffer contentBuffer, boolean last) {
             assert contentBuffer != null;
@@ -356,8 +378,16 @@ class ProxyClientProcessor extends BaseFilter {
         @Override
         public void onWritePossible() throws Exception {
             synchronized (lock) {
+                writingStarted = true;
+                lock.notifyAll();
+                if (debugStringBuilder != null) {
+                    debugStringBuilder.append("b");
+                }
                 resetTimeout();
                 outputStreamToClient.write(contentBuffer);
+                if (debugStringBuilder != null) {
+                    debugStringBuilder.append("e\n");
+                }
 //                for (long t = System.currentTimeMillis(); System.currentTimeMillis() - t < 5500; ) ;
 //                System.out.println("!!!DELAY!! " + contentBuffer + "; " + last + "; " + new java.util.Date());
                 if (last) {
