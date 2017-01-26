@@ -259,8 +259,6 @@ class ProxyClientProcessor extends BaseFilter {
         }
 
         HttpProxy.LOG.config("Notifying about sending " + contentBuffer + (last ? " (LAST)" : ""));
-        // Events in notifyCanWrite are internally synchronized,
-        // and all calls of onWritePossible will be in proper order.
         if (debugStringBuilder != null) {
             synchronized (lock) {
                 debugStringBuilder.append("N");
@@ -272,8 +270,15 @@ class ProxyClientProcessor extends BaseFilter {
             while (!handler.writingStarted) {
                 try {
                     lock.wait();
+                    // We need to wait until onWritePossible() method will enter to synchronized section
+                    // and really start sending data. After this, we can be sure that the next call
+                    // of this handleRead method will be delayed at the "synchronized" operator
+                    // in the beginning of this method. In other case, there is a risk that the next call
+                    // of this method will occur BEFORE starting onWritePossible(), and notifyCanWrite
+                    // method will throw an exception
+                    // "Illegal attempt to set a new handler before the existing handler has been notified"
                 } catch (InterruptedException e) {
-                    // just exiting
+                    // just exiting with STOP_ACTION
                 }
             }
         }

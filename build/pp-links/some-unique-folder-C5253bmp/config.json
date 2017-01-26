@@ -3,6 +3,6 @@
   "rawBytes_": true,
   "cacheable_": false,
   "renderer": {
-    "format": "png"
+    "format": "bmp"
   }
 }

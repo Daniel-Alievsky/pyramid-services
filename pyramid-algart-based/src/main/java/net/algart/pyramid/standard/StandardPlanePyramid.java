@@ -24,12 +24,12 @@
 
 package net.algart.pyramid.standard;
 
-import net.algart.arrays.Matrices;
-import net.algart.arrays.Matrix;
-import net.algart.arrays.PArray;
+import net.algart.arrays.*;
 import net.algart.external.MatrixToBufferedImageConverter;
+import net.algart.imageio.QuickBMPWriter;
 import net.algart.math.IPoint;
 import net.algart.math.IRectangularArea;
+import net.algart.math.functions.LinearFunc;
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidImageData;
 import net.algart.pyramid.PlanePyramidInformation;
@@ -167,10 +167,16 @@ class StandardPlanePyramid implements PlanePyramid {
         final long toX = imageRequest.getZeroLevelToX();
         final long toY = imageRequest.getZeroLevelToY();
         if (rawBytes) {
-            //TODO!! return RGBRGB bytes/short/... from readImage method
+            //TODO!! return some form of bytes, maybe Protocol Buffers
         }
-        BufferedImage bufferedImage = source.readBufferedImage(compression, fromX, fromY, toX, toY, converter);
-        return bufferedImageToBytes(bufferedImage, renderingFormatName);
+        if (renderingFormatName.equalsIgnoreCase("bmp")) {
+            // use more efficient AlgART QuickBMPWriter
+            Matrix<? extends PArray> matrix = source.readImage(compression, fromX, fromY, toX, toY);
+            return matrixToBMPBytes(matrix);
+        } else {
+            BufferedImage bufferedImage = source.readBufferedImage(compression, fromX, fromY, toX, toY, converter);
+            return bufferedImageToBytes(bufferedImage, renderingFormatName);
+        }
     }
 
     @Override
@@ -239,6 +245,18 @@ class StandardPlanePyramid implements PlanePyramid {
         stream.flush();
         this.lastAccessTime = System.currentTimeMillis();
         return new PlanePyramidImageData(stream.toByteArray(), this);
+    }
+
+    private PlanePyramidImageData matrixToBMPBytes(Matrix<? extends PArray> matrix) {
+        if (matrix.elementType() != byte.class) {
+            double max = matrix.array().maxPossibleValue(1.0);
+            matrix = Matrices.asFuncMatrix(LinearFunc.getInstance(0.0, 255.0 / max), ByteArray.class, matrix);
+        }
+        final byte[] data = (byte[]) Arrays.toJavaArray(matrix.array());
+        final byte[] bytes = new QuickBMPWriter(
+            (int) matrix.dim(1), (int) matrix.dim(2), (int) matrix.dim(0), data)
+            .getBmpBytes();
+        return new PlanePyramidImageData(bytes, this);
     }
 
     private static JsonObject actualAreasToJson(PlanePyramidSource source) {
