@@ -60,6 +60,8 @@ class StandardPlanePyramid implements PlanePyramid {
     public static final long PYRAMID_TIMEOUT = Math.max(16, Integer.getInteger(
         "net.algart.pyramid.standard.pyramidTimeout", 30000));
 
+    private static final boolean USE_QUICK_BMP_WRITER = true;
+
     private final String pyramidConfiguration;
     private final ScalablePlanePyramidSource source;
     private final String pyramidFormatName;
@@ -169,11 +171,13 @@ class StandardPlanePyramid implements PlanePyramid {
         if (rawBytes) {
             //TODO!! return some form of bytes, maybe Protocol Buffers
         }
-        if (renderingFormatName.equalsIgnoreCase("bmp")) {
+        if (USE_QUICK_BMP_WRITER && renderingFormatName.equalsIgnoreCase("bmp")) {
             // use more efficient AlgART QuickBMPWriter
+//            System.out.println("QUICK!!!");
             Matrix<? extends PArray> matrix = source.readImage(compression, fromX, fromY, toX, toY);
             return matrixToBMPBytes(matrix);
         } else {
+//            System.out.println("SLOW!!!");
             BufferedImage bufferedImage = source.readBufferedImage(compression, fromX, fromY, toX, toY, converter);
             return bufferedImageToBytes(bufferedImage, renderingFormatName);
         }
