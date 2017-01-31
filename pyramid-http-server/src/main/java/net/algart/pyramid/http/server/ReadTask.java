@@ -85,7 +85,7 @@ final class ReadTask implements Comparable<ReadTask> {
                 && previousCachedData.getCreationTime() < ifModifiedSince + 1000;
         // the 2nd check is to be on the safe side: usually these data are never modified
         if (alreadyInClientCache) {
-            LOG.info("Not modified (304): " + this);
+            LOG.config("Not modified (304): " + this);
             response.setStatus(304, "Not modified");
         } else {
             resetTimeout();
@@ -134,7 +134,7 @@ final class ReadTask implements Comparable<ReadTask> {
         if (checkCancellingTask("Task cancelled because of too slow waiting in queue")) {
             return;
         }
-        LOG.info("Starting " + this);
+        LOG.config("Starting " + this);
         PlanePyramidData data = previousCachedData;
         final boolean cacheable;
         if (data == null) {
@@ -158,7 +158,7 @@ final class ReadTask implements Comparable<ReadTask> {
             }
         } else {
             // Note: we don't access pyramid at all if the data are already in cache
-            LOG.info("Data loaded from cache: " + this);
+            LOG.config("Data loaded from cache: " + this);
             cacheable = true;
             // Obviously, if the data appeared in cache, the pyramid was cacheable
         }
@@ -224,10 +224,10 @@ final class ReadTask implements Comparable<ReadTask> {
         }
         if (response.isSuspended()) {
             response.resume();
-            LOG.info("Response is resumed: " + this);
+            LOG.config("Response is resumed: " + this);
         } else {
             response.finish();
-            LOG.info("Response is finished: " + this);
+            LOG.config("Response is finished: " + this);
         }
         closed = true;
     }

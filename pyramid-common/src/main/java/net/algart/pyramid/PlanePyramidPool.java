@@ -70,7 +70,7 @@ public final class PlanePyramidPool {
         synchronized (pool) {
             PlanePyramid pyramid = pool.get(pyramidConfiguration);
             if (pyramid != null) {
-                LOG.info("The pyramid has loaded from pool: " + pyramid);
+                LOG.config("The pyramid has loaded from pool: " + pyramid);
                 return pyramid;
             }
             pyramid = factory.newPyramid(pyramidConfiguration);

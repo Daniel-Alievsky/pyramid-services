@@ -24,7 +24,10 @@
 
 package net.algart.pyramid.http.tests;
 
-import net.algart.pyramid.*;
+import net.algart.pyramid.PlanePyramid;
+import net.algart.pyramid.PlanePyramidFactory;
+import net.algart.pyramid.PlanePyramidImageData;
+import net.algart.pyramid.PlanePyramidInformation;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.http.server.HttpPyramidService;
 import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
@@ -38,6 +41,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Objects;
@@ -57,6 +61,12 @@ public class DummyPyramidTest {
     private static final int USED_CPU_COUNT = Math.min(4, Runtime.getRuntime().availableProcessors());
 
     public static void main(String[] args) throws IOException {
+        if (args.length < 1) {
+            System.out.printf("Usage:%n");
+            System.out.printf("    %s projectRoot%n", DummyPyramidTest.class.getName());
+            return;
+        }
+        final Path projectRoot = Paths.get(args[0]);
         System.setProperty(
             "net.algart.pyramid.http.port",
             "81");
@@ -66,7 +76,7 @@ public class DummyPyramidTest {
         final HttpPyramidService service = new HttpPyramidService(
             new MyPyramidFactory(),
             81,
-            Paths.get(HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER))
+            projectRoot.resolve(HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER))
         {
             @Override
             public String pyramidIdToConfiguration(String pyramidId) throws IOException {
