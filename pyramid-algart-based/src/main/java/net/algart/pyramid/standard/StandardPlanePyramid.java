@@ -33,6 +33,7 @@ import net.algart.math.functions.LinearFunc;
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidImageData;
 import net.algart.pyramid.PlanePyramidInformation;
+import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
 import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
 import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
 import net.algart.simagis.pyramid.PlanePyramidSource;
@@ -65,7 +66,7 @@ class StandardPlanePyramid implements PlanePyramid {
 
     private final String pyramidConfiguration;
     private final ScalablePlanePyramidSource source;
-    private final String pyramidFormatName;
+    private final String formatName;
     private final String renderingFormatName;
     private final Color renderingBackgroundColor;
     private final MatrixToBufferedImageConverter converter;
@@ -78,7 +79,7 @@ class StandardPlanePyramid implements PlanePyramid {
 
     StandardPlanePyramid(
         PlanePyramidSource parentSource,
-        JsonObject pyramidDataJson,
+        StandardPyramidDataConfiguration pyramidDataConfiguration,
         JsonObject rendererJson,
         boolean rawBytes,
         boolean cacheable,
@@ -86,15 +87,11 @@ class StandardPlanePyramid implements PlanePyramid {
         throws IOException
     {
         Objects.requireNonNull(parentSource, "Null plane pyramid source");
-        Objects.requireNonNull(pyramidDataJson, "Null pyramid data JSON");
+        Objects.requireNonNull(pyramidDataConfiguration, "Null pyramid data configuration");
         Objects.requireNonNull(rendererJson, "Null renderer JSON");
         Objects.requireNonNull(pyramidConfiguration, "Null pyramid configuration");
         this.source = ScalablePlanePyramidSource.newInstance(parentSource);
-        this.pyramidFormatName = pyramidDataJson.getString(FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
-        if (pyramidFormatName == null) {
-            throw new IOException("Invalid pyramid configuration json: no \""
-                + FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" attribute <<<" + pyramidDataJson + ">>>");
-        }
+        this.formatName = pyramidDataConfiguration.getFormatName();
         this.renderingFormatName = rendererJson.getString("format", "png");
         final boolean transparencySupported = transparencySupported(renderingFormatName);
         final JsonNumber opacity = rendererJson.getJsonNumber("opacity");
@@ -140,7 +137,7 @@ class StandardPlanePyramid implements PlanePyramid {
                     this.source.dimY(),
                     this.source.elementType()
                 );
-                information.setPyramidFormatName(pyramidFormatName);
+                information.setPyramidFormatName(formatName);
                 information.setRenderingFormatName(renderingFormatName);
                 information.setPixelSizeInMicrons(this.source.pixelSizeInMicrons());
                 information.setMagnification(this.source.magnification());

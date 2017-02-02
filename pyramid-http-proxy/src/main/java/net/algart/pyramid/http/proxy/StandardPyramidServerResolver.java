@@ -27,6 +27,7 @@ package net.algart.pyramid.http.proxy;
 import net.algart.http.proxy.HttpServerAddress;
 import net.algart.http.proxy.HttpServerResolver;
 import net.algart.pyramid.api.common.PyramidApiTools;
+import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
 import net.algart.pyramid.api.http.*;
 import org.glassfish.grizzly.http.util.Parameters;
 
@@ -108,13 +109,13 @@ class StandardPyramidServerResolver implements HttpServerResolver {
             specificServerConfiguration.getConfigRootDir(),
             specificServerConfiguration.getConfigFileName());
         final JsonObject config = PyramidApiTools.pyramidConfigurationToJson(pyramidConfiguration);
-        final Path pyramidDir = PyramidApiTools.getPyramidPath(config);
-        final JsonObject pyramidDataJson = PyramidApiTools.readPyramidDataConfiguration(pyramidDir);
-        final String pyramidFormatName = PyramidApiTools.getFormatNameFromPyramidDataJson(pyramidDataJson);
-        final HttpPyramidServicesConfiguration.Service service =
-            configuration.findServiceByFormatName(pyramidFormatName);
+        final Path pyramidPath = PyramidApiTools.getPyramidPath(config);
+        final StandardPyramidDataConfiguration pyramidDataConfiguration =
+            StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidPath);
+        final String formatName = pyramidDataConfiguration.getFormatName();
+        final HttpPyramidServicesConfiguration.Service service = configuration.findServiceByFormatName(formatName);
         if (service == null) {
-            throw new IOException("Service not found for pyramid format \"" + pyramidFormatName + "\"");
+            throw new IOException("Service not found for pyramid format \"" + formatName + "\"");
         }
         return new HttpServerAddress(proxyConfiguration.getPyramidHost(), service.getPort());
     }

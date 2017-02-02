@@ -87,30 +87,6 @@ public class PyramidApiTools {
         return Paths.get(pyramidPath);
     }
 
-    public static JsonObject readPyramidDataConfiguration(Path pyramidPath) throws IOException {
-        final Path pyramidDataConfigFile = pyramidPath.resolve(
-            PyramidConstants.PYRAMID_DATA_CONFIG_FILE_NAME);
-        try (final JsonReader reader = Json.createReader(Files.newBufferedReader(
-            pyramidDataConfigFile, StandardCharsets.UTF_8)))
-        {
-            return reader.readObject();
-        } catch (JsonException e) {
-            throw new IOException("Invalid pyramid configuration json at " + pyramidDataConfigFile, e);
-        }
-    }
-
-    public static String getFormatNameFromPyramidDataJson(JsonObject pyramidDataJson) throws IOException {
-        final String pyramidFormatName = pyramidDataJson.getString(
-            PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
-        if (pyramidFormatName == null) {
-            throw new IOException("Invalid pyramid configuration json ("
-                + PyramidConstants.PYRAMID_DATA_CONFIG_FILE_NAME + "): no "
-                + PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE
-                + " value <<<" + pyramidDataJson + ">>>");
-        }
-        return pyramidFormatName;
-    }
-
     public static String currentJREHome() {
         String s = System.getProperty("java.home");
         if (s == null) {
