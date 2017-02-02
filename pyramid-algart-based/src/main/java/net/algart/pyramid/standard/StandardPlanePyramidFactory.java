@@ -56,13 +56,13 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
     @Override
     public PlanePyramid newPyramid(final String pyramidConfiguration) throws Exception {
         Objects.requireNonNull(pyramidConfiguration);
-        final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
+        final JsonObject config = PyramidApiTools.pyramidConfigurationToJson(pyramidConfiguration);
         final Path pyramidDir = PyramidApiTools.getPyramidPath(config);
-        final JsonObject pyramidJson = PyramidApiTools.readPyramidConfiguration(pyramidDir);
-        final String fileName = pyramidJson.getString(FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
+        final JsonObject pyramidDataJson = PyramidApiTools.readPyramidDataConfiguration(pyramidDir);
+        final String fileName = pyramidDataJson.getString(FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
         if (fileName == null) {
-            throw new IOException("Invalid pyramid configuration json: no \""
-                + FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" attribute <<<" + pyramidJson + ">>>");
+            throw new IOException("Invalid pyramid data configuration json: no \""
+                + FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" attribute <<<" + pyramidDataJson + ">>>");
         }
         final Path pyramidFile = pyramidDir.resolve(fileName);
         if (!Files.exists(pyramidFile)) {
@@ -76,10 +76,10 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
         final boolean cacheable = config.getBoolean("cacheable", true);
         final PlanePyramidSource planePyramidSource = planePyramidSourceFactory.newPlanePyramidSource(
             pyramidFile.toAbsolutePath().toString(),
-            pyramidJson.toString(),
+            pyramidDataJson.toString(),
             rendererJson.toString());
         return new StandardPlanePyramid(
-            planePyramidSource, pyramidJson, rendererJson, rawBytes, cacheable, pyramidConfiguration);
+            planePyramidSource, pyramidDataJson, rendererJson, rawBytes, cacheable, pyramidConfiguration);
     }
 
     @Override

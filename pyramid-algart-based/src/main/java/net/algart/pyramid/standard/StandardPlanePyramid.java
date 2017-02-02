@@ -78,7 +78,7 @@ class StandardPlanePyramid implements PlanePyramid {
 
     StandardPlanePyramid(
         PlanePyramidSource parentSource,
-        JsonObject pyramidJson,
+        JsonObject pyramidDataJson,
         JsonObject rendererJson,
         boolean rawBytes,
         boolean cacheable,
@@ -86,14 +86,14 @@ class StandardPlanePyramid implements PlanePyramid {
         throws IOException
     {
         Objects.requireNonNull(parentSource, "Null plane pyramid source");
-        Objects.requireNonNull(pyramidJson, "Null pyramid JSON");
+        Objects.requireNonNull(pyramidDataJson, "Null pyramid data JSON");
         Objects.requireNonNull(rendererJson, "Null renderer JSON");
         Objects.requireNonNull(pyramidConfiguration, "Null pyramid configuration");
         this.source = ScalablePlanePyramidSource.newInstance(parentSource);
-        this.pyramidFormatName = pyramidJson.getString(FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
+        this.pyramidFormatName = pyramidDataJson.getString(FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
         if (pyramidFormatName == null) {
             throw new IOException("Invalid pyramid configuration json: no \""
-                + FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" attribute <<<" + pyramidJson + ">>>");
+                + FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" attribute <<<" + pyramidDataJson + ">>>");
         }
         this.renderingFormatName = rendererJson.getString("format", "png");
         final boolean transparencySupported = transparencySupported(renderingFormatName);

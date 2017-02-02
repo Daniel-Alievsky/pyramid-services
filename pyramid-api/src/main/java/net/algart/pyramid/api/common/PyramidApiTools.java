@@ -68,7 +68,7 @@ public class PyramidApiTools {
         return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
     }
 
-    public static JsonObject configurationToJson(String pyramidConfiguration) throws IOException {
+    public static JsonObject pyramidConfigurationToJson(String pyramidConfiguration) throws IOException {
         try {
             return Json.createReader(new StringReader(pyramidConfiguration)).readObject();
         } catch (JsonException e) {
@@ -87,26 +87,26 @@ public class PyramidApiTools {
         return Paths.get(pyramidPath);
     }
 
-    public static JsonObject readPyramidConfiguration(Path pyramidPath) throws IOException {
-        final Path pyramidConfigurationFile = pyramidPath.resolve(
+    public static JsonObject readPyramidDataConfiguration(Path pyramidPath) throws IOException {
+        final Path pyramidDataConfigFile = pyramidPath.resolve(
             PyramidConstants.PYRAMID_DATA_CONFIG_FILE_NAME);
         try (final JsonReader reader = Json.createReader(Files.newBufferedReader(
-            pyramidConfigurationFile, StandardCharsets.UTF_8)))
+            pyramidDataConfigFile, StandardCharsets.UTF_8)))
         {
             return reader.readObject();
         } catch (JsonException e) {
-            throw new IOException("Invalid pyramid configuration json at " + pyramidConfigurationFile, e);
+            throw new IOException("Invalid pyramid configuration json at " + pyramidDataConfigFile, e);
         }
     }
 
-    public static String getFormatNameFromPyramidJson(JsonObject pyramidJson) throws IOException {
-        final String pyramidFormatName = pyramidJson.getString(
+    public static String getFormatNameFromPyramidDataJson(JsonObject pyramidDataJson) throws IOException {
+        final String pyramidFormatName = pyramidDataJson.getString(
             PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
         if (pyramidFormatName == null) {
             throw new IOException("Invalid pyramid configuration json ("
                 + PyramidConstants.PYRAMID_DATA_CONFIG_FILE_NAME + "): no "
                 + PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE
-                + " value <<<" + pyramidJson + ">>>");
+                + " value <<<" + pyramidDataJson + ">>>");
         }
         return pyramidFormatName;
     }

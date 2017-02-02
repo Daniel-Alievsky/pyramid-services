@@ -107,10 +107,10 @@ class StandardPyramidServerResolver implements HttpServerResolver {
             pyramidId,
             specificServerConfiguration.getConfigRootDir(),
             specificServerConfiguration.getConfigFileName());
-        final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
+        final JsonObject config = PyramidApiTools.pyramidConfigurationToJson(pyramidConfiguration);
         final Path pyramidDir = PyramidApiTools.getPyramidPath(config);
-        final JsonObject pyramidJson = PyramidApiTools.readPyramidConfiguration(pyramidDir);
-        final String pyramidFormatName = PyramidApiTools.getFormatNameFromPyramidJson(pyramidJson);
+        final JsonObject pyramidDataJson = PyramidApiTools.readPyramidDataConfiguration(pyramidDir);
+        final String pyramidFormatName = PyramidApiTools.getFormatNameFromPyramidDataJson(pyramidDataJson);
         final HttpPyramidServicesConfiguration.Service service =
             configuration.findServiceByFormatName(pyramidFormatName);
         if (service == null) {
