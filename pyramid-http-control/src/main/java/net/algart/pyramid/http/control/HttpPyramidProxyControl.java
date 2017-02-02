@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.control;
 
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
@@ -51,13 +51,13 @@ public class HttpPyramidProxyControl extends JavaProcessControl implements Pyram
 
     private final String proxyHost;
     private final int proxyPort;
-    private final HttpPyramidConfiguration configuration;
+    private final HttpPyramidServicesConfiguration configuration;
     private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final Path systemCommandsFolder;
 
     public HttpPyramidProxyControl(
         String proxyHost,
-        HttpPyramidConfiguration configuration,
+        HttpPyramidServicesConfiguration configuration,
         HttpPyramidSpecificServerConfiguration specificServerConfiguration)
     {
         this.proxyHost = Objects.requireNonNull(proxyHost, "Null proxyHost");

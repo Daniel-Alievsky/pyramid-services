@@ -24,7 +24,7 @@
 
 package net.algart.pyramid.api.tests.http;
 
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -37,8 +37,8 @@ public class HttpPyramidServiceConfigurationTest {
             return;
         }
         final Path projectRoot = Paths.get(args[0]);
-        final HttpPyramidConfiguration configuration =
-            HttpPyramidConfiguration.readFromRootFolder(projectRoot);
+        final HttpPyramidServicesConfiguration configuration =
+            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
         System.out.println(configuration);
     }
 }

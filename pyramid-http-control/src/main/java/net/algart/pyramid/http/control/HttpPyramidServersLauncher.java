@@ -24,7 +24,7 @@
 
 package net.algart.pyramid.http.control;
 
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
@@ -54,12 +54,12 @@ public final class HttpPyramidServersLauncher {
     private static final int PROBLEM_NUMBER_OF_ATTEMPTS = 3;
     private static final int SLOW_START_NUMBER_OF_ATTEMPTS = 10;
 
-    private final HttpPyramidConfiguration configuration;
+    private final HttpPyramidServicesConfiguration configuration;
     private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final Map<String, Process> runningProcesses;
 
     public HttpPyramidServersLauncher(
-        HttpPyramidConfiguration configuration,
+        HttpPyramidServicesConfiguration configuration,
         HttpPyramidSpecificServerConfiguration specificServerConfiguration)
     {
         this.configuration = Objects.requireNonNull(configuration, "Null configuration");
@@ -68,7 +68,7 @@ public final class HttpPyramidServersLauncher {
         this.runningProcesses = Collections.synchronizedMap(new LinkedHashMap<>());
     }
 
-    public HttpPyramidConfiguration getConfiguration() {
+    public HttpPyramidServicesConfiguration getConfiguration() {
         return configuration;
     }
 
@@ -168,7 +168,7 @@ public final class HttpPyramidServersLauncher {
     public boolean startPyramidServicesGroup(String groupId, boolean skipIfAlive)
         throws IOException
     {
-        final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
+        final HttpPyramidServicesConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return startProcess(new HttpPyramidProcessControl(
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
     }
@@ -176,7 +176,7 @@ public final class HttpPyramidServersLauncher {
     public AsyncPyramidCommand stopPyramidServicesGroupRequest(String groupId, boolean skipIfNotAlive)
         throws InvalidFileConfigurationException
     {
-        final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
+        final HttpPyramidServicesConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return stopProcessRequest(new HttpPyramidProcessControl(
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfNotAlive);
     }
@@ -184,7 +184,7 @@ public final class HttpPyramidServersLauncher {
     public AsyncPyramidCommand restartPyramidServicesGroupRequest(String groupId, boolean skipIfAlive)
         throws InvalidFileConfigurationException
     {
-        final HttpPyramidConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
+        final HttpPyramidServicesConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return restartProcessRequest(new HttpPyramidProcessControl(
             HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
     }
@@ -378,8 +378,8 @@ public final class HttpPyramidServersLauncher {
         };
     }
 
-    private HttpPyramidConfiguration.Process getProcessConfiguration(String groupId) {
-        final HttpPyramidConfiguration.Process result = configuration.getProcess(groupId);
+    private HttpPyramidServicesConfiguration.Process getProcessConfiguration(String groupId) {
+        final HttpPyramidServicesConfiguration.Process result = configuration.getProcess(groupId);
         if (result == null) {
             throw new IllegalArgumentException("Service group " + groupId + " not found");
         }
@@ -480,7 +480,7 @@ public final class HttpPyramidServersLauncher {
         final Path projectRoot = Paths.get(args[startArgIndex + 1]);
         final Path specificServerConfigurationFile = Paths.get(args[startArgIndex + 2]);
         final HttpPyramidServersLauncher launcher = new HttpPyramidServersLauncher(
-            HttpPyramidConfiguration.readFromRootFolder(projectRoot),
+            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot),
             HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile));
         try {
             long t1 = System.nanoTime();

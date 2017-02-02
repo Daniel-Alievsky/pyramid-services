@@ -29,7 +29,7 @@
     <parent>
         <artifactId>pyramid-services</artifactId>
         <groupId>net.algart.pyramid</groupId>
-        <version>1.0.6</version>
+        <version>1.0.7</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -46,12 +46,18 @@
         <dependency>
             <groupId>net.algart.pyramid</groupId>
             <artifactId>pyramid-common</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.7</version>
         </dependency>
         <dependency>
             <groupId>net.algart.pyramid</groupId>
             <artifactId>pyramid-api</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.7</version>
+        </dependency>
+        <dependency>
+            <groupId>net.algart.pyramid</groupId>
+            <artifactId>pyramid-http-server</artifactId>
+            <version>1.0.7</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>net.algart</groupId>
@@ -67,12 +73,6 @@
             <groupId>javax.json</groupId>
             <artifactId>javax.json-api</artifactId>
             <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>net.algart.pyramid</groupId>
-            <artifactId>pyramid-http-server</artifactId>
-            <version>1.0.6</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.github.jai-imageio</groupId>

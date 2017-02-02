@@ -24,7 +24,7 @@
 
 package net.algart.pyramid.http.control;
 
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
@@ -41,13 +41,13 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
     private static final Logger LOG = Logger.getLogger(HttpPyramidProcessControl.class.getName());
 
     private final String host;
-    private final HttpPyramidConfiguration.Process processConfiguration;
+    private final HttpPyramidServicesConfiguration.Process processConfiguration;
     private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final List<HttpPyramidServiceControl> serviceControls;
 
     public HttpPyramidProcessControl(
         String host,
-        HttpPyramidConfiguration.Process processConfiguration,
+        HttpPyramidServicesConfiguration.Process processConfiguration,
         HttpPyramidSpecificServerConfiguration specificServerConfiguration)
     {
         this.host = Objects.requireNonNull(host, "Null host");
@@ -55,7 +55,7 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
         this.specificServerConfiguration = Objects.requireNonNull(
             specificServerConfiguration, "Null specificServerConfiguration");
         this.serviceControls = new ArrayList<>();
-        for (HttpPyramidConfiguration.Service service : processConfiguration.getServices()) {
+        for (HttpPyramidServicesConfiguration.Service service : processConfiguration.getServices()) {
             this.serviceControls.add(new HttpPyramidServiceControl(host, service));
         }
     }
@@ -64,7 +64,7 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
         return host;
     }
 
-    public HttpPyramidConfiguration.Process getProcessConfiguration() {
+    public HttpPyramidServicesConfiguration.Process getProcessConfiguration() {
         return processConfiguration;
     }
 
@@ -105,7 +105,7 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
 
     @Override
     public Process startOnLocalhost() throws InvalidFileConfigurationException {
-        final HttpPyramidConfiguration configuration = processConfiguration.parentConfiguration();
+        final HttpPyramidServicesConfiguration configuration = processConfiguration.parentConfiguration();
         final Path javaPath = specificServerConfiguration.javaExecutable(processConfiguration.jreName());
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
@@ -128,7 +128,7 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
         command.add("--groupId=" + processConfiguration.getGroupId());
         command.add(configuration.getProjectRoot().toAbsolutePath().toString());
         command.add(configuration.getGlobalConfigurationFile().toAbsolutePath().toString());
-        for (HttpPyramidConfiguration.Service service : processConfiguration.getServices()) {
+        for (HttpPyramidServicesConfiguration.Service service : processConfiguration.getServices()) {
             command.add(service.getConfigurationFile().toAbsolutePath().toString());
         }
         command.add(specificServerConfiguration.getSpecificServerConfigurationFile().toAbsolutePath().toString());

@@ -60,7 +60,7 @@ public interface PlanePyramidFactory {
      * that must be different for different pyramids.
      * We recommend to use the same value for identical actual pyramids with identical data and behaviour
      * (results of other methods), for example, when the same pyramid on the disk is accessed
-     * via different instances of this class.
+     * via different instances of this class.</p>
      *
      * @param pyramidConfiguration all information about the data source and parameters.
      * @return new remote pyramid.

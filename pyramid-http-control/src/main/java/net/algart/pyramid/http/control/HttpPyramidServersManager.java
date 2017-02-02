@@ -24,7 +24,7 @@
 
 package net.algart.pyramid.http.control;
 
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
 import java.io.IOException;
@@ -46,14 +46,14 @@ public class HttpPyramidServersManager {
     private final Object lock = new Object();
 
     private HttpPyramidServersManager(
-        HttpPyramidConfiguration configuration,
+        HttpPyramidServicesConfiguration configuration,
         HttpPyramidSpecificServerConfiguration specificServerConfiguration)
     {
         this.launcher = new HttpPyramidServersLauncher(configuration, specificServerConfiguration);
     }
 
     public static HttpPyramidServersManager newInstance(
-        HttpPyramidConfiguration configuration,
+        HttpPyramidServicesConfiguration configuration,
         HttpPyramidSpecificServerConfiguration specificServerConfiguration)
     {
         return new HttpPyramidServersManager(configuration, specificServerConfiguration);
@@ -64,7 +64,7 @@ public class HttpPyramidServersManager {
         Path specificServerConfigurationFile) throws IOException
     {
         return new HttpPyramidServersManager(
-            HttpPyramidConfiguration.readFromRootFolder(projectRoot),
+            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot),
             HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile));
     }
 
@@ -72,7 +72,7 @@ public class HttpPyramidServersManager {
         return launcher;
     }
 
-    public HttpPyramidConfiguration getConfiguration() {
+    public HttpPyramidServicesConfiguration getConfiguration() {
         return launcher.getConfiguration();
     }
 

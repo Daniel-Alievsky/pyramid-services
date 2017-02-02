@@ -43,14 +43,14 @@ class StandardPyramidServerResolver implements HttpServerResolver {
     private static final Logger LOG = Logger.getLogger(StandardPyramidServerResolver.class.getName());
 
     private final Map<String, HttpServerAddress> pool = new ServerAddressHashMap();
-    private final HttpPyramidConfiguration configuration;
+    private final HttpPyramidServicesConfiguration configuration;
     private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final HttpPyramidSpecificServerConfiguration.ProxySettings proxyConfiguration;
     private final List<HttpPyramidIdFinder> pyramidIdFinders = new ArrayList<>();
     private final Object lock = new Object();
 
     StandardPyramidServerResolver(
-        HttpPyramidConfiguration configuration,
+        HttpPyramidServicesConfiguration configuration,
         HttpPyramidSpecificServerConfiguration specificServerConfiguration)
     {
         assert configuration != null && specificServerConfiguration != null;
@@ -111,7 +111,8 @@ class StandardPyramidServerResolver implements HttpServerResolver {
         final Path pyramidDir = PyramidApiTools.getPyramidPath(config);
         final JsonObject pyramidJson = PyramidApiTools.readPyramidConfiguration(pyramidDir);
         final String pyramidFormatName = PyramidApiTools.getFormatNameFromPyramidJson(pyramidJson);
-        final HttpPyramidConfiguration.Service service = configuration.findServiceByFormatName(pyramidFormatName);
+        final HttpPyramidServicesConfiguration.Service service =
+            configuration.findServiceByFormatName(pyramidFormatName);
         if (service == null) {
             throw new IOException("Service not found for pyramid format \"" + pyramidFormatName + "\"");
         }

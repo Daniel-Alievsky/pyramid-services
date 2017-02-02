@@ -48,12 +48,12 @@ public final class HttpPyramidProxyServer {
 
     static final Logger LOG = Logger.getLogger(HttpPyramidProxyServer.class.getName());
 
-    private final HttpPyramidConfiguration serviceConfiguration;
+    private final HttpPyramidServicesConfiguration serviceConfiguration;
     private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final HttpProxy proxy;
 
     public HttpPyramidProxyServer(
-        HttpPyramidConfiguration configuration,
+        HttpPyramidServicesConfiguration configuration,
         HttpPyramidSpecificServerConfiguration specificServerConfiguration)
     {
         Objects.requireNonNull(configuration, "Null configuration of pyramid services");
@@ -181,8 +181,8 @@ public final class HttpPyramidProxyServer {
         final Path specificServerConfigurationFile = Paths.get(args[startArgIndex + 1]);
         final HttpPyramidProxyServer server;
         try {
-            final HttpPyramidConfiguration serviceConfiguration =
-                HttpPyramidConfiguration.readFromRootFolder(projectRoot);
+            final HttpPyramidServicesConfiguration serviceConfiguration =
+                HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
             final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
                 HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
             server = new HttpPyramidProxyServer(serviceConfiguration, specificServerConfiguration);

@@ -29,7 +29,6 @@ import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.FileNotFoundException;
-import java.io.IOError;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -90,7 +89,7 @@ public class PyramidApiTools {
 
     public static JsonObject readPyramidConfiguration(Path pyramidPath) throws IOException {
         final Path pyramidConfigurationFile = pyramidPath.resolve(
-            PyramidConstants.PYRAMID_CONFIGURATION_FILE_NAME);
+            PyramidConstants.PYRAMID_DATA_CONFIG_FILE_NAME);
         try (final JsonReader reader = Json.createReader(Files.newBufferedReader(
             pyramidConfigurationFile, StandardCharsets.UTF_8)))
         {
@@ -102,11 +101,11 @@ public class PyramidApiTools {
 
     public static String getFormatNameFromPyramidJson(JsonObject pyramidJson) throws IOException {
         final String pyramidFormatName = pyramidJson.getString(
-            PyramidConstants.FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME, null);
+            PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
         if (pyramidFormatName == null) {
             throw new IOException("Invalid pyramid configuration json ("
-                + PyramidConstants.PYRAMID_CONFIGURATION_FILE_NAME + "): no "
-                + PyramidConstants.FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME
+                + PyramidConstants.PYRAMID_DATA_CONFIG_FILE_NAME + "): no "
+                + PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE
                 + " value <<<" + pyramidJson + ">>>");
         }
         return pyramidFormatName;

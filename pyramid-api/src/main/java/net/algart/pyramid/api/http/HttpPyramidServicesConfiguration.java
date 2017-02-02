@@ -41,7 +41,7 @@ import java.util.*;
  * Configuration of the set of services. Usually created on the compilation stage
  * and copied to the server without changes.
  */
-public class HttpPyramidConfiguration {
+public class HttpPyramidServicesConfiguration {
     public static final String GLOBAL_CONFIGURATION_FILE_NAME = ".global-configuration.json";
     public static final String CONFIGURATION_FILE_MASK = ".*.json";
     public static final String COMMON_CLASS_PATH_FIELD = "commonClassPath";
@@ -177,7 +177,7 @@ public class HttpPyramidConfiguration {
         private final String jreName;
         private final String workingDirectory;
         private final long requiredMemory;
-        private HttpPyramidConfiguration parentConfiguration;
+        private HttpPyramidServicesConfiguration parentConfiguration;
 
         private Process(String groupId, List<Service> services) {
             this.groupId = Objects.requireNonNull(groupId);
@@ -285,10 +285,10 @@ public class HttpPyramidConfiguration {
         }
 
         public String xmxOption() {
-            return HttpPyramidConfiguration.xmxOption(xmx());
+            return HttpPyramidServicesConfiguration.xmxOption(xmx());
         }
 
-        public HttpPyramidConfiguration parentConfiguration() {
+        public HttpPyramidServicesConfiguration parentConfiguration() {
             return parentConfiguration;
         }
 
@@ -327,7 +327,7 @@ public class HttpPyramidConfiguration {
     // - actual -Xmx for every process is a maximum of this value and its xmx()
     private String systemCommandsFolder;
 
-    private HttpPyramidConfiguration(
+    private HttpPyramidServicesConfiguration(
         Path projectRoot,
         Path globalConfigurationFile,
         JsonObject globalConfiguration,
@@ -458,7 +458,7 @@ public class HttpPyramidConfiguration {
         return jsonToPrettyString(toJson(true));
     }
 
-    public static HttpPyramidConfiguration readFromRootFolder(Path projectRoot) throws IOException {
+    public static HttpPyramidServicesConfiguration readFromRootFolder(Path projectRoot) throws IOException {
         Objects.requireNonNull(projectRoot, "Null projectRoot");
         final Path configurationFolder = projectRoot.resolve(
             PyramidConstants.CONFIGURATION_FOLDER_IN_PROJECT_ROOT);
@@ -474,7 +474,7 @@ public class HttpPyramidConfiguration {
         }
     }
 
-    public static HttpPyramidConfiguration readFromFiles(
+    public static HttpPyramidServicesConfiguration readFromFiles(
         Path projectRoot,
         Path globalConfigurationFile,
         Iterable<Path> configurationFiles)
@@ -511,7 +511,7 @@ public class HttpPyramidConfiguration {
             final String groupId = entry.getKey();
             processes.put(groupId, new Process(groupId, entry.getValue()));
         }
-        return new HttpPyramidConfiguration(
+        return new HttpPyramidServicesConfiguration(
             projectRoot,
             globalConfigurationFile,
             globalConfiguration,

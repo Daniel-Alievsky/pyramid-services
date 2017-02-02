@@ -37,6 +37,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
+import static net.algart.pyramid.api.common.PyramidConstants.FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE;
+
 public class StandardPlanePyramidFactory implements PlanePyramidFactory {
     private volatile PlanePyramidSourceFactory planePyramidSourceFactory;
 
@@ -57,9 +59,10 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
         final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
         final Path pyramidDir = PyramidApiTools.getPyramidPath(config);
         final JsonObject pyramidJson = PyramidApiTools.readPyramidConfiguration(pyramidDir);
-        final String fileName = pyramidJson.getString("fileName", null);
+        final String fileName = pyramidJson.getString(FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
         if (fileName == null) {
-            throw new IOException("Invalid pyramid configuration json: no fileName value <<<" + pyramidJson + ">>>");
+            throw new IOException("Invalid pyramid configuration json: no \""
+                + FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" attribute <<<" + pyramidJson + ">>>");
         }
         final Path pyramidFile = pyramidDir.resolve(fileName);
         if (!Files.exists(pyramidFile)) {

@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.tests;
 
 import net.algart.pyramid.PlanePyramidInformation;
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import net.algart.pyramid.http.control.HttpPyramidProxyControl;
 import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
@@ -49,7 +49,8 @@ public class HttpPyramidProxyAccessTest {
         final String pyramidId = args[3];
         final Path outputFolder = Paths.get(args[4]);
         final double compression = Double.parseDouble(args[5]);
-        final HttpPyramidConfiguration configuration = HttpPyramidConfiguration.readFromRootFolder(projectRoot);
+        final HttpPyramidServicesConfiguration configuration =
+            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
         final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
             HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
 

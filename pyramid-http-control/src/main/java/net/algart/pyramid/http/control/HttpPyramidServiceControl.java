@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.control;
 
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 
 import java.io.IOException;
@@ -45,14 +45,14 @@ public final class HttpPyramidServiceControl implements PyramidAccessControl {
 
     public HttpPyramidServiceControl(
         String host,
-        HttpPyramidConfiguration.Service serviceConfiguration)
+        HttpPyramidServicesConfiguration.Service serviceConfiguration)
     {
         this(host, serviceConfiguration, false);
     }
 
     public HttpPyramidServiceControl(
         String host,
-        HttpPyramidConfiguration.Service serviceConfiguration,
+        HttpPyramidServicesConfiguration.Service serviceConfiguration,
         boolean https)
     {
         this(host,

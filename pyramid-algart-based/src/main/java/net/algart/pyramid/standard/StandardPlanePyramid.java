@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static net.algart.pyramid.api.common.PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE;
 import static net.algart.simagis.pyramid.PlanePyramidSource.DIM_HEIGHT;
 import static net.algart.simagis.pyramid.PlanePyramidSource.DIM_WIDTH;
 
@@ -89,10 +90,10 @@ class StandardPlanePyramid implements PlanePyramid {
         Objects.requireNonNull(rendererJson, "Null renderer JSON");
         Objects.requireNonNull(pyramidConfiguration, "Null pyramid configuration");
         this.source = ScalablePlanePyramidSource.newInstance(parentSource);
-        this.pyramidFormatName = pyramidJson.getString("formatName", null);
+        this.pyramidFormatName = pyramidJson.getString(FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
         if (pyramidFormatName == null) {
-            throw new IOException("Invalid pyramid configuration json: no pyramidFormatName value <<<"
-                + pyramidJson + ">>>");
+            throw new IOException("Invalid pyramid configuration json: no \""
+                + FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" attribute <<<" + pyramidJson + ">>>");
         }
         this.renderingFormatName = rendererJson.getString("format", "png");
         final boolean transparencySupported = transparencySupported(renderingFormatName);

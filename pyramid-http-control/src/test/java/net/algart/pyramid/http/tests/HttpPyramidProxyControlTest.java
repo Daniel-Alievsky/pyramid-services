@@ -24,7 +24,7 @@
 
 package net.algart.pyramid.http.tests;
 
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import net.algart.pyramid.http.control.HttpPyramidProxyControl;
 
@@ -43,7 +43,8 @@ public class HttpPyramidProxyControlTest {
         final String command = args[1].toLowerCase();
         final Path projectRoot = Paths.get(args[2]);
         final Path specificServerConfigurationFile = Paths.get(args[3]);
-        final HttpPyramidConfiguration configuration = HttpPyramidConfiguration.readFromRootFolder(projectRoot);
+        final HttpPyramidServicesConfiguration configuration =
+            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
         final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
             HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
 

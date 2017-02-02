@@ -25,7 +25,7 @@
 package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidFactory;
-import net.algart.pyramid.api.http.HttpPyramidConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
@@ -46,12 +46,12 @@ public class HttpPyramidServer {
 
     private static final Logger LOG = Logger.getLogger(HttpPyramidServer.class.getName());
 
-    private final HttpPyramidConfiguration.Process processConfiguration;
+    private final HttpPyramidServicesConfiguration.Process processConfiguration;
     private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private volatile List<HttpPyramidService> services = null;
 
     public HttpPyramidServer(
-        HttpPyramidConfiguration.Process processConfiguration,
+        HttpPyramidServicesConfiguration.Process processConfiguration,
         HttpPyramidSpecificServerConfiguration specificServerConfiguration)
     {
         this.processConfiguration = Objects.requireNonNull(processConfiguration);
@@ -61,7 +61,7 @@ public class HttpPyramidServer {
     public void start() throws Exception {
         final List<HttpPyramidService> services = new ArrayList<>();
         try {
-            for (HttpPyramidConfiguration.Service serviceConfiguration : processConfiguration.getServices()) {
+            for (HttpPyramidServicesConfiguration.Service serviceConfiguration : processConfiguration.getServices()) {
                 final String planePyramidFactory = serviceConfiguration.getPlanePyramidFactory();
                 final String planePyramidFactoryConfiguration =
                     serviceConfiguration.getPlanePyramidFactoryConfiguration();
@@ -103,7 +103,7 @@ public class HttpPyramidServer {
         LOG.info("Finishing pyramid server for ports " + processConfiguration.allPorts());
     }
 
-    public HttpPyramidConfiguration.Process getProcessConfiguration() {
+    public HttpPyramidServicesConfiguration.Process getProcessConfiguration() {
         return processConfiguration;
     }
 
@@ -189,7 +189,7 @@ public class HttpPyramidServer {
         final Path projectRoot = Paths.get(args[startArgIndex]);
         final Path specificServerConfigurationFile = Paths.get(args[args.length - 1]);
         // Note: current version of HttpPyramidServer does not use specificServerConfigurationFile.
-        final HttpPyramidConfiguration configuration;
+        final HttpPyramidServicesConfiguration configuration;
         final HttpPyramidServer server;
         try {
             if (args.length > startArgIndex + 2) {
@@ -198,11 +198,12 @@ public class HttpPyramidServer {
                 for (int index = startArgIndex + 2; index < args.length - 1; index++) {
                     files.add(Paths.get(args[index]));
                 }
-                configuration = HttpPyramidConfiguration.readFromFiles(projectRoot, globalConfigurationFile, files);
+                configuration = HttpPyramidServicesConfiguration.readFromFiles(
+                    projectRoot, globalConfigurationFile, files);
             } else {
-                configuration = HttpPyramidConfiguration.readFromRootFolder(projectRoot);
+                configuration = HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
             }
-            final HttpPyramidConfiguration.Process process = configuration.getProcess(groupId);
+            final HttpPyramidServicesConfiguration.Process process = configuration.getProcess(groupId);
             if (process == null) {
                 throw new IllegalArgumentException("Process with groupId \"" + groupId + "\" is not found");
             }

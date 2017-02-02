@@ -40,9 +40,10 @@ public class PyramidConstants {
     // HttpPyramidConfiguration.GLOBAL_CONFIGURATION_FILE_NAME (json-file), "commonVmOptions" section.
     public static final String PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON = System.getProperty(
         "net.algart.pyramid.api.common.pyramidPathNameInJson", "pyramidPath");
-    public static final String PYRAMID_CONFIGURATION_FILE_NAME = System.getProperty(
-        "net.algart.pyramid.api.common.pyramidConfigurationFileName", ".pp.json");
-    public static final String FORMAT_NAME_IN_PYRAMID_CONFIGURATION_FILE_NAME = "formatName";
+    public static final String PYRAMID_DATA_CONFIG_FILE_NAME = System.getProperty(
+        "net.algart.pyramid.api.common.pyramidDataConfigFileName", ".pp.json");
+    public static final String FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE = "formatName";
+    public static final String FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE = "fileName";
 
     // The following constants can be customized also by more simple way:
     // HttpPyramidSpecificServerConfiguration json-file

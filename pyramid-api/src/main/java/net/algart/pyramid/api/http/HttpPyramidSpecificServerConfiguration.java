@@ -48,8 +48,8 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         private final HttpPyramidSpecificServerConfiguration parentConfiguration;
 
         public JRE(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
-            this.name = HttpPyramidConfiguration.getRequiredString(json, "name");
-            this.homePath = HttpPyramidConfiguration.getRequiredString(json, "homePath");
+            this.name = HttpPyramidServicesConfiguration.getRequiredString(json, "name");
+            this.homePath = HttpPyramidServicesConfiguration.getRequiredString(json, "homePath");
             this.parentConfiguration = parentConfiguration;
         }
 
@@ -84,8 +84,8 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         private final HttpPyramidSpecificServerConfiguration parentConfiguration;
 
         private SSLSettings(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
-            this.keystoreFile = HttpPyramidConfiguration.getRequiredString(json, "keystoreFile");
-            this.keystorePassword = HttpPyramidConfiguration.getRequiredString(json, "keystorePassword");
+            this.keystoreFile = HttpPyramidServicesConfiguration.getRequiredString(json, "keystoreFile");
+            this.keystorePassword = HttpPyramidServicesConfiguration.getRequiredString(json, "keystorePassword");
             this.keyPassword = json.getString("keyPassword", keystorePassword);
             this.parentConfiguration = parentConfiguration;
         }
@@ -185,7 +185,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         private ProxySettings(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
             Objects.requireNonNull(parentConfiguration);
             Objects.requireNonNull(json);
-            this.proxyPort = HttpPyramidConfiguration.getRequiredInt(json, "proxyPort");
+            this.proxyPort = HttpPyramidServicesConfiguration.getRequiredInt(json, "proxyPort");
             if (proxyPort <= 0 || proxyPort > HttpPyramidConstants.MAX_ALLOWED_PORT) {
                 throw new JsonException("Invalid proxy configuration JSON:"
                     + " invalid proxy port number " + proxyPort
@@ -346,7 +346,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
     }
 
     public String toString() {
-        return HttpPyramidConfiguration.jsonToPrettyString(toJson());
+        return HttpPyramidServicesConfiguration.jsonToPrettyString(toJson());
     }
 
     public static HttpPyramidSpecificServerConfiguration readFromFile(Path specificServerConfigurationFile)
@@ -355,7 +355,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         Objects.requireNonNull(specificServerConfigurationFile, "Null specificServerConfigurationFile");
         return new HttpPyramidSpecificServerConfiguration(
             specificServerConfigurationFile,
-            HttpPyramidConfiguration.readJson(specificServerConfigurationFile));
+            HttpPyramidServicesConfiguration.readJson(specificServerConfigurationFile));
     }
 
     JsonObject toJson() {
