@@ -1,6 +1,9 @@
 {
   "formatName": "loci",
   "groupId": "com.simagis.pyramid.loci",
+  "extensions": [
+    "*"
+  ],
   "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
   "planePyramidFactoryConfiguration": "com.simagis.pyramid.loci.server.LociPlanePyramidSourceFactory",
   "port": 20010,

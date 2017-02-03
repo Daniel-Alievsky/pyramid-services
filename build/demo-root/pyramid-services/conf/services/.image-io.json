@@ -1,6 +1,17 @@
 {
   "formatName": "imageIO",
   "groupId": "net.algart.simagis.pyramid.sources.imageio",
+  "extensions": [
+    "jpg",
+    "jpeg",
+    "png",
+    "gif",
+    "bmp",
+    "wbmp",
+    "tif",
+    "tiff",
+    "imageio"
+  ],
   "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
   "planePyramidFactoryConfiguration": "net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory",
   "port": 9010,

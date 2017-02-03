@@ -53,6 +53,7 @@ public class HttpPyramidServicesConfiguration {
         private final String formatName;
         // - must be unique
         private final String groupId;
+        private final Set<String> extensions;
         private final String planePyramidFactory;
         private final String planePyramidFactoryConfiguration;
         private final String jreName;
@@ -69,12 +70,17 @@ public class HttpPyramidServicesConfiguration {
             Objects.requireNonNull(configurationFile);
             Objects.requireNonNull(json);
             this.configurationFile = configurationFile;
-            this.formatName = getRequiredString(json, "formatName");
-            this.groupId = getRequiredString(json, "groupId");
-            this.planePyramidFactory = getRequiredString(json, "planePyramidFactory");
+            this.formatName = getRequiredString(json, "formatName", configurationFile);
+            this.groupId = getRequiredString(json, "groupId", configurationFile);
+            final JsonArray extensions = getRequiredJsonArray(json, "extensions", configurationFile);
+            this.extensions = new LinkedHashSet<>();
+            for (int k = 0, n = extensions.size(); k < n; k++) {
+                this.extensions.add(extensions.getString(k));
+            }
+            this.planePyramidFactory = getRequiredString(json, "planePyramidFactory", configurationFile);
             this.planePyramidFactoryConfiguration = json.getString("planePyramidFactoryConfiguration", null);
             this.jreName = json.getString("jreName", null);
-            final JsonArray classPath = getRequiredJsonArray(json, CLASS_PATH_FIELD);
+            final JsonArray classPath = getRequiredJsonArray(json, CLASS_PATH_FIELD, configurationFile);
             this.classPath = new TreeSet<>();
             for (int k = 0, n = classPath.size(); k < n; k++) {
                 this.classPath.add(classPath.getString(k));
@@ -89,9 +95,9 @@ public class HttpPyramidServicesConfiguration {
             this.workingDirectory = json.getString("workingDirectory", null);
             final String memory = getStringOrInt(json, "memory");
             this.memory = memory != null ? parseLongWithMetricalSuffixes(memory) : null;
-            this.port = getRequiredInt(json, "port");
+            this.port = getRequiredInt(json, "port", configurationFile);
             if (port <= 0 || port > HttpPyramidConstants.MAX_ALLOWED_PORT) {
-                throw new JsonException("Invalid configuration JSON:"
+                throw new JsonException("Invalid configuration JSON " + configurationFile + ":"
                     + " invalid port number " + port
                     + " (must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT + ")");
             }
@@ -107,6 +113,10 @@ public class HttpPyramidServicesConfiguration {
 
         public String getGroupId() {
             return groupId;
+        }
+
+        public Collection<String> getExtensions() {
+            return Collections.unmodifiableSet(extensions);
         }
 
         public String getPlanePyramidFactory() {
@@ -153,6 +163,7 @@ public class HttpPyramidServicesConfiguration {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
             builder.add("formatName", formatName);
             builder.add("groupId", groupId);
+            builder.add("extensions", toJsonArray(extensions));
             builder.add("planePyramidFactory", planePyramidFactory);
             builder.add("planePyramidFactoryConfiguration", planePyramidFactoryConfiguration);
             if (jreName != null) {
@@ -529,26 +540,26 @@ public class HttpPyramidServicesConfiguration {
         return null;
     }
 
-    static String getRequiredString(JsonObject json, String name) {
+    static String getRequiredString(JsonObject json, String name, Path file) {
         final JsonString result = json.getJsonString(name);
         if (result == null) {
-            throw new JsonException("Invalid configuration JSON: \"" + name + "\" value required");
+            throw new JsonException("Invalid configuration JSON " + file + ": \"" + name + "\" value required");
         }
         return result.getString();
     }
 
-    static int getRequiredInt(JsonObject json, String name) {
+    static int getRequiredInt(JsonObject json, String name, Path file) {
         final JsonNumber result = json.getJsonNumber(name);
         if (result == null) {
-            throw new JsonException("Invalid configuration JSON: \"" + name + "\" value required");
+            throw new JsonException("Invalid configuration JSON " + file + ": \"" + name + "\" value required");
         }
         return result.intValueExact();
     }
 
-    static JsonArray getRequiredJsonArray(JsonObject json, String name) {
+    static JsonArray getRequiredJsonArray(JsonObject json, String name, Path file) {
         final JsonArray result = json.getJsonArray(name);
         if (result == null) {
-            throw new JsonException("Invalid configuration JSON: \"" + name + "\" value required");
+            throw new JsonException("Invalid configuration JSON " + file + ": \"" + name + "\" value required");
         }
         return result;
     }

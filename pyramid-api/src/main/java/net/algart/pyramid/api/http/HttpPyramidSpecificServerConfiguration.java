@@ -48,8 +48,10 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         private final HttpPyramidSpecificServerConfiguration parentConfiguration;
 
         public JRE(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
-            this.name = HttpPyramidServicesConfiguration.getRequiredString(json, "name");
-            this.homePath = HttpPyramidServicesConfiguration.getRequiredString(json, "homePath");
+            this.name = HttpPyramidServicesConfiguration.getRequiredString(json, "name",
+                parentConfiguration.specificServerConfigurationFile);
+            this.homePath = HttpPyramidServicesConfiguration.getRequiredString(json, "homePath",
+                parentConfiguration.specificServerConfigurationFile);
             this.parentConfiguration = parentConfiguration;
         }
 
@@ -84,8 +86,10 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         private final HttpPyramidSpecificServerConfiguration parentConfiguration;
 
         private SSLSettings(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
-            this.keystoreFile = HttpPyramidServicesConfiguration.getRequiredString(json, "keystoreFile");
-            this.keystorePassword = HttpPyramidServicesConfiguration.getRequiredString(json, "keystorePassword");
+            this.keystoreFile = HttpPyramidServicesConfiguration.getRequiredString(json, "keystoreFile",
+                parentConfiguration.specificServerConfigurationFile);
+            this.keystorePassword = HttpPyramidServicesConfiguration.getRequiredString(json, "keystorePassword",
+                parentConfiguration.specificServerConfigurationFile);
             this.keyPassword = json.getString("keyPassword", keystorePassword);
             this.parentConfiguration = parentConfiguration;
         }
@@ -140,8 +144,9 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
                 this.host = json.getString("host", "localhost");
                 this.port = json.getInt("port", 80);
                 if (port <= 0) {
-                    throw new JsonException("Invalid proxy configuration JSON:"
-                        + " zero or negative default server port number " + port);
+                    throw new JsonException("Invalid proxy configuration JSON "
+                        + parentProxySettings.parentConfiguration.specificServerConfigurationFile + ": "
+                        + "zero or negative default server port number " + port);
                 }
                 this.parentProxySettings = parentProxySettings;
             }
@@ -185,9 +190,12 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         private ProxySettings(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
             Objects.requireNonNull(parentConfiguration);
             Objects.requireNonNull(json);
-            this.proxyPort = HttpPyramidServicesConfiguration.getRequiredInt(json, "proxyPort");
+            this.parentConfiguration = parentConfiguration;
+            this.proxyPort = HttpPyramidServicesConfiguration.getRequiredInt(json, "proxyPort",
+                parentConfiguration.specificServerConfigurationFile);
             if (proxyPort <= 0 || proxyPort > HttpPyramidConstants.MAX_ALLOWED_PORT) {
-                throw new JsonException("Invalid proxy configuration JSON:"
+                throw new JsonException("Invalid proxy configuration JSON"
+                    + parentConfiguration.specificServerConfigurationFile + ":"
                     + " invalid proxy port number " + proxyPort
                     + " (must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT + ")");
             }
@@ -195,7 +203,6 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             this.ssl = json.getBoolean("ssl", false);
             this.defaultServer = new DefaultServer(this, json.getJsonObject("defaultServer"));
             this.autoRevivingByManager = json.getBoolean("autoRevivingByManager", false);
-            this.parentConfiguration = parentConfiguration;
         }
 
         public int getProxyPort() {
@@ -259,6 +266,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
     private HttpPyramidSpecificServerConfiguration(Path specificServerConfigurationFile, JsonObject json) {
         Objects.requireNonNull(specificServerConfigurationFile);
         Objects.requireNonNull(json);
+        this.specificServerConfigurationFile = specificServerConfigurationFile;
         this.configRootDir = json.getString("configRootDir", PyramidConstants.DEFAULT_CONFIG_ROOT_DIR);
         this.configFileName = json.getString("configFileName", PyramidConstants.DEFAULT_CONFIG_FILE_NAME);
         this.imagesRootDir = json.getString("imagesRootDir", PyramidConstants.DEFAULT_IMAGES_ROOT_DIR);
@@ -275,17 +283,18 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         this.proxy = json.getBoolean("proxy", false);
         final JsonObject proxySettingsJson = json.getJsonObject("proxySettings");
         if (proxy && proxySettingsJson == null) {
-            throw new JsonException("Invalid configuration JSON: "
+            throw new JsonException("Invalid configuration JSON " + specificServerConfigurationFile + ": "
                 + "\"proxySettings\" value required when \"proxy\" mode is used");
         }
-        this.proxySettings = proxySettingsJson == null ? null : new ProxySettings(this, proxySettingsJson);
+        this.proxySettings = proxySettingsJson == null ?
+            null :
+            new ProxySettings(this, proxySettingsJson);
         final JsonObject sslSettingsJson = json.getJsonObject("sslSettings");
         if (proxySettings != null && proxySettings.ssl && sslSettingsJson == null) {
-            throw new JsonException("Invalid configuration JSON: "
+            throw new JsonException("Invalid configuration JSON " + specificServerConfigurationFile + ": "
                 + "\"sslSettings\" value required when \"proxySettings\".\"ssl\" mode is used");
         }
         this.sslSettings = sslSettingsJson == null ? null : new SSLSettings(this, sslSettingsJson);
-        this.specificServerConfigurationFile = specificServerConfigurationFile;
     }
 
     public String getConfigRootDir() {

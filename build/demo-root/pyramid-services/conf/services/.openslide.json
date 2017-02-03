@@ -1,6 +1,9 @@
 {
   "formatName": "openslide",
   "groupId": "com.simagis.pyramid.openslide",
+  "extensions": [
+    "*"
+  ],
   "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
   "planePyramidFactoryConfiguration": "com.simagis.pyramid.openslide.server.OpenSlidePlanePyramidSourceFactory",
   "port": 20020,
