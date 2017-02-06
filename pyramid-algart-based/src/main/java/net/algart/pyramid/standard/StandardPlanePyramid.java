@@ -50,7 +50,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static net.algart.pyramid.api.common.PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE;
 import static net.algart.simagis.pyramid.PlanePyramidSource.DIM_HEIGHT;
 import static net.algart.simagis.pyramid.PlanePyramidSource.DIM_WIDTH;
 

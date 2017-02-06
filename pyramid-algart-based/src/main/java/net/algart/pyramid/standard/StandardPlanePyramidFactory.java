@@ -41,7 +41,8 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
 
     @Override
     public void initializeConfiguration(Object factoryConfiguration) throws Exception {
-        Objects.requireNonNull(factoryConfiguration, "Null plane pyramid source sub-factory (configuration argument");
+        Objects.requireNonNull(factoryConfiguration,
+            "Null plane pyramid source sub-factory (configuration argument");
         if (!(factoryConfiguration instanceof String)) {
             throw new IllegalArgumentException("Invalid type of configuration argument: it must be a String "
                 + "(the name of PlanePyramidSourceFactory class)");
