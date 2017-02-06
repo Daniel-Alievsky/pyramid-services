@@ -188,7 +188,7 @@ public class HttpPyramidServer {
         }
         final Path projectRoot = Paths.get(args[startArgIndex]);
         final Path specificServerConfigurationFile = Paths.get(args[args.length - 1]);
-        // Note: current version of HttpPyramidServer does not use specificServerConfigurationFile.
+        // Note: specificServerConfigurationFile is used for finding configRootDir and configFileName
         final HttpPyramidServicesConfiguration configuration;
         final HttpPyramidServer server;
         try {
