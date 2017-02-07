@@ -25,6 +25,7 @@
 package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidFactory;
+import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
@@ -63,14 +64,11 @@ public class HttpPyramidServer {
         try {
             for (HttpPyramidServicesConfiguration.Service serviceConfiguration : processConfiguration.getServices()) {
                 final String planePyramidFactory = serviceConfiguration.getPlanePyramidFactory();
-                final String planePyramidFactoryConfiguration =
-                    serviceConfiguration.getPlanePyramidFactoryConfiguration();
                 final int port = serviceConfiguration.getPort();
                 final Class<?> factoryClass = Class.forName(planePyramidFactory);
                 final PlanePyramidFactory factory = (PlanePyramidFactory) factoryClass.newInstance();
-                if (planePyramidFactoryConfiguration != null) {
-                    factory.initializeConfiguration(planePyramidFactoryConfiguration);
-                }
+                factory.initializeConfiguration(
+                    PyramidApiTools.configurationToJson(serviceConfiguration.toJsonString()));
                 final HttpPyramidService service = newService(factory, port);
                 addHandlers(service);
                 services.add(service);

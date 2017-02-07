@@ -68,11 +68,11 @@ public class PyramidApiTools {
         return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
     }
 
-    public static JsonObject pyramidConfigurationToJson(String pyramidConfiguration) throws IOException {
+    public static JsonObject configurationToJson(String configuration) throws IOException {
         try {
-            return Json.createReader(new StringReader(pyramidConfiguration)).readObject();
+            return Json.createReader(new StringReader(configuration)).readObject();
         } catch (JsonException e) {
-            throw new IOException("Invalid configuration json: <<<" + pyramidConfiguration + ">>>", e);
+            throw new IOException("Invalid configuration json: <<<" + configuration + ">>>", e);
         }
     }
 

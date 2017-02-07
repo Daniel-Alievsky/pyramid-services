@@ -25,9 +25,12 @@
 package net.algart.pyramid.standard.tests;
 
 import net.algart.pyramid.PlanePyramidFactory;
+import net.algart.pyramid.api.common.PyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.http.server.HttpPyramidService;
 
+import javax.json.Json;
+import javax.json.JsonObjectBuilder;
 import java.io.IOException;
 import java.nio.file.Paths;
 
@@ -54,7 +57,11 @@ class SimpleHttpPyramidServer {
                 final PlanePyramidFactory factory = (PlanePyramidFactory)
                     planePyramidFactoryClasses[k].newInstance();
                 if (planePyramidSubFactoryClasses[k] != null) {
-                    factory.initializeConfiguration(planePyramidSubFactoryClasses[k]);
+                    final JsonObjectBuilder builder = Json.createObjectBuilder();
+                    builder.add(PyramidConstants.PLANE_PYRAMID_SUB_FACTORY_IN_PYRAMID_FACTORY_CONFIGURATION_JSON,
+                        planePyramidSubFactoryClasses[k]);
+                    builder.add(PyramidConstants.FORMAT_NAME_IN_PYRAMID_FACTORY_CONFIGURATION_JSON, "unknown");
+                    factory.initializeConfiguration(builder.build());
                 }
                 services[k] = newService(factory, ports[k]);
                 addHandlers(services[k]);

@@ -30,15 +30,21 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class StandardPyramidDataConfiguration {
     private final JsonObject pyramidDataJson;
     private final Path pyramidDataFile;
     private final String formatName;
 
-    private StandardPyramidDataConfiguration(Path pyramidPath) throws IOException {
+    private StandardPyramidDataConfiguration(Path pyramidPath, List<PyramidFormat> supportedFormats)
+        throws IOException
+    {
         final Path pyramidDataConfigFile = pyramidPath.resolve(PyramidConstants.PYRAMID_DATA_CONFIG_FILE_NAME);
         if (!Files.exists(pyramidDataConfigFile)) {
             this.pyramidDataJson = Json.createObjectBuilder().build();
@@ -54,29 +60,65 @@ public class StandardPyramidDataConfiguration {
         }
         final String formatName = this.pyramidDataJson.getString(
             PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
+        PyramidFormat currentFormat = null;
+        for (PyramidFormat format : supportedFormats) {
+            if (formatName != null && formatName.equals(format.getFormatName())) {
+                currentFormat = format;
+                break;
+            }
+        }
         final String dataFileName = pyramidDataJson.getString(
             PyramidConstants.FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
-        if (dataFileName == null) {
-            //TODO!! detect
-            throw new IOException("Invalid pyramid data configuration json "
-                + pyramidDataConfigFile.toAbsolutePath() + ": no \""
-                + PyramidConstants.FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" value");
+        Path dataFile = dataFileName == null ? null : pyramidPath.resolve(dataFileName);
+        if (dataFile == null) {
+            final List<Path> matched = new ArrayList<>();
+            try (final DirectoryStream<Path> files = Files.newDirectoryStream(pyramidPath)) {
+                for (Path file : files) {
+                    for (PyramidFormat format :
+                        (currentFormat != null ? Collections.singleton(currentFormat) : supportedFormats))
+                    {
+                        if (format.matches(file)) {
+                            matched.add(file);
+                        }
+                    }
+                }
+            }
+            if (matched.size() == 1) {
+                dataFile = matched.get(0);
+            } else {
+                throw new IOException("Cannot find pyramid data file: pyramid data configuration json "
+                    + pyramidDataConfigFile.toAbsolutePath() + " does not contains \""
+                    + PyramidConstants.FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" value, and there are "
+                    + (matched.isEmpty() ? "no" : "more than 1") + " files with suitable extensions");
+            }
         }
-        if (formatName == null) {
-            //TODO!! detect
-            throw new IOException("Invalid pyramid configuration json "
-                + pyramidDataConfigFile.toAbsolutePath() + ": no \""
-                + PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" value");
+        if (currentFormat == null) {
+            for (PyramidFormat format : supportedFormats) {
+                if (format.matches(dataFile)) {
+                    currentFormat = format;
+                    break;
+                }
+            }
+            if (currentFormat == null) {
+                throw new IOException("Cannot detect pyramid format: pyramid data configuration json "
+                    + pyramidDataConfigFile.toAbsolutePath() + " does not contains \""
+                    + PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" value, and an extension "
+                    + "of the pyramid data file " + dataFile + " does not match any supported format");
+            }
         }
-        this.pyramidDataFile = pyramidPath.resolve(dataFileName);
+        this.pyramidDataFile = dataFile;
         if (!Files.exists(pyramidDataFile)) {
             throw new IOException("Pyramid data file at " + pyramidDataFile + " does not exist");
         }
-        this.formatName = formatName;
+        this.formatName = currentFormat.getFormatName();
     }
 
-    public static StandardPyramidDataConfiguration readFromPyramidFolder(Path pyramidPath) throws IOException {
-        return new StandardPyramidDataConfiguration(pyramidPath);
+    public static StandardPyramidDataConfiguration readFromPyramidFolder(
+        Path pyramidPath,
+        List<PyramidFormat> supportedFormats)
+        throws IOException
+    {
+        return new StandardPyramidDataConfiguration(pyramidPath, supportedFormats);
     }
 
     public JsonObject getPyramidDataJson() {

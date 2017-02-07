@@ -27,6 +27,7 @@ package net.algart.pyramid.http.proxy;
 import net.algart.http.proxy.HttpServerAddress;
 import net.algart.http.proxy.HttpServerResolver;
 import net.algart.pyramid.api.common.PyramidApiTools;
+import net.algart.pyramid.api.common.PyramidFormat;
 import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
 import net.algart.pyramid.api.http.*;
 import org.glassfish.grizzly.http.util.Parameters;
@@ -45,6 +46,7 @@ class StandardPyramidServerResolver implements HttpServerResolver {
 
     private final Map<String, HttpServerAddress> pool = new ServerAddressHashMap();
     private final HttpPyramidServicesConfiguration configuration;
+    private final List<PyramidFormat> allFormats;
     private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final HttpPyramidSpecificServerConfiguration.ProxySettings proxyConfiguration;
     private final List<HttpPyramidIdFinder> pyramidIdFinders = new ArrayList<>();
@@ -57,6 +59,7 @@ class StandardPyramidServerResolver implements HttpServerResolver {
         assert configuration != null && specificServerConfiguration != null;
         assert specificServerConfiguration.getProxySettings() != null;
         this.configuration = configuration;
+        this.allFormats = configuration.allFormats();
         this.specificServerConfiguration = specificServerConfiguration;
         this.proxyConfiguration = specificServerConfiguration.getProxySettings();
     }
@@ -108,10 +111,10 @@ class StandardPyramidServerResolver implements HttpServerResolver {
             pyramidId,
             specificServerConfiguration.getConfigRootDir(),
             specificServerConfiguration.getConfigFileName());
-        final JsonObject config = PyramidApiTools.pyramidConfigurationToJson(pyramidConfiguration);
+        final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
         final Path pyramidPath = PyramidApiTools.getPyramidPath(config);
         final StandardPyramidDataConfiguration pyramidDataConfiguration =
-            StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidPath);
+            StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidPath, allFormats);
         final String formatName = pyramidDataConfiguration.getFormatName();
         final HttpPyramidServicesConfiguration.Service service = configuration.findServiceByFormatName(formatName);
         if (service == null) {

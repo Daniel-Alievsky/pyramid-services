@@ -25,6 +25,7 @@
 package net.algart.pyramid.api.http;
 
 import net.algart.pyramid.api.common.PyramidConstants;
+import net.algart.pyramid.api.common.PyramidFormat;
 
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
@@ -50,12 +51,11 @@ public class HttpPyramidServicesConfiguration {
         public static final String CLASS_PATH_FIELD = "classPath";
 
         private final Path configurationFile;
-        private final String formatName;
+        private final PyramidFormat pyramidFormat;
         // - must be unique
         private final String groupId;
-        private final Set<String> extensions;
         private final String planePyramidFactory;
-        private final String planePyramidFactoryConfiguration;
+        private final String planePyramidSubFactory;
         private final String jreName;
         private final Set<String> classPath;
         private final Set<String> vmOptions;
@@ -70,15 +70,11 @@ public class HttpPyramidServicesConfiguration {
             Objects.requireNonNull(configurationFile);
             Objects.requireNonNull(json);
             this.configurationFile = configurationFile;
-            this.formatName = getRequiredString(json, "formatName", configurationFile);
+            this.pyramidFormat = PyramidFormat.getInstance(json);
             this.groupId = getRequiredString(json, "groupId", configurationFile);
-            final JsonArray extensions = getRequiredJsonArray(json, "extensions", configurationFile);
-            this.extensions = new LinkedHashSet<>();
-            for (int k = 0, n = extensions.size(); k < n; k++) {
-                this.extensions.add(extensions.getString(k));
-            }
             this.planePyramidFactory = getRequiredString(json, "planePyramidFactory", configurationFile);
-            this.planePyramidFactoryConfiguration = json.getString("planePyramidFactoryConfiguration", null);
+            this.planePyramidSubFactory = json.getString(
+                PyramidConstants.PLANE_PYRAMID_SUB_FACTORY_IN_PYRAMID_FACTORY_CONFIGURATION_JSON,null);
             this.jreName = json.getString("jreName", null);
             final JsonArray classPath = getRequiredJsonArray(json, CLASS_PATH_FIELD, configurationFile);
             this.classPath = new TreeSet<>();
@@ -107,8 +103,12 @@ public class HttpPyramidServicesConfiguration {
             return configurationFile;
         }
 
+        public PyramidFormat getPyramidFormat() {
+            return pyramidFormat;
+        }
+
         public String getFormatName() {
-            return formatName;
+            return pyramidFormat.getFormatName();
         }
 
         public String getGroupId() {
@@ -116,15 +116,15 @@ public class HttpPyramidServicesConfiguration {
         }
 
         public Collection<String> getExtensions() {
-            return Collections.unmodifiableSet(extensions);
+            return pyramidFormat.getExtensions();
         }
 
         public String getPlanePyramidFactory() {
             return planePyramidFactory;
         }
 
-        public String getPlanePyramidFactoryConfiguration() {
-            return planePyramidFactoryConfiguration;
+        public String getPlanePyramidSubFactory() {
+            return planePyramidSubFactory;
         }
 
         public String getJREName() {
@@ -161,11 +161,11 @@ public class HttpPyramidServicesConfiguration {
 
         JsonObject toJson() {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
-            builder.add("formatName", formatName);
+            builder.add("formatName", pyramidFormat.getFormatName());
             builder.add("groupId", groupId);
-            builder.add("extensions", toJsonArray(extensions));
+            builder.add("extensions", toJsonArray(pyramidFormat.getExtensions()));
             builder.add("planePyramidFactory", planePyramidFactory);
-            builder.add("planePyramidFactoryConfiguration", planePyramidFactoryConfiguration);
+            builder.add("planePyramidSubFactory", planePyramidSubFactory);
             if (jreName != null) {
                 builder.add("jreName", jreName);
             }
@@ -377,9 +377,9 @@ public class HttpPyramidServicesConfiguration {
         this.allServices = new LinkedHashMap<>();
         for (Process process : processList) {
             for (Service service : process.services) {
-                if (allServices.putIfAbsent(service.formatName, service) != null) {
-                    throw new JsonException("Invalid configuration JSON: "
-                        + "two or more services with the single format \"" + service.formatName + "\"");
+                if (allServices.putIfAbsent(service.pyramidFormat.getFormatName(), service) != null) {
+                    throw new JsonException("Invalid configuration JSON: two or more services "
+                        + "with the single format \"" + service.pyramidFormat.getFormatName()+ "\"");
                 }
             }
         }
@@ -443,6 +443,14 @@ public class HttpPyramidServicesConfiguration {
 
     public Map<String, Service> allServices() {
         return Collections.unmodifiableMap(allServices);
+    }
+
+    public List<PyramidFormat> allFormats() {
+        final List<PyramidFormat> result = new ArrayList<>();
+        for (Service service : allServices.values()) {
+            result.add(service.getPyramidFormat());
+        }
+        return result;
     }
 
     public Service findServiceByFormatName(String formatName) {

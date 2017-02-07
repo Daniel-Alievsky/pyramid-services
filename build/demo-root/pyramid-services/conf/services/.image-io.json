@@ -13,7 +13,7 @@
     "imageio"
   ],
   "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
-  "planePyramidFactoryConfiguration": "net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory",
+  "planePyramidSubFactory": "net.algart.simagis.pyramid.factories.ImageIOPlanePyramidSourceFactory",
   "port": 9010,
   "classPath": [
     "lib/.image-io/*"

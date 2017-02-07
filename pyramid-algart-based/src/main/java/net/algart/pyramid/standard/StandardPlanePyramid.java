@@ -63,9 +63,9 @@ class StandardPlanePyramid implements PlanePyramid {
 
     private static final boolean USE_QUICK_BMP_WRITER = true;
 
+    private final StandardPlanePyramidFactory factory;
     private final String pyramidConfiguration;
     private final ScalablePlanePyramidSource source;
-    private final String formatName;
     private final String renderingFormatName;
     private final Color renderingBackgroundColor;
     private final MatrixToBufferedImageConverter converter;
@@ -77,6 +77,7 @@ class StandardPlanePyramid implements PlanePyramid {
     private volatile long lastAccessTime;
 
     StandardPlanePyramid(
+        StandardPlanePyramidFactory factory,
         PlanePyramidSource parentSource,
         StandardPyramidDataConfiguration pyramidDataConfiguration,
         JsonObject rendererJson,
@@ -85,12 +86,13 @@ class StandardPlanePyramid implements PlanePyramid {
         String pyramidConfiguration)
         throws IOException
     {
+        Objects.requireNonNull(factory, "Null factory");
         Objects.requireNonNull(parentSource, "Null plane pyramid source");
         Objects.requireNonNull(pyramidDataConfiguration, "Null pyramid data configuration");
         Objects.requireNonNull(rendererJson, "Null renderer JSON");
         Objects.requireNonNull(pyramidConfiguration, "Null pyramid configuration");
+        this.factory = factory;
         this.source = ScalablePlanePyramidSource.newInstance(parentSource);
-        this.formatName = pyramidDataConfiguration.getFormatName();
         this.renderingFormatName = rendererJson.getString("format", "png");
         final boolean transparencySupported = transparencySupported(renderingFormatName);
         final JsonNumber opacity = rendererJson.getJsonNumber("opacity");
@@ -136,7 +138,7 @@ class StandardPlanePyramid implements PlanePyramid {
                     this.source.dimY(),
                     this.source.elementType()
                 );
-                information.setPyramidFormatName(formatName);
+                information.setPyramidFormatName(factory.getPyramidFormat().getFormatName());
                 information.setRenderingFormatName(renderingFormatName);
                 information.setPixelSizeInMicrons(this.source.pixelSizeInMicrons());
                 information.setMagnification(this.source.magnification());

@@ -27,37 +27,45 @@ package net.algart.pyramid.standard;
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.api.common.PyramidApiTools;
+import net.algart.pyramid.api.common.PyramidConstants;
+import net.algart.pyramid.api.common.PyramidFormat;
 import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
 import net.algart.simagis.pyramid.PlanePyramidSource;
 import net.algart.simagis.pyramid.PlanePyramidSourceFactory;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import javax.json.*;
 import java.nio.file.Path;
-import java.util.Objects;
+import java.util.*;
 
 public class StandardPlanePyramidFactory implements PlanePyramidFactory {
+    private volatile PyramidFormat pyramidFormat;
     private volatile PlanePyramidSourceFactory planePyramidSourceFactory;
 
     @Override
     public void initializeConfiguration(Object factoryConfiguration) throws Exception {
         Objects.requireNonNull(factoryConfiguration,
-            "Null plane pyramid source sub-factory (configuration argument");
-        if (!(factoryConfiguration instanceof String)) {
-            throw new IllegalArgumentException("Invalid type of configuration argument: it must be a String "
-                + "(the name of PlanePyramidSourceFactory class)");
+            "Null plane pyramid factory configuration argument");
+        if (!(factoryConfiguration instanceof JsonObject)) {
+            throw new IllegalArgumentException("Invalid type of configuration argument: it must be JsonObject "
+                + "(containing name of PlanePyramidSourceFactory class, format name and list of file extensions)");
         }
+        final JsonObject configuration = (JsonObject) factoryConfiguration;
+        this.pyramidFormat = PyramidFormat.getInstance(configuration);
+        final String planePyramidSubFactory = getRequiredString(configuration,
+            PyramidConstants.PLANE_PYRAMID_SUB_FACTORY_IN_PYRAMID_FACTORY_CONFIGURATION_JSON);
         this.planePyramidSourceFactory = (PlanePyramidSourceFactory)
-            Class.forName((String) factoryConfiguration).newInstance();
+            Class.forName(planePyramidSubFactory).newInstance();
     }
 
     @Override
     public PlanePyramid newPyramid(final String pyramidConfiguration) throws Exception {
         Objects.requireNonNull(pyramidConfiguration);
-        final JsonObject config = PyramidApiTools.pyramidConfigurationToJson(pyramidConfiguration);
+        final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
         final Path pyramidPath = PyramidApiTools.getPyramidPath(config);
         final StandardPyramidDataConfiguration pyramidDataConfiguration =
-            StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidPath);
+            StandardPyramidDataConfiguration.readFromPyramidFolder(
+                pyramidPath,
+                Collections.singletonList(pyramidFormat));
         final Path pyramidDataFile = pyramidDataConfiguration.getPyramidDataFile();
         JsonObject rendererJson = config.getJsonObject(PlanePyramid.RENDERER_KEY);
         if (rendererJson == null) {
@@ -70,11 +78,34 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
             pyramidDataConfiguration.getPyramidDataJson().toString(),
             rendererJson.toString());
         return new StandardPlanePyramid(
-            planePyramidSource, pyramidDataConfiguration, rendererJson, rawBytes, cacheable, pyramidConfiguration);
+            this,
+            planePyramidSource,
+            pyramidDataConfiguration,
+            rendererJson,
+            rawBytes,
+            cacheable,
+            pyramidConfiguration);
+    }
+
+    public PyramidFormat getPyramidFormat() {
+        return pyramidFormat;
+    }
+
+    public PlanePyramidSourceFactory getPlanePyramidSourceFactory() {
+        return planePyramidSourceFactory;
     }
 
     @Override
     public String toString() {
         return getClass().getSimpleName() + " based on " + planePyramidSourceFactory.getClass().getName();
+    }
+
+    private static String getRequiredString(JsonObject json, String name) {
+        final JsonString result = json.getJsonString(name);
+        if (result == null) {
+            throw new JsonException("Invalid factory configuration JSON: \"" + name
+                + "\" value required <<<" + json + ">>>");
+        }
+        return result.getString();
     }
 }

@@ -36,13 +36,20 @@ public class PyramidConstants {
     public static final Path CONFIGURATION_FOLDER_IN_PROJECT_ROOT = Paths.get(getStringEnv(
         "NET_ALGART_PYRAMID_CONFIGURATION_FOLDER_IN_PROJECT_ROOT", "pyramid-services/conf/services"));
 
-    // The following constants usually do not change, but theoretically can be customized via
+    public static final String FORMAT_NAME_IN_PYRAMID_FACTORY_CONFIGURATION_JSON = "formatName";
+    public static final String EXTENSIONS_IN_PYRAMID_FACTORY_CONFIGURATION_JSON = "extensions";
+    public static final String PLANE_PYRAMID_SUB_FACTORY_IN_PYRAMID_FACTORY_CONFIGURATION_JSON =
+        "planePyramidSubFactory";
+
+    // The following 2 constants usually do not change, but theoretically can be customized via
     // HttpPyramidConfiguration.GLOBAL_CONFIGURATION_FILE_NAME (json-file), "commonVmOptions" section.
     public static final String PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON = System.getProperty(
         "net.algart.pyramid.api.common.pyramidPathNameInJson", "pyramidPath");
     public static final String PYRAMID_DATA_CONFIG_FILE_NAME = System.getProperty(
         "net.algart.pyramid.api.common.pyramidDataConfigFileName", ".pp.json");
-    public static final String FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE = "formatName";
+
+    public static final String FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE =
+        FORMAT_NAME_IN_PYRAMID_FACTORY_CONFIGURATION_JSON;
     public static final String FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE = "fileName";
 
     // The following constants can be customized also by more simple way:

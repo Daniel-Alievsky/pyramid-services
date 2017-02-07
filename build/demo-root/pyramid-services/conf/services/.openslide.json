@@ -5,7 +5,7 @@
     "*"
   ],
   "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
-  "planePyramidFactoryConfiguration": "com.simagis.pyramid.openslide.server.OpenSlidePlanePyramidSourceFactory",
+  "planePyramidSubFactory": "com.simagis.pyramid.openslide.server.OpenSlidePlanePyramidSourceFactory",
   "port": 20020,
   "classPath": [
     "lib/.openslide/OpenSlide.jar",
