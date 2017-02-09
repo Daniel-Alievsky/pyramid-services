@@ -26,16 +26,14 @@ package net.algart.pyramid.standard;
 
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidFactory;
-import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.common.PyramidConstants;
 import net.algart.pyramid.api.common.PyramidFormat;
-import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
-import net.algart.simagis.pyramid.PlanePyramidSource;
 import net.algart.simagis.pyramid.PlanePyramidSourceFactory;
 
-import javax.json.*;
-import java.nio.file.Path;
-import java.util.*;
+import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonString;
+import java.util.Objects;
 
 public class StandardPlanePyramidFactory implements PlanePyramidFactory {
     private volatile PyramidFormat pyramidFormat;
@@ -59,32 +57,7 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
 
     @Override
     public PlanePyramid newPyramid(final String pyramidConfiguration) throws Exception {
-        Objects.requireNonNull(pyramidConfiguration);
-        final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
-        final Path pyramidPath = PyramidApiTools.getPyramidPath(config);
-        final StandardPyramidDataConfiguration pyramidDataConfiguration =
-            StandardPyramidDataConfiguration.readFromPyramidFolder(
-                pyramidPath,
-                Collections.singletonList(pyramidFormat));
-        final Path pyramidDataFile = pyramidDataConfiguration.getPyramidDataFile();
-        JsonObject rendererJson = config.getJsonObject(PlanePyramid.RENDERER_KEY);
-        if (rendererJson == null) {
-            rendererJson = Json.createObjectBuilder().build();
-        }
-        final boolean rawBytes = config.getBoolean("rawBytes", false);
-        final boolean cacheable = config.getBoolean("cacheable", true);
-        final PlanePyramidSource planePyramidSource = planePyramidSourceFactory.newPlanePyramidSource(
-            pyramidDataFile.toAbsolutePath().toString(),
-            pyramidDataConfiguration.getPyramidDataJson().toString(),
-            rendererJson.toString());
-        return new StandardPlanePyramid(
-            this,
-            planePyramidSource,
-            pyramidDataConfiguration,
-            rendererJson,
-            rawBytes,
-            cacheable,
-            pyramidConfiguration);
+        return new StandardPlanePyramid(this, pyramidConfiguration);
     }
 
     public PyramidFormat getPyramidFormat() {

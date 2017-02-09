@@ -35,7 +35,7 @@ public final class PlanePyramidImageData extends PlanePyramidData {
         Objects.requireNonNull(bytes);
         Objects.requireNonNull(thisPyramid);
         this.bytes = bytes;
-        this.imageFormat = thisPyramid.format();
+        this.imageFormat = thisPyramid.returnedDataFormat();
         this.rawBytes = thisPyramid.isRawBytes();
     }
 

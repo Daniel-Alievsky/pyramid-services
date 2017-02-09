@@ -75,7 +75,7 @@ public interface PlanePyramid {
      *
      * @return format of the image, returned as a byte sequence by {@link #readImage}.
      */
-    String format();
+    String returnedDataFormat();
 
     /**
      * Returns true if the current time minus last access time is greater than some timeout.

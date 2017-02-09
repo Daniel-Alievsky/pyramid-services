@@ -41,6 +41,7 @@ public class StandardPyramidDataConfiguration {
     private final JsonObject pyramidDataJson;
     private final Path pyramidDataFile;
     private final String formatName;
+    private final String subFormatName;
 
     private StandardPyramidDataConfiguration(Path pyramidPath, List<PyramidFormat> supportedFormats)
         throws IOException
@@ -111,6 +112,7 @@ public class StandardPyramidDataConfiguration {
             throw new IOException("Pyramid data file at " + pyramidDataFile + " does not exist");
         }
         this.formatName = currentFormat.getFormatName();
+        this.subFormatName = PyramidFormat.getFileExtension(pyramidDataFile.getFileName().toString().toLowerCase());
     }
 
     public static StandardPyramidDataConfiguration readFromPyramidFolder(
@@ -131,5 +133,9 @@ public class StandardPyramidDataConfiguration {
 
     public String getFormatName() {
         return formatName;
+    }
+
+    public String getSubFormatName() {
+        return subFormatName;
     }
 }

@@ -72,6 +72,14 @@ public class PyramidFormat {
         return extension != null && extensions.contains(extension.toLowerCase());
     }
 
+    static String getFileExtension(String fileName) {
+        int p = fileName.lastIndexOf('.');
+        if (p == -1) {
+            return null;
+        }
+        return fileName.substring(p + 1);
+    }
+
     private static String getRequiredString(JsonObject json, String name) {
         final JsonString result = json.getJsonString(name);
         if (result == null) {
@@ -79,13 +87,5 @@ public class PyramidFormat {
                 + "\" value required <<<" + json + ">>>");
         }
         return result.getString();
-    }
-
-    private static String getFileExtension(String fileName) {
-        int p = fileName.lastIndexOf('.');
-        if (p == -1) {
-            return null;
-        }
-        return fileName.substring(p + 1);
     }
 }

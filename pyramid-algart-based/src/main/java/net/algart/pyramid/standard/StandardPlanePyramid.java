@@ -33,6 +33,7 @@ import net.algart.math.functions.LinearFunc;
 import net.algart.pyramid.PlanePyramid;
 import net.algart.pyramid.PlanePyramidImageData;
 import net.algart.pyramid.PlanePyramidInformation;
+import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
 import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
 import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
@@ -46,7 +47,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -66,7 +69,8 @@ class StandardPlanePyramid implements PlanePyramid {
     private final StandardPlanePyramidFactory factory;
     private final String pyramidConfiguration;
     private final ScalablePlanePyramidSource source;
-    private final String renderingFormatName;
+    private final String subFormat;
+    private final String returnedDataFormatName;
     private final Color renderingBackgroundColor;
     private final MatrixToBufferedImageConverter converter;
     private final MatrixToBufferedImageConverter specialImageConverter;
@@ -76,25 +80,36 @@ class StandardPlanePyramid implements PlanePyramid {
     private volatile PlanePyramidInformation information;
     private volatile long lastAccessTime;
 
-    StandardPlanePyramid(
-        StandardPlanePyramidFactory factory,
-        PlanePyramidSource parentSource,
-        StandardPyramidDataConfiguration pyramidDataConfiguration,
-        JsonObject rendererJson,
-        boolean rawBytes,
-        boolean cacheable,
-        String pyramidConfiguration)
-        throws IOException
-    {
-        Objects.requireNonNull(factory, "Null factory");
-        Objects.requireNonNull(parentSource, "Null plane pyramid source");
-        Objects.requireNonNull(pyramidDataConfiguration, "Null pyramid data configuration");
-        Objects.requireNonNull(rendererJson, "Null renderer JSON");
-        Objects.requireNonNull(pyramidConfiguration, "Null pyramid configuration");
-        this.factory = factory;
-        this.source = ScalablePlanePyramidSource.newInstance(parentSource);
-        this.renderingFormatName = rendererJson.getString("format", "png");
-        final boolean transparencySupported = transparencySupported(renderingFormatName);
+    StandardPlanePyramid(StandardPlanePyramidFactory factory, String pyramidConfiguration) throws IOException {
+        this.pyramidConfiguration = Objects.requireNonNull(
+            pyramidConfiguration, "Null pyramid configuration");
+        this.factory = Objects.requireNonNull(
+            factory, "Null plane pyramid factory");
+        final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
+        final Path pyramidPath = PyramidApiTools.getPyramidPath(config);
+        final StandardPyramidDataConfiguration pyramidDataConfiguration =
+            StandardPyramidDataConfiguration.readFromPyramidFolder(
+                pyramidPath,
+                Collections.singletonList(factory.getPyramidFormat()));
+        final Path pyramidDataFile = pyramidDataConfiguration.getPyramidDataFile();
+        if (!this.factory.getPyramidFormat().getFormatName().equals(pyramidDataConfiguration.getFormatName())) {
+            throw new AssertionError(
+                StandardPyramidDataConfiguration.class + " recognized strange format");
+        }
+        this.subFormat = pyramidDataConfiguration.getSubFormatName();
+        JsonObject rendererJson = config.getJsonObject(PlanePyramid.RENDERER_KEY);
+        if (rendererJson == null) {
+            rendererJson = Json.createObjectBuilder().build();
+        }
+        this.rawBytes = config.getBoolean("rawBytes", false);
+        this.cacheable = config.getBoolean("cacheable", true);
+        final PlanePyramidSource planePyramidSource = factory.getPlanePyramidSourceFactory().newPlanePyramidSource(
+            pyramidDataFile.toAbsolutePath().toString(),
+            pyramidDataConfiguration.getPyramidDataJson().toString(),
+            rendererJson.toString());
+        this.source = ScalablePlanePyramidSource.newInstance(planePyramidSource);
+        this.returnedDataFormatName = rendererJson.getString("format", "png");
+        final boolean transparencySupported = transparencySupported(returnedDataFormatName);
         final JsonNumber opacity = rendererJson.getJsonNumber("opacity");
         final RendererType rendererType = RendererType.parse(rendererJson.getString("type", null))
             .toCompatible(source.bandCount());
@@ -107,9 +122,6 @@ class StandardPlanePyramid implements PlanePyramid {
             transparencySupported);
         // - opacity is not used in DEFAULT renderer
         this.specialImageConverter = new MatrixToBufferedImageConverter.Packed3DToPackedRGB(transparencySupported);
-        this.rawBytes = rawBytes;
-        this.cacheable = cacheable;
-        this.pyramidConfiguration = pyramidConfiguration;
         this.lastAccessTime = System.currentTimeMillis();
     }
 
@@ -138,8 +150,9 @@ class StandardPlanePyramid implements PlanePyramid {
                     this.source.dimY(),
                     this.source.elementType()
                 );
-                information.setPyramidFormatName(factory.getPyramidFormat().getFormatName());
-                information.setRenderingFormatName(renderingFormatName);
+                information.setFormatName(factory.getPyramidFormat().getFormatName());
+                information.setSubFormatName(subFormat);
+                information.setReturnedDataFormatName(returnedDataFormatName);
                 information.setPixelSizeInMicrons(this.source.pixelSizeInMicrons());
                 information.setMagnification(this.source.magnification());
                 final List<String> specialImageNames = new ArrayList<>();
@@ -170,7 +183,7 @@ class StandardPlanePyramid implements PlanePyramid {
         if (rawBytes) {
             //TODO!! return some form of bytes, maybe Protocol Buffers
         }
-        if (USE_QUICK_BMP_WRITER && renderingFormatName.equalsIgnoreCase("bmp")) {
+        if (USE_QUICK_BMP_WRITER && returnedDataFormatName.equalsIgnoreCase("bmp")) {
             // use more efficient AlgART QuickBMPWriter
 //            System.out.println("QUICK!!!");
             Matrix<? extends PArray> matrix = source.readImage(compression, fromX, fromY, toX, toY);
@@ -178,7 +191,7 @@ class StandardPlanePyramid implements PlanePyramid {
         } else {
 //            System.out.println("SLOW!!!");
             BufferedImage bufferedImage = source.readBufferedImage(compression, fromX, fromY, toX, toY, converter);
-            return bufferedImageToBytes(bufferedImage, renderingFormatName);
+            return bufferedImageToBytes(bufferedImage, returnedDataFormatName);
         }
     }
 
@@ -207,7 +220,7 @@ class StandardPlanePyramid implements PlanePyramid {
             m = Matrices.asResized(Matrices.ResizingMethod.POLYLINEAR_AVERAGING, m, m.dim(0), width, height);
         }
         final BufferedImage bufferedImage = specialImageConverter.toBufferedImage(m);
-        return bufferedImageToBytes(bufferedImage, renderingFormatName);
+        return bufferedImageToBytes(bufferedImage, returnedDataFormatName);
     }
 
     @Override
@@ -216,8 +229,8 @@ class StandardPlanePyramid implements PlanePyramid {
     }
 
     @Override
-    public String format() {
-        return renderingFormatName;
+    public String returnedDataFormat() {
+        return returnedDataFormatName;
     }
 
     @Override
@@ -232,7 +245,7 @@ class StandardPlanePyramid implements PlanePyramid {
 
     @Override
     public String toString() {
-        return "Plane pyramid based on " + source + " (" + renderingFormatName + " format)";
+        return "Plane pyramid based on " + source + " (" + returnedDataFormatName + " format)";
     }
 
     private PlanePyramidImageData bufferedImageToBytes(BufferedImage bufferedImage, String formatName)

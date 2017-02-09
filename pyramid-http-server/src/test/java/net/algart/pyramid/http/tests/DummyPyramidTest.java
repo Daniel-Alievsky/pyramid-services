@@ -159,7 +159,7 @@ public class DummyPyramidTest {
 
 
         @Override
-        public String format() {
+        public String returnedDataFormat() {
             return "png";
         }
 

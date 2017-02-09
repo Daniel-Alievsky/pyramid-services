@@ -37,8 +37,9 @@ public final class PlanePyramidInformation extends PlanePyramidData {
     private final long zeroLevelDimX;
     private final long zeroLevelDimY;
     private final Class<?> elementType;
-    private volatile String pyramidFormatName = null;
-    private volatile String renderingFormatName = null;
+    private volatile String formatName = null;
+    private volatile String subFormatName = null;
+    private volatile String returnedDataFormatName = null;
     private volatile Double pixelSizeInMicrons = null;
     private volatile Double magnification = null;
     private volatile Set<String> existingSpecialImages = new LinkedHashSet<>();
@@ -69,6 +70,15 @@ public final class PlanePyramidInformation extends PlanePyramidData {
         this.elementType = elementType;
     }
 
+    /**
+     * Loads pyramid information from a text stream, containing some JSON.
+     * Usually this method is called from Java client and loads information, for example, from HTTP stream.
+     *
+     * @param reader reader of textual input stream.
+     * @return pyramid information, loaded from this stream
+     * @throws JsonException if the text is not a correct JSON or if it does not contain correct required fields
+     *                       "elementType", "channelCount", "zeroLevelDimX", "zeroLevelDimY".
+     */
     public static PlanePyramidInformation valueOf(Reader reader) {
         final JsonObject json;
         try (final JsonReader jsonReader = Json.createReader(reader)) {
@@ -93,13 +103,17 @@ public final class PlanePyramidInformation extends PlanePyramidData {
             getRequiredLong(json, "zeroLevelDimX"),
             getRequiredLong(json, "zeroLevelDimY"),
             elementType);
-        final String pyramidFormatName = json.getString("pyramidFormatName", null);
-        if (pyramidFormatName != null) {
-            result.setPyramidFormatName(pyramidFormatName);
+        final String formatName = json.getString("formatName", null);
+        if (formatName != null) {
+            result.setFormatName(formatName);
         }
-        final String renderingFormatName = json.getString("renderingFormatName", null);
-        if (renderingFormatName != null) {
-            result.setRenderingFormatName(renderingFormatName);
+        final String subFormatName = json.getString("subFormatName", null);
+        if (subFormatName != null) {
+            result.setFormatName(subFormatName);
+        }
+        final String returnedDataFormatName = json.getString("returnedDataFormatName", null);
+        if (returnedDataFormatName != null) {
+            result.setReturnedDataFormatName(returnedDataFormatName);
         }
         final JsonNumber pixelSizeInMicrons = json.getJsonNumber("pixelSizeInMicrons");
         if (pixelSizeInMicrons != null) {
@@ -137,20 +151,28 @@ public final class PlanePyramidInformation extends PlanePyramidData {
         return elementType;
     }
 
-    public String getRenderingFormatName() {
-        return renderingFormatName;
+    public String getReturnedDataFormatName() {
+        return returnedDataFormatName;
     }
 
-    public void setRenderingFormatName(String renderingFormatName) {
-        this.renderingFormatName = renderingFormatName;
+    public void setReturnedDataFormatName(String returnedDataFormatName) {
+        this.returnedDataFormatName = returnedDataFormatName;
     }
 
-    public String getPyramidFormatName() {
-        return pyramidFormatName;
+    public String getFormatName() {
+        return formatName;
     }
 
-    public void setPyramidFormatName(String pyramidFormatName) {
-        this.pyramidFormatName = pyramidFormatName;
+    public void setFormatName(String formatName) {
+        this.formatName = formatName;
+    }
+
+    public String getSubFormatName() {
+        return subFormatName;
+    }
+
+    public void setSubFormatName(String subFormatName) {
+        this.subFormatName = subFormatName;
     }
 
     public Double getPixelSizeInMicrons() {
@@ -253,11 +275,14 @@ public final class PlanePyramidInformation extends PlanePyramidData {
         builder.add("zeroLevelDimX", zeroLevelDimX);
         builder.add("zeroLevelDimY", zeroLevelDimY);
         builder.add("elementType", elementType.toString());
-        if (pyramidFormatName != null) {
-            builder.add("pyramidFormatName", pyramidFormatName);
+        if (formatName != null) {
+            builder.add("formatName", formatName);
         }
-        if (renderingFormatName != null) {
-            builder.add("renderingFormatName", renderingFormatName);
+        if (subFormatName != null) {
+            builder.add("subFormatName", subFormatName);
+        }
+        if (returnedDataFormatName != null) {
+            builder.add("returnedDataFormatName", returnedDataFormatName);
         }
         if (pixelSizeInMicrons != null) {
             builder.add("pixelSizeInMicrons", pixelSizeInMicrons);
@@ -279,7 +304,7 @@ public final class PlanePyramidInformation extends PlanePyramidData {
         return builder.build();
     }
 
-    private  static String getRequiredString(JsonObject json, String name) {
+    private static String getRequiredString(JsonObject json, String name) {
         final JsonString result = json.getJsonString(name);
         if (result == null) {
             throw new JsonException("Invalid pyramid information JSON: \"" + name + "\" value required");
