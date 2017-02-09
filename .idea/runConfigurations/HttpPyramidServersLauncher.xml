@@ -8,7 +8,7 @@
     </extension>
     <option name="MAIN_CLASS_NAME" value="net.algart.pyramid.http.control.HttpPyramidServersLauncher" />
     <option name="VM_PARAMETERS" value="-ea -esa" />
-    <option name="PROGRAM_PARAMETERS" value="--consoleWaiting start C:\simagis\.live-pyramid-services\ C:\simagis\.live-pyramid-services\host-conf\server-settings.json " />
+    <option name="PROGRAM_PARAMETERS" value="--consoleWaiting start C:\simagis\live-pyramid-services\out\artifacts\_live_pyramid_services\.live-pyramid-services C:\simagis\live-pyramid-services\out\artifacts\_live_pyramid_services\.live-pyramid-services\host-conf\server-settings.json" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
     <option name="ALTERNATIVE_JRE_PATH" />

@@ -165,7 +165,9 @@ public class HttpPyramidServicesConfiguration {
             builder.add("groupId", groupId);
             builder.add("extensions", toJsonArray(pyramidFormat.getExtensions()));
             builder.add("planePyramidFactory", planePyramidFactory);
-            builder.add("planePyramidSubFactory", planePyramidSubFactory);
+            if (planePyramidSubFactory != null) {
+                builder.add("planePyramidSubFactory", planePyramidSubFactory);
+            }
             if (jreName != null) {
                 builder.add("jreName", jreName);
             }

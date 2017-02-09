@@ -72,6 +72,11 @@ public class PyramidFormat {
         return extension != null && extensions.contains(extension.toLowerCase());
     }
 
+    @Override
+    public String toString() {
+        return "pyramid format \"" + formatName + "\", extensions " + extensions;
+    }
+
     static String getFileExtension(String fileName) {
         int p = fileName.lastIndexOf('.');
         if (p == -1) {
