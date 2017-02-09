@@ -109,7 +109,7 @@ public final class PlanePyramidInformation extends PlanePyramidData {
         }
         final String subFormatName = json.getString("subFormatName", null);
         if (subFormatName != null) {
-            result.setFormatName(subFormatName);
+            result.setSubFormatName(subFormatName);
         }
         final String returnedDataFormatName = json.getString("returnedDataFormatName", null);
         if (returnedDataFormatName != null) {
