@@ -34,9 +34,9 @@
             <element id="artifact" artifact-name="pyramid-common:jar" />
             <element id="artifact" artifact-name="pyramid-http-control:jar" />
             <element id="artifact" artifact-name="pyramid-http-server:jar" />
-            <element id="library" level="project" name="Maven: net.algart:algart:1.2.7" />
-            <element id="library" level="project" name="Maven: net.algart.simagis:simagis-plane-pyramid-sdk:1.2.15" />
             <element id="artifact" artifact-name="pyramid-http-proxy:jar" />
+            <element id="library" level="project" name="Maven: net.algart.simagis:simagis-plane-pyramid-sdk:1.2.16" />
+            <element id="library" level="project" name="Maven: net.algart:algart:1.2.7" />
           </element>
         </element>
       </element>
