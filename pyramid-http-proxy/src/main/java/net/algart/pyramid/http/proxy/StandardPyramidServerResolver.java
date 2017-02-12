@@ -29,6 +29,7 @@ import net.algart.http.proxy.HttpServerResolver;
 import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.common.PyramidFormat;
 import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
+import net.algart.pyramid.api.common.UnknownPyramidDataFormatException;
 import net.algart.pyramid.api.http.*;
 import org.glassfish.grizzly.http.util.Parameters;
 
@@ -113,8 +114,12 @@ class StandardPyramidServerResolver implements HttpServerResolver {
             specificServerConfiguration.getConfigFileName());
         final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
         final Path pyramidPath = PyramidApiTools.getPyramidPath(config);
-        final StandardPyramidDataConfiguration pyramidDataConfiguration =
-            StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidPath, allFormats);
+        final StandardPyramidDataConfiguration pyramidDataConfiguration;
+        try {
+            pyramidDataConfiguration = StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidPath, allFormats);
+        } catch (UnknownPyramidDataFormatException e) {
+            throw new IOException(e);
+        }
         final String formatName = pyramidDataConfiguration.getFormatName();
         final HttpPyramidServicesConfiguration.Service service = configuration.findServiceByFormatName(formatName);
         if (service == null) {

@@ -35,6 +35,7 @@ import net.algart.pyramid.PlanePyramidImageData;
 import net.algart.pyramid.PlanePyramidInformation;
 import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
+import net.algart.pyramid.api.common.UnknownPyramidDataFormatException;
 import net.algart.pyramid.requests.PlanePyramidReadImageRequest;
 import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
 import net.algart.simagis.pyramid.PlanePyramidSource;
@@ -80,7 +81,9 @@ class StandardPlanePyramid implements PlanePyramid {
     private volatile PlanePyramidInformation information;
     private volatile long lastAccessTime;
 
-    StandardPlanePyramid(StandardPlanePyramidFactory factory, String pyramidConfiguration) throws IOException {
+    StandardPlanePyramid(StandardPlanePyramidFactory factory, String pyramidConfiguration)
+        throws IOException, UnknownPyramidDataFormatException
+    {
         this.pyramidConfiguration = Objects.requireNonNull(
             pyramidConfiguration, "Null pyramid configuration");
         this.factory = Objects.requireNonNull(

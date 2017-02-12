@@ -45,7 +45,7 @@ public class StandardPyramidDataConfiguration {
     private final String subFormatName;
 
     private StandardPyramidDataConfiguration(Path pyramidPath, List<PyramidFormat> supportedFormats)
-        throws IOException
+        throws IOException, UnknownPyramidDataFormatException
     {
         final Path pyramidDataConfigFile = pyramidPath.resolve(PyramidConstants.PYRAMID_DATA_CONFIG_FILE_NAME);
         if (!Files.exists(pyramidDataConfigFile)) {
@@ -88,11 +88,11 @@ public class StandardPyramidDataConfiguration {
             if (matched.size() == 1) {
                 dataFile = matched.get(0);
             } else {
-                throw new IOException("Cannot find pyramid data file: pyramid data configuration json "
-                    + pyramidDataConfigFile.toAbsolutePath() + " does not contain \""
-                    + PyramidConstants.FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" value, and there are "
-                    + (matched.isEmpty() ? "no" : "more than 1") + " files with suitable extensions "
-                    + "among formats:" + toPrettyString(actualFormats));
+                throw new PyramidDataFileNotFoundException("Cannot find pyramid data file: "
+                    + "pyramid data configuration json " + pyramidDataConfigFile.toAbsolutePath()
+                    + " does not contain \"" + PyramidConstants.FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE
+                    + "\" value, and there are " + (matched.isEmpty() ? "no" : "more than 1")
+                    + " files with suitable extensions among formats:" + toPrettyString(actualFormats));
             }
         }
         if (currentFormat == null) {
@@ -103,16 +103,17 @@ public class StandardPyramidDataConfiguration {
                 }
             }
             if (currentFormat == null) {
-                throw new IOException("Cannot detect pyramid format: pyramid data configuration json "
-                    + pyramidDataConfigFile.toAbsolutePath() + " does not contain \""
-                    + PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE + "\" value, and an extension "
-                    + "of the pyramid data file " + dataFile + " does not match any supported format "
-                    + "among formats:" + toPrettyString(supportedFormats));
+                throw new UnknownPyramidDataFormatException("Cannot detect pyramid format: "
+                    + "pyramid data configuration json " + pyramidDataConfigFile.toAbsolutePath()
+                    + " does not contain \"" + PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE
+                    + "\" value, and an extension  of the pyramid data file " + dataFile
+                    + " does not match any supported format among formats:" + toPrettyString(supportedFormats));
             }
         }
         this.pyramidDataFile = dataFile;
         if (!Files.exists(pyramidDataFile)) {
-            throw new IOException("Pyramid data file at " + pyramidDataFile + " does not exist");
+            throw new PyramidDataFileNotFoundException("Pyramid data file at "
+                + pyramidDataFile + " does not exist");
         }
         this.formatName = currentFormat.getFormatName();
         this.subFormatName = PyramidFormat.getFileExtension(pyramidDataFile.getFileName().toString().toLowerCase());
@@ -121,7 +122,7 @@ public class StandardPyramidDataConfiguration {
     public static StandardPyramidDataConfiguration readFromPyramidFolder(
         Path pyramidPath,
         List<PyramidFormat> supportedFormats)
-        throws IOException
+        throws IOException, UnknownPyramidDataFormatException
     {
         return new StandardPyramidDataConfiguration(pyramidPath, supportedFormats);
     }
