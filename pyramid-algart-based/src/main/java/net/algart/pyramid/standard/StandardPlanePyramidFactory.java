@@ -33,11 +33,12 @@ import net.algart.simagis.pyramid.PlanePyramidSourceFactory;
 import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonString;
+import java.util.List;
 import java.util.Objects;
 
 public class StandardPlanePyramidFactory implements PlanePyramidFactory {
-    private volatile PyramidFormat pyramidFormat;
-    private volatile PlanePyramidSourceFactory planePyramidSourceFactory;
+    private volatile PyramidFormat pyramidFormat = null;
+    private volatile PlanePyramidSourceFactory planePyramidSourceFactory = null;
 
     @Override
     public void initializeConfiguration(Object factoryConfiguration) throws Exception {
@@ -66,6 +67,14 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
 
     public PlanePyramidSourceFactory getPlanePyramidSourceFactory() {
         return planePyramidSourceFactory;
+    }
+
+    @Override
+    public List<String> accompanyingResources(String pyramidDataPath) {
+        if (planePyramidSourceFactory == null) {
+            throw new IllegalStateException("Factory is not initialized yet");
+        }
+        return planePyramidSourceFactory.accompanyingResources(pyramidDataPath);
     }
 
     @Override

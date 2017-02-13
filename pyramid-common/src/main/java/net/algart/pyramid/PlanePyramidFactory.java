@@ -24,6 +24,9 @@
 
 package net.algart.pyramid;
 
+import java.util.Collections;
+import java.util.List;
+
 public interface PlanePyramidFactory {
     /**
      * <p>Customize behaviour the factory according the passed object.
@@ -47,7 +50,7 @@ public interface PlanePyramidFactory {
     /**
      * <p>Creates new remote pyramid.</p>
      *
-     * <p>The <tt>pyramidConfiguration</tt> argument is usually JSON-file. Typical example:</p>
+     * <p>The <tt>pyramidConfiguration</tt> argument is usually JSON. Typical example:</p>
      *
      * <pre>
      *     {
@@ -67,4 +70,23 @@ public interface PlanePyramidFactory {
      * @see PlanePyramid#pyramidConfiguration()
      */
     PlanePyramid newPyramid(String pyramidConfiguration) throws Exception;
+
+    /**
+     * <p>Returns the list of files, folders or other resources, containing the pyramid data, if the "main"
+     * file pyramid file or other resource is located at <tt>pyramidDataPath</tt>.
+     * (Usually it is some file in the folder, specified by "path" value in <tt>pyramidConfiguration</tt>
+     * JSON, passed to {@link #newPyramid(String)} method.)</p>
+     *
+     * <p>For single-file formats, this method should returns an empty list (default behaviour).
+     * For many formats, returns one folder with the same name without extension or something similar.</p>
+     *
+     * <p>Note: this method must be called <i>after</i> {@link #initializeConfiguration(Object)},
+     * in other case <tt>IllegalStateException</tt> can be thrown.</p>
+     *
+     * @param pyramidDataPath some file or other resource, indicating the pyramid.
+     * @return the list of additional files, folders or other resources, containing the data of this pyramid.
+     */
+    default List<String> accompanyingResources(String pyramidDataPath) {
+        return Collections.emptyList();
+    }
 }
