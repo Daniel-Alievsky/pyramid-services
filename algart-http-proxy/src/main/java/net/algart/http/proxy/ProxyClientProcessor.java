@@ -258,7 +258,7 @@ class ProxyClientProcessor extends BaseFilter {
             }
         }
 
-        HttpProxy.LOG.config("Notifying about sending " + contentBuffer + (last ? " (LAST)" : ""));
+        HttpProxy.LOG.fine("Notifying about sending " + contentBuffer + (last ? " (LAST)" : ""));
         if (debugStringBuilder != null) {
             synchronized (lock) {
                 debugStringBuilder.append("N");

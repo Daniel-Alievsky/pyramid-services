@@ -33,6 +33,7 @@ import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -43,6 +44,7 @@ import java.util.logging.Logger;
 final class ReadTask implements Comparable<ReadTask> {
     private static final int CHUNK_SIZE = 8192;
     private static final Logger LOG = Logger.getLogger(ReadTask.class.getName());
+    private static final boolean DETAILED_LOG = LOG.isLoggable(Level.CONFIG);
 
     private static final Lock GLOBAL_LOCK = new ReentrantLock();
     private static final AtomicLong GLOBAL_TIME_STAMP = new AtomicLong(0);
@@ -101,7 +103,7 @@ final class ReadTask implements Comparable<ReadTask> {
     @Override
     public String toString() {
         return "ReadTask for request " + pyramidRequest
-            + ", elapsed time=" + (System.currentTimeMillis() - lastAccessTime) + "ms"
+            + ", time since last access " + (System.currentTimeMillis() - lastAccessTime) + " ms"
             + " (priority " + pyramidRequest.priority() + ", timestamp " + taskCreationTimeStamp + ")";
     }
 
@@ -143,13 +145,21 @@ final class ReadTask implements Comparable<ReadTask> {
                 GLOBAL_LOCK.lock();
             }
             try {
+                long t1 = DETAILED_LOG ? System.nanoTime() : 0;
                 final String pyramidUniqueId = pyramidRequest.getPyramidUniqueId();
 //                try {Thread.sleep(5000);} catch (InterruptedException e) {}
                 final PlanePyramid pyramid = pyramidPool.getHttpPlanePyramid(pyramidUniqueId, savingMemoryMode);
+                long t2 = DETAILED_LOG ? System.nanoTime() : 0;
                 cacheable = pyramid.isCacheable();
                 data = pyramid.read(pyramidRequest);
                 if (cacheable) {
                     cache.put(pyramidRequest, data);
+                }
+                long t3 = DETAILED_LOG ? System.nanoTime() : 0;
+                if (DETAILED_LOG) {
+                    LOG.config(String.format(Locale.US,
+                        "Data loaded in %s: getting pyramid %.3f ms, reading data %.3f ms",
+                        this, (t2 - t1) * 1e-6, (t3 - t2) * 1e-6));
                 }
             } finally {
                 if (savingMemoryMode) {
