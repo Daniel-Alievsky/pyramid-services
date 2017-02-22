@@ -36,6 +36,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HttpPyramidServersManager {
+    private static final boolean AUTO_REVIVE = getBooleanProperty(
+        "net.algart.pyramid.http.control.autoRevive", true);
+    // - can be disabled for debugging needs
+
     private static final Logger LOG = Logger.getLogger(HttpPyramidServersManager.class.getName());
     private static final int REVIVING_DELAY_IN_MILLISECONDS = 3000;
 
@@ -105,39 +109,6 @@ public class HttpPyramidServersManager {
         // Actually the processes will be stopped at the end of RevivingThread.run()
     }
 
-
-    private class RevivingThread extends Thread {
-
-        @Override
-        public void run() {
-            synchronized (lock) {
-                try {
-                    while (!shutdown) {
-                        lock.wait(REVIVING_DELAY_IN_MILLISECONDS);
-                        reviveAll();
-                    }
-                } catch (InterruptedException e) {
-                    LOG.log(Level.SEVERE, "Unexpected interrupted exception", e);
-                } catch (InvalidFileConfigurationException e) {
-                    LOG.log(Level.SEVERE, "Unexpected corruption of configuration file structure while"
-                        + " reviving pyramid services", e.getCause());
-                } catch (Throwable e) {
-                    LOG.log(Level.SEVERE, "Unexpected runtime exception", e);
-                } finally {
-                    LOG.info("Finishing reviving thread");
-                    revivingActive = false;
-                    lock.notifyAll();
-                }
-            }
-            try {
-                launcher.stopAllRequest(false).waitFor();
-            } catch (Throwable e) {
-                LOG.log(Level.SEVERE, "CANNOT STOP PYRAMID SERVICES! Probably the file structure is corrupted! "
-                    + "Please reboot the server and check all confiration files and folders", e);
-            }
-        }
-    }
-
     private void reviveAll() throws InvalidFileConfigurationException {
         final List<AsyncPyramidCommand> allSubCommands = new ArrayList<>();
         final List<AsyncPyramidCommand> serviceCommands = new ArrayList<>();
@@ -176,6 +147,47 @@ public class HttpPyramidServersManager {
                         revivingByManager ? "0 proxy successfully revived" :
                             !hasProxy ? "proxy absent" : "proxy not checked"));
             }).waitFor();
+        }
+    }
+
+    private static boolean getBooleanProperty(String propertyName, boolean defaultValue) {
+        if (defaultValue) {
+            return !"false".equalsIgnoreCase(System.getProperty(propertyName));
+        } else {
+            return Boolean.getBoolean(propertyName);
+        }
+    }
+
+    private class RevivingThread extends Thread {
+        @Override
+        public void run() {
+            synchronized (lock) {
+                try {
+                    while (!shutdown) {
+                        lock.wait(REVIVING_DELAY_IN_MILLISECONDS);
+                        if (AUTO_REVIVE) {
+                            reviveAll();
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    LOG.log(Level.SEVERE, "Unexpected interrupted exception", e);
+                } catch (InvalidFileConfigurationException e) {
+                    LOG.log(Level.SEVERE, "Unexpected corruption of configuration file structure while"
+                        + " reviving pyramid services", e.getCause());
+                } catch (Throwable e) {
+                    LOG.log(Level.SEVERE, "Unexpected runtime exception", e);
+                } finally {
+                    LOG.info("Finishing reviving thread");
+                    revivingActive = false;
+                    lock.notifyAll();
+                }
+            }
+            try {
+                launcher.stopAllRequest(false).waitFor();
+            } catch (Throwable e) {
+                LOG.log(Level.SEVERE, "CANNOT STOP PYRAMID SERVICES! Probably the file structure is corrupted! "
+                    + "Please reboot the server and check all confiration files and folders", e);
+            }
         }
     }
 

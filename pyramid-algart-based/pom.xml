@@ -29,7 +29,7 @@
     <parent>
         <artifactId>pyramid-services</artifactId>
         <groupId>net.algart.pyramid</groupId>
-        <version>1.0.7</version>
+        <version>1.0.8</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -46,17 +46,17 @@
         <dependency>
             <groupId>net.algart.pyramid</groupId>
             <artifactId>pyramid-common</artifactId>
-            <version>1.0.7</version>
+            <version>1.0.8</version>
         </dependency>
         <dependency>
             <groupId>net.algart.pyramid</groupId>
             <artifactId>pyramid-api</artifactId>
-            <version>1.0.7</version>
+            <version>1.0.8</version>
         </dependency>
         <dependency>
             <groupId>net.algart.pyramid</groupId>
             <artifactId>pyramid-http-server</artifactId>
-            <version>1.0.7</version>
+            <version>1.0.8</version>
             <scope>test</scope>
         </dependency>
         <dependency>
