@@ -173,10 +173,10 @@ public class HttpPyramidServer {
         }
         if (args.length < startArgIndex + 2 || groupId == null) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s --groupId=com.xxxxxxx projectRoot specificServerConfigurationFile%n"
+            System.out.printf("    %s --groupId=xxxxxxx projectRoot specificServerConfigurationFile%n"
                 , HttpPyramidServer.class.getName());
             System.out.printf("or%n");
-            System.out.printf("    %s --groupId=com.xxxxxxx projectRoot somePath/.global-configuration.json "
+            System.out.printf("    %s --groupId=xxxxxxx projectRoot somePath/.global-configuration.json "
                 + "somePath/.format1.json somePath/.format2.json ... specificServerConfigurationFile%n",
                 HttpPyramidServer.class.getName());
             if (groupId == null) {

@@ -456,6 +456,7 @@ public final class HttpPyramidServersLauncher {
     public static void main(String[] args) throws InterruptedException, IOException {
         int startArgIndex = 0;
         boolean checkAlive = false, serviceMode = false, consoleWaiting = false;
+        String groupId = null;
         if (args.length > startArgIndex && args[startArgIndex].equals("--checkAlive")) {
             checkAlive = true;
             startArgIndex++;
@@ -469,11 +470,17 @@ public final class HttpPyramidServersLauncher {
             consoleWaiting = true;
             startArgIndex++;
         }
+        if (args.length > startArgIndex && args[startArgIndex].startsWith("--groupId=")) {
+            groupId = args[startArgIndex].substring("--groupId=".length());
+            startArgIndex++;
+        }
         if (args.length < startArgIndex + 3) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s [--checkAlive] [--serviceMode] [--consoleWaiting] start|stop|restart "
-                    + "projectRoot specificServerConfigurationFile%n",
+            System.out.printf("    %s [--checkAlive] [--serviceMode] [--consoleWaiting] [--groupId=xxxxxxx] "
+                    + "start|stop|restart projectRoot specificServerConfigurationFile%n",
                 HttpPyramidServersLauncher.class.getName());
+            System.out.println("xxxxxxx (if present) should be \"groupId\" value for some service group or "
+                + "special keyword PROXY to control the proxy.");
             return;
         }
         final String command = args[startArgIndex].toLowerCase();
@@ -486,16 +493,33 @@ public final class HttpPyramidServersLauncher {
             long t1 = System.nanoTime();
             switch (command) {
                 case "start": {
-                    launcher.startAll(checkAlive);
+                    if (groupId == null) {
+                        launcher.startAll(checkAlive);
+                    } else if (groupId.equals("PROXY")) {
+                        launcher.startPyramidProxy(checkAlive);
+                    } else {
+                        launcher.startPyramidServicesGroup(groupId, checkAlive);
+                    }
                     break;
                 }
                 case "stop": {
-                    launcher.stopAllRequest(checkAlive).waitFor();
-                    // get() method allows to print welcome message after ACTUAL performing the command
+                    if (groupId == null) {
+                        launcher.stopAllRequest(checkAlive).waitFor();
+                    } else if (groupId.equals("PROXY")) {
+                        launcher.stopPyramidProxyRequest(checkAlive).waitFor();
+                    } else {
+                        launcher.stopPyramidServicesGroupRequest(groupId, checkAlive).waitFor();
+                    }
                     break;
                 }
                 case "restart": {
-                    launcher.restartAllRequest(checkAlive).waitFor();
+                    if (groupId == null) {
+                        launcher.restartAllRequest(checkAlive).waitFor();
+                    } else if (groupId.equals("PROXY")) {
+                        launcher.restartPyramidProxyRequest(checkAlive).waitFor();
+                    } else {
+                        launcher.restartPyramidServicesGroupRequest(groupId, checkAlive).waitFor();
+                    }
                     break;
                 }
                 default: {
