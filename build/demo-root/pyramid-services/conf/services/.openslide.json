@@ -1,16 +1,15 @@
 {
   "formatName": "openslide",
-  "groupId": "com.simagis.pyramid.openslide",
   "extensions": [
     "*"
   ],
+  "groupId": "com.simagis.pyramid.openslide",
   "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
   "planePyramidSubFactory": "com.simagis.pyramid.openslide.server.OpenSlidePlanePyramidSourceFactory",
   "port": 20020,
   "classPath": [
-    "lib/.openslide/OpenSlide.jar",
-    "lib/.openslide/PlanePyramidSourceOpenSlide.jar"
+    "lib/.openslide/*"
   ],
-  "workingDirectory": "bin/.openslide",
+  "workingDirectory": "bin/x64/.openslide",
   "memory": "2g"
 }

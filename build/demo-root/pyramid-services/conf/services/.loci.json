@@ -1,15 +1,14 @@
 {
   "formatName": "loci",
-  "groupId": "com.simagis.pyramid.loci",
   "extensions": [
     "*"
   ],
+  "groupId": "com.simagis.pyramid.loci",
   "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
   "planePyramidSubFactory": "com.simagis.pyramid.loci.server.LociPlanePyramidSourceFactory",
   "port": 20010,
   "classPath": [
-    "lib/.loci/loci_tools-5.0.6.jar",
-    "lib/.loci/PlanePyramidSourceBioFormats.jar"
+    "lib/.loci/*"
   ],
   "memory": "2g"
 }
