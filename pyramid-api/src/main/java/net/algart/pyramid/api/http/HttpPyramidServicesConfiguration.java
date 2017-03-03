@@ -47,6 +47,8 @@ public class HttpPyramidServicesConfiguration {
     public static final String CONFIGURATION_FILE_MASK = ".*.json";
     public static final String COMMON_CLASS_PATH_FIELD = "commonClassPath";
 
+    private static volatile boolean globalConfigurationFileRequired = true;
+
     public static class Service extends ConvertibleToJson {
         public static final String CLASS_PATH_FIELD = "classPath";
 
@@ -507,11 +509,17 @@ public class HttpPyramidServicesConfiguration {
         if (!Files.isDirectory(projectRoot)) {
             throw new FileNotFoundException("Project root " + projectRoot + " is not an existing folder");
         }
+        final JsonObject globalConfiguration;
         if (!Files.isRegularFile(globalConfigurationFile)) {
-            throw new FileNotFoundException("Global configuration file "
-                + globalConfigurationFile + " is not an existing file");
+            if (globalConfigurationFileRequired) {
+                throw new FileNotFoundException("Global configuration file "
+                    + globalConfigurationFile + " is not an existing file");
+            } else {
+                globalConfiguration = Json.createObjectBuilder().build();
+            }
+        } else {
+            globalConfiguration = readJson(globalConfigurationFile);
         }
-        final JsonObject globalConfiguration = readJson(globalConfigurationFile);
         final String globalConfigurationFileName = globalConfigurationFile.getFileName().toString();
         final LinkedHashMap<String, List<Service>> groups = new LinkedHashMap<>();
         for (Path file : configurationFiles) {
@@ -537,6 +545,18 @@ public class HttpPyramidServicesConfiguration {
             globalConfigurationFile,
             globalConfiguration,
             processes);
+    }
+
+    /**
+     * Allows to enable running when the global configuration file {@link #GLOBAL_CONFIGURATION_FILE_NAME}
+     * does not exist (by calling with <tt>false</tt> argument).
+     * Usually should not be called, but can be useful in service utilities.
+     *
+     * @param globalConfigurationFileRequired <tt>false</tt> if you want to enable work without
+     *                                        global configuration file; default is <tt>true</tt>.
+     */
+    public static void setGlobalConfigurationFileRequired(boolean globalConfigurationFileRequired) {
+        HttpPyramidServicesConfiguration.globalConfigurationFileRequired = globalConfigurationFileRequired;
     }
 
     static String getStringOrInt(JsonObject json, String name) {

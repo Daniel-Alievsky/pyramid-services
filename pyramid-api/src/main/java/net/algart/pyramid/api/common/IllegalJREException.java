@@ -22,14 +22,16 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.http.control;
+package net.algart.pyramid.api.common;
 
-import java.io.IOException;
-
-public class InvalidFileConfigurationException extends IOException {
-    public InvalidFileConfigurationException(Exception cause) {
-        super("Unexpected disk problem, probably due to invalid services configuration files", cause);
+public class IllegalJREException extends Exception {
+    public IllegalJREException(String message) {
+        super(message);
     }
 
-    private static final long serialVersionUID = -7194076601293007434L;
+    public IllegalJREException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    private static final long serialVersionUID = -1523472956580301517L;
 }

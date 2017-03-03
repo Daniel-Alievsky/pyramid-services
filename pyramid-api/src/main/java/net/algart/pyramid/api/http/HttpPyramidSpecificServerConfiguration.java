@@ -24,11 +24,11 @@
 
 package net.algart.pyramid.api.http;
 
+import net.algart.pyramid.api.common.IllegalJREException;
 import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.common.PyramidConstants;
 
 import javax.json.*;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -326,27 +326,40 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         return jre != null ? jre.getHomePath() : PyramidApiTools.currentJREHome();
     }
 
-    public String jreHome(String jreName) {
+    public String jreHome(String jreName) throws IllegalJREException {
         if (jreName == null) {
             return jreHome();
         }
         final JRE jre = jreMap.get(jreName);
-        return jre != null ? jre.getHomePath() : jreHome();
+        if (jre == null) {
+            throw new IllegalJREException("Unknown JRE with name \"" + jreName
+                + "\": such JRE is not specified in " + specificServerConfigurationFile);
+        }
+        return jre.getHomePath();
     }
 
-    public Path javaExecutable() {
+    public Path javaExecutable() throws IllegalJREException {
         return javaExecutable(null);
     }
 
-    public Path javaExecutable(String jreName) {
+    public Path javaExecutable(final String jreName) throws IllegalJREException {
         final String jreHome = jreHome(jreName);
         try {
             return PyramidApiTools.javaExecutable(jreHome);
-        } catch (FileNotFoundException e) {
-            // Currently running Java must exist always!
-            throw new JsonException("Invalid "
-                + (jreName == null ? "default JRE" : "JRE \"" + jreName + "\"")
-                + ": the path \"" + jreHome + "\" does not contain correct Java Runtime Envitonment", e);
+        } catch (IllegalJREException e) {
+            if (jreName == null && jreMap.get(JRE.DEFAULT_NAME) == null) {
+                // - the same JRE as in jreHome()
+                assert jreHome.equals(PyramidApiTools.currentJREHome());
+                // Currently running Java must exist always!
+                throw new AssertionError("Invalid default JRE (specified by \"java.home\" "
+                    + "system property): the path \"" + jreHome
+                    + "\" does not contain correct Java Runtime Envitonment");
+            } else {
+                if (jreName != null) {
+                    e = new IllegalJREException("Illegal JRE \"" + jreName + "\": " + e.getMessage());
+                }
+                throw e;
+            }
         }
     }
 

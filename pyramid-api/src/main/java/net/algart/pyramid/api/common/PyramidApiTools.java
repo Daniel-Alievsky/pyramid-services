@@ -95,14 +95,14 @@ public class PyramidApiTools {
         return s;
     }
 
-    public static Path javaExecutable(String jreHome) throws FileNotFoundException {
+    public static Path javaExecutable(String jreHome) throws IllegalJREException {
         // Finding executable file according http://docs.oracle.com/javase/1.5.0/docs/tooldocs/solaris/jdkfiles.html
         if (jreHome == null) {
             throw new NullPointerException("Null jreHome argument");
         }
         final Path jrePath = Paths.get(jreHome);
         if (!Files.exists(jrePath)) {
-            throw new FileNotFoundException("JRE home directory " + jrePath + " does not exist");
+            throw new IllegalJREException("JRE home directory " + jrePath + " does not exist");
         }
         Path javaBin = jrePath.resolve("bin");
         Path javaFile = javaBin.resolve("java"); // Unix
@@ -110,7 +110,7 @@ public class PyramidApiTools {
             javaFile = javaBin.resolve("java.exe"); // Windows
         }
         if (!Files.exists(javaFile)) {
-            throw new FileNotFoundException("Cannot find java utility at " + javaFile);
+            throw new IllegalJREException("Cannot find java utility at " + javaFile);
         }
         return javaFile;
     }

@@ -163,6 +163,7 @@ public class ClassPathGroupResolver {
                 ClassPathGroupResolver.class.getName());
             return;
         }
+        HttpPyramidServicesConfiguration.setGlobalConfigurationFileRequired(false);
         final Path projectRoot = Paths.get(args[startIndex]);
         final HttpPyramidServicesConfiguration configuration =
             HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);

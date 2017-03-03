@@ -24,6 +24,7 @@
 
 package net.algart.pyramid.http.control;
 
+import net.algart.pyramid.api.common.IllegalJREException;
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
@@ -102,7 +103,12 @@ public class HttpPyramidProxyControl extends JavaProcessControl implements Pyram
 
     @Override
     public Process startOnLocalhost() throws InvalidFileConfigurationException {
-        final Path javaPath = specificServerConfiguration.javaExecutable();
+        final Path javaPath;
+        try {
+            javaPath = specificServerConfiguration.javaExecutable();
+        } catch (IllegalJREException e) {
+            throw new InvalidFileConfigurationException(e);
+        }
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
         command.addAll(configuration.getCommonVmOptions());
