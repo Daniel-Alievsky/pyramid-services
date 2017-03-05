@@ -295,7 +295,7 @@ public class HttpPyramidServicesConfiguration {
 
         public Long xmx() {
             final long commonMemory = parentConfiguration.commonMemory == null ? 0 : parentConfiguration.commonMemory;
-            final long requiredMemory = Math.max(this.requiredMemory, commonMemory);
+            final long requiredMemory = this.requiredMemory != 0 ? this.requiredMemory : commonMemory;
             return requiredMemory == 0 ? null : requiredMemory;
         }
 

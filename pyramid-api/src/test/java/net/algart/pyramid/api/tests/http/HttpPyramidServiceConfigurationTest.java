@@ -40,5 +40,14 @@ public class HttpPyramidServiceConfigurationTest {
         final HttpPyramidServicesConfiguration configuration =
             HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
         System.out.println(configuration);
+        for (HttpPyramidServicesConfiguration.Process process : configuration.getProcesses().values()) {
+            System.out.printf("%nInformation about process \"%s\"%n", process.getGroupId());
+            System.out.printf("    ports: %s%n", process.allPorts());
+            System.out.printf("    jreName: %s%n", process.jreName());
+            System.out.printf("    workingDirectory: %s%n", process.workingDirectory());
+            System.out.printf("    classPath: %s%n", process.classPath(false));
+            System.out.printf("    vmOptions: %s%n", process.vmOptions());
+            System.out.printf("    xmxOption: %s%n", process.xmxOption());
+        }
     }
 }
