@@ -51,7 +51,8 @@ public class ClassPathGroupResolver {
         final Map<Path, JsonObject> result = new LinkedHashMap<>();
         for (HttpPyramidServicesConfiguration.Service service : configuration.allServices().values()) {
             final JsonObject json = toJson(service.toJsonString());
-            final JsonObject resolved = resolveClassPath(json, HttpPyramidServicesConfiguration.Service.CLASS_PATH_FIELD);
+            final JsonObject resolved = resolveClassPath(
+                json, HttpPyramidServicesConfiguration.Service.CLASS_PATH_FIELD);
             if (resolved != null) {
                 result.put(service.getConfigurationFile(), resolved);
             }

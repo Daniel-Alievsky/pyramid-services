@@ -47,7 +47,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         private final String homePath;
         private final HttpPyramidSpecificServerConfiguration parentConfiguration;
 
-        public JRE(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
+        private JRE(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
             this.name = HttpPyramidServicesConfiguration.getRequiredString(json, "name",
                 parentConfiguration.specificServerConfigurationFile);
             this.homePath = HttpPyramidServicesConfiguration.getRequiredString(json, "homePath",
