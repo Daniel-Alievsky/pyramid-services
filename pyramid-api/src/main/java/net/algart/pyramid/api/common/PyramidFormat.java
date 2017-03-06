@@ -34,14 +34,13 @@ import java.util.*;
 public class PyramidFormat {
     private final String formatName;
     private final Set<String> extensions;
+    private final int recognitionPriority;
+    // - priority is not used by current version of services, but may be used by other systems like uploaders
 
-    private PyramidFormat(String formatName, Set<String> extensions) {
+    private PyramidFormat(String formatName, Set<String> extensions, int recognitionPriority) {
         this.formatName = Objects.requireNonNull(formatName, "Null formatName");
         this.extensions = Objects.requireNonNull(extensions, "Null extensions");
-    }
-
-    public static PyramidFormat getInstance(String formatName, Set<String> extensions) {
-        return new PyramidFormat(formatName, extensions);
+        this.recognitionPriority = recognitionPriority;
     }
 
     public static PyramidFormat getInstance(JsonObject json) {
@@ -55,15 +54,41 @@ public class PyramidFormat {
                 extensions.add(jsonExtensions.getString(k).toLowerCase());
             }
         }
-        return getInstance(formatName, extensions);
+        final int recognitionPriority = json.getInt("recognitionPriority", 0);
+        return new PyramidFormat(formatName, extensions, recognitionPriority);
     }
 
     public String getFormatName() {
         return formatName;
     }
 
+    /**
+     * The set of file extensions, expected for this image format. In particular, it is used
+     * for automatic search of the pyramid file by {@link StandardPyramidDataConfiguration}
+     * when {@link PyramidConstants#PYRAMID_DATA_CONFIG_FILE_NAME} configuration file is absent or incorrect.
+     *
+     * <p>The extension <tt>"*"</tt> is reserved and means any possible extension.</p>
+     *
+     * @return set of file extensions, expected for this image format.
+     */
     public Collection<String> getExtensions() {
         return Collections.unmodifiableSet(extensions);
+    }
+
+    /**
+     * The priority of this format for recognition procedure.
+     * For example, if we have some large <tt>.tiff</tt>-file, we can assign  the priority 500 to LOCI BioFormats
+     * pyramid reader and 0 to the reader based on standard <tt>javax.imageio.ImageIO</tt> class.
+     * Then, if the pyramid is written in some custom microscope format, supported by LOCI,
+     * it will be detected correctly, but if it is a usual planar TIFF, not supported by LOCI (and LOCI library
+     * will return error while attempt to read it), this file will be processed by built-in Java library.
+     *
+     * <p>Not used by current version of the services.</p>
+     *
+     * @return priority of this format for recognition procedure.
+     */
+    public int getRecognitionPriority() {
+        return recognitionPriority;
     }
 
     public boolean matches(Path pyramidDataFile) {
@@ -74,7 +99,8 @@ public class PyramidFormat {
 
     @Override
     public String toString() {
-        return "pyramid format \"" + formatName + "\", extensions " + extensions;
+        return "pyramid format \"" + formatName + "\", extensions " + extensions
+            + (recognitionPriority == 0 ? "" : ", recognition priority " + recognitionPriority);
     }
 
     static String getFileExtension(String fileName) {

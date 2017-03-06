@@ -54,7 +54,7 @@ public class HttpPyramidServicesConfiguration {
 
         private final Path configurationFile;
         private final PyramidFormat pyramidFormat;
-        // - must be unique
+        // - pyramidFormat.formatName must be unique
         private final String groupId;
         private final String planePyramidFactory;
         private final String planePyramidSubFactory;
@@ -113,12 +113,16 @@ public class HttpPyramidServicesConfiguration {
             return pyramidFormat.getFormatName();
         }
 
-        public String getGroupId() {
-            return groupId;
-        }
-
         public Collection<String> getExtensions() {
             return pyramidFormat.getExtensions();
+        }
+
+        public int getRecognitionPriority() {
+            return pyramidFormat.getRecognitionPriority();
+        }
+
+        public String getGroupId() {
+            return groupId;
         }
 
         public String getPlanePyramidFactory() {
@@ -164,8 +168,9 @@ public class HttpPyramidServicesConfiguration {
         JsonObject toJson() {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
             builder.add("formatName", pyramidFormat.getFormatName());
-            builder.add("groupId", groupId);
             builder.add("extensions", toJsonArray(pyramidFormat.getExtensions()));
+            builder.add("recognitionPriority", pyramidFormat.getRecognitionPriority());
+            builder.add("groupId", groupId);
             builder.add("planePyramidFactory", planePyramidFactory);
             if (planePyramidSubFactory != null) {
                 builder.add("planePyramidSubFactory", planePyramidSubFactory);

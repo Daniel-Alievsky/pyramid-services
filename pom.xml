@@ -31,7 +31,7 @@
     <groupId>net.algart.pyramid</groupId>
     <artifactId>pyramid-services</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.9</version>
+    <version>1.0.10</version>
     <modules>
         <module>algart-http-proxy</module>
         <module>pyramid-common</module>

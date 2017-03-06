@@ -115,11 +115,11 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
         }
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
-        command.addAll(processConfiguration.vmOptions());
         final String xmxOption = processConfiguration.xmxOption();
         if (xmxOption != null) {
             command.add(xmxOption);
         }
+        command.addAll(processConfiguration.vmOptions());
         StringBuilder cp = new StringBuilder();
         for (String p : processConfiguration.classPath(processConfiguration.hasWorkingDirectory())) {
             if (cp.length() > 0) {

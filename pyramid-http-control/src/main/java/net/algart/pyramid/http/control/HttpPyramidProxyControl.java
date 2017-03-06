@@ -111,11 +111,11 @@ public class HttpPyramidProxyControl extends JavaProcessControl implements Pyram
         }
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
-        command.addAll(configuration.getCommonVmOptions());
         final String xmxOption = configuration.commonXmxOption();
         if (xmxOption != null) {
             command.add(xmxOption);
         }
+        command.addAll(configuration.getCommonVmOptions());
         StringBuilder cp = new StringBuilder();
         for (String p : configuration.classPath(false)) {
             if (cp.length() > 0) {
