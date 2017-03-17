@@ -55,6 +55,13 @@ public class HttpPyramidConstants {
     public static final int SYSTEM_COMMANDS_DELAY = 300;
     public static final int SYSTEM_COMMANDS_DELAY_AFTER_FINISH = 500;
 
+    public static final int SYSTEM_COMMNAD_STOP_TIMEOUT = SYSTEM_COMMANDS_DELAY + 1000;
+    // - We need to give one or several additional seconds to the process,
+    // because it can now work over a lot of reading tasks.
+    public static final int SYSTEM_COMMAND_DELAY_AFTER_STOP = SYSTEM_COMMANDS_DELAY_AFTER_FINISH + 500;
+    // - Note that services and the proxy don't stop immediately, but will delay exiting
+    // during SYSTEM_COMMANDS_DELAY_AFTER_FINISH ms.
+
     /**
      * Note: all command prexies start with '/' character and contains only alphanumeric characters after this
      * (maybe including also '-' and '_' characters).

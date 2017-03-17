@@ -31,11 +31,13 @@ import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HttpPyramidServer {
@@ -44,6 +46,7 @@ public class HttpPyramidServer {
             throw new AssertionError("Invalid constant DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME");
         }
     }
+    private static final int STOP_PROBLEM_NUMBER_OF_ATTEMPTS = 3;
 
     private static final Logger LOG = Logger.getLogger(HttpPyramidServer.class.getName());
 
@@ -59,7 +62,7 @@ public class HttpPyramidServer {
         this.specificServerConfiguration = Objects.requireNonNull(specificServerConfiguration);
     }
 
-    public void start() throws Exception {
+    public void start(boolean tryToStopIfAlreadyRunning) throws Exception {
         final List<HttpPyramidService> services = new ArrayList<>();
         try {
             for (HttpPyramidServicesConfiguration.Service serviceConfiguration : processConfiguration.getServices()) {
@@ -69,10 +72,27 @@ public class HttpPyramidServer {
                 final PlanePyramidFactory factory = (PlanePyramidFactory) factoryClass.newInstance();
                 factory.initializeConfiguration(
                     PyramidApiTools.configurationToJson(serviceConfiguration.toJsonString()));
-                final HttpPyramidService service = newService(factory, port);
-                addHandlers(service);
-                services.add(service);
-                service.start();
+                for (int attempt = 0; ; attempt++) {
+                    final HttpPyramidService service = newService(factory, port);
+                    addHandlers(service);
+                    try {
+                        service.start();
+                        services.add(service);
+                        break;
+                    } catch (BindException e) {
+                        if (!tryToStopIfAlreadyRunning || attempt >= STOP_PROBLEM_NUMBER_OF_ATTEMPTS) {
+                            throw e;
+                        }
+                        LOG.warning("Cannot start " + service + ": " + e + "; attempt to stop it...");
+                        try {
+                            service.tryToStop();
+                        } catch (IOException unexpectedException) {
+                            LOG.log(Level.SEVERE, "Problem while stop request", unexpectedException);
+                            throw e;
+                        }
+                        LOG.info("Restarting...");
+                    }
+                }
             }
         } catch (Exception | Error e) {
             for (final HttpPyramidService service : services) {
@@ -160,11 +180,21 @@ public class HttpPyramidServer {
     public static void main(String[] args) throws InterruptedException {
         int startArgIndex = 0;
         boolean serviceMode = false;
+        boolean tryToStopIfAlreadyRunning = false;
         String groupId = null;
         if (args.length > startArgIndex && args[startArgIndex].equals(
             HttpPyramidConstants.HTTP_PYRAMID_SERVICE_MODE_FLAG))
         {
             serviceMode = true;
+            startArgIndex++;
+        }
+        if (args.length > startArgIndex && args[startArgIndex].equals(
+            "--tryToStopIfAlreadyRunning"))
+        {
+            // - by default, aggressive logic (trying to stop) is not a good idea:
+            // it will lead to strange behaviour of HttpPyramidServersLauncher and analogous clients,
+            // that repeats attempt to start several times
+            tryToStopIfAlreadyRunning = true;
             startArgIndex++;
         }
         if (args.length > startArgIndex && args[startArgIndex].startsWith("--groupId=")) {
@@ -208,7 +238,7 @@ public class HttpPyramidServer {
             final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
                 HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
             server = new HttpPyramidServer(process, specificServerConfiguration);
-            server.start();
+            server.start(tryToStopIfAlreadyRunning);
         } catch (Exception e) {
             if (serviceMode) {
                 e.printStackTrace();

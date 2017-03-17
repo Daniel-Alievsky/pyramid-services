@@ -28,6 +28,7 @@ import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.PlanePyramidPool;
 import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.common.PyramidConstants;
+import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 import net.algart.pyramid.http.server.handlers.*;
@@ -36,6 +37,7 @@ import org.glassfish.grizzly.http.server.*;
 
 import java.io.IOError;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -243,6 +245,38 @@ public class HttpPyramidService {
             response.setStatus(200, "OK");
             response.getWriter().write(HttpPyramidConstants.ALIVE_RESPONSE);
             response.finish();
+        }
+    }
+
+    void tryToStop() throws IOException {
+        final Path keyFile = HttpPyramidApiTools.keyFile(
+            HttpPyramidConstants.CommandPrefixes.FINISH, port, systemCommandsFolder);
+        try {
+            Files.createFile(keyFile);
+        } catch (FileAlreadyExistsException e) {
+            // it is not a problem if this file already exists
+        }
+        try {
+            try {
+                Thread.sleep(HttpPyramidConstants.SYSTEM_COMMNAD_STOP_TIMEOUT);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            final boolean accepted = !Files.exists(keyFile);
+            if (accepted) {
+                try {
+                    Thread.sleep(HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        } finally {
+            try {
+                Files.deleteIfExists(keyFile);
+                // - necessary to remove file even if the process did not react to it:
+                // in other case, this file will lead to problems while new starting the process
+            } catch (IOException ignored) {
+            }
         }
     }
 

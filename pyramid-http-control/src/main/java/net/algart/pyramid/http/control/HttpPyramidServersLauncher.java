@@ -40,14 +40,6 @@ public final class HttpPyramidServersLauncher {
     private static final Logger LOG = Logger.getLogger(HttpPyramidServersLauncher.class.getName());
 
     private static final int SUCCESS_START_DELAY_IN_MS = 1000;
-    private static final int SUCCESS_STOP_TIMEOUT_IN_MS =
-        HttpPyramidConstants.SYSTEM_COMMANDS_DELAY + 1000;
-    // - We need to give one or several additional seconds to the process,
-    // because it can now work over a lot of reading tasks.
-    private static final int DELAY_AFTER_SUCCESS_STOP_IN_MS =
-        HttpPyramidConstants.SYSTEM_COMMANDS_DELAY_AFTER_FINISH + 500;
-    // - Note that services and the proxy don't stop immediately, but will delay exiting
-    // during SYSTEM_COMMANDS_DELAY_AFTER_FINISH ms.
     private static final int FORCIBLE_STOP_DELAY_IN_MS = 500;
 
     private static final int PROBLEM_DELAY_IN_MS = 3000;
@@ -278,7 +270,8 @@ public final class HttpPyramidServersLauncher {
         return new AsyncPyramidCommand() {
             int remainingAttemptsCount = javaProcess == null ? PROBLEM_NUMBER_OF_ATTEMPTS : 1;
             AsyncPyramidCommand subCommand = control.stopOnLocalhostRequest(
-                SUCCESS_STOP_TIMEOUT_IN_MS, DELAY_AFTER_SUCCESS_STOP_IN_MS);
+                HttpPyramidConstants.SYSTEM_COMMNAD_STOP_TIMEOUT,
+                HttpPyramidConstants.SYSTEM_COMMAND_DELAY_AFTER_STOP);
             volatile long sleepEndTimeStamp;
             volatile boolean waitingAfterFailure = false;
             volatile boolean waitingAfterDestroyForcibly = false;
@@ -295,7 +288,8 @@ public final class HttpPyramidServersLauncher {
                     if (System.currentTimeMillis() > sleepEndTimeStamp) {
                         if (waitingAfterFailure) {
                             subCommand = control.stopOnLocalhostRequest(
-                                SUCCESS_STOP_TIMEOUT_IN_MS, DELAY_AFTER_SUCCESS_STOP_IN_MS);
+                                HttpPyramidConstants.SYSTEM_COMMNAD_STOP_TIMEOUT,
+                                HttpPyramidConstants.SYSTEM_COMMAND_DELAY_AFTER_STOP);
                             waitingAfterFailure = false;
                             // new attempt
                         } else {
@@ -323,7 +317,7 @@ public final class HttpPyramidServersLauncher {
                     sleepEndTimeStamp = System.currentTimeMillis() + PROBLEM_DELAY_IN_MS;
                     waitingAfterFailure = true;
                     LOG.info("Cannot stop process " + control.processName() + " in "
-                        + SUCCESS_STOP_TIMEOUT_IN_MS / 1000.0 + " seconds; "
+                        + HttpPyramidConstants.SYSTEM_COMMNAD_STOP_TIMEOUT / 1000.0 + " seconds; "
                         + "making " + PROBLEM_DELAY_IN_MS / 1000.0 + " seconds delay (remaining attempts: "
                         + remainingAttemptsCount + ")...");
                     return;
