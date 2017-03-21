@@ -16,7 +16,9 @@
     <option name="ENV_VARIABLES" />
     <option name="PASS_PARENT_ENVS" value="true" />
     <module name="pyramid-http-control" />
-    <envs />
+    <envs>
+      <env name="NET_ALGART_PYRAMID_PYRAMID_SERVICES_LOGGING_CONFIG_FILE" value="C:\simagis\.live-pyramid-services\host-conf\logging.debug.properties " />
+    </envs>
     <method />
   </configuration>
 </component>

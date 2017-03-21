@@ -47,6 +47,9 @@ public class HttpPyramidServicesConfiguration {
     public static final String CONFIGURATION_FILE_MASK = ".*.json";
     public static final String COMMON_CLASS_PATH_FIELD = "commonClassPath";
 
+    private static final String SERVICES_LOGGING_CONFIG_FILE = PyramidConstants.getStringEnv(
+        "NET_ALGART_PYRAMID_PYRAMID_SERVICES_LOGGING_CONFIG_FILE", null);
+
     private static volatile boolean globalConfigurationFileRequired = true;
 
     public static class Service extends ConvertibleToJson {
@@ -291,6 +294,9 @@ public class HttpPyramidServicesConfiguration {
 
         public Collection<String> vmOptions() {
             final Set<String> result = new TreeSet<>();
+            if (SERVICES_LOGGING_CONFIG_FILE != null) {
+                result.add("-Djava.util.logging.config.file=" + SERVICES_LOGGING_CONFIG_FILE);
+            }
             for (Service service : services) {
                 result.addAll(service.vmOptions);
             }

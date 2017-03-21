@@ -120,7 +120,8 @@ class ProxyClientProcessor extends BaseFilter {
         response.suspend(proxy.getReadingFromServerTimeoutInMs(), TimeUnit.MILLISECONDS, null, new TimeoutHandler() {
             @Override
             public boolean onTimeout(Response responseInTimeout) {
-                closeAndReturnError("Timeout while waiting for the server response");
+                closeAndReturnError("Timeout while waiting for the server response: waiting more than "
+                    + proxy.getReadingFromServerTimeoutInMs() / 1000 + " seconds");
                 try {
                     proxy.getServerFailureHandler().onServerTimeout(
                         serverAddress,
@@ -193,7 +194,7 @@ class ProxyClientProcessor extends BaseFilter {
             @Override
             public void onAllDataRead() throws Exception {
                 synchronized (lock) {
-                    HttpProxy.LOG.config("All data ready");
+                    HttpProxy.LOG.config("All client data ready");
                     sendData();
                     try {
                         inputStreamFromClient.close();
@@ -206,7 +207,7 @@ class ProxyClientProcessor extends BaseFilter {
                 resetTimeout();
                 final Buffer buffer = inputStreamFromClient.readBuffer();
                 final boolean finished = inputStreamFromClient.isFinished();
-                HttpProxy.LOG.config("Data ready, sending request to server: buffer " + buffer);
+                HttpProxy.LOG.config("Client data ready, sending request to server: buffer " + buffer);
                 final HttpContent httpContent = HttpContent.builder(requestToServerHeaders)
                     .content(buffer)
                     .last(finished)
@@ -313,6 +314,7 @@ class ProxyClientProcessor extends BaseFilter {
                 response.setStatus(500, "AlgART Proxy: " + message);
                 response.setContentType("text/plain; charset=utf-8");
                 final Buffer contentBuffer = Buffers.wrap(null, "AlgART Proxy: " + message);
+                // Connections will be closed by the following ProxyWriteHandler
                 outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, true));
             }
             HttpProxy.LOG.warning("Error: " + message + " ("

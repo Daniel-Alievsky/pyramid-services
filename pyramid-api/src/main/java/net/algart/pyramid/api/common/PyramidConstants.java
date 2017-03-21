@@ -63,7 +63,7 @@ public class PyramidConstants {
     public static final String DEFAULT_IMAGES_ROOT_DIR = System.getProperty(
         "net.algart.pyramid.api.common.imagesRoot", "/pp-images");
 
-    private static String getStringEnv(String envVarName, String defaultValue) {
+    public static String getStringEnv(String envVarName, String defaultValue) {
         try {
             String s = System.getenv(envVarName);
             return s != null ? s : defaultValue;

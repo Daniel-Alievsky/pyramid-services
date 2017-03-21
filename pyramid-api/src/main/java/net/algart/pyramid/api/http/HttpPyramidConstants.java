@@ -37,7 +37,7 @@ public class HttpPyramidConstants {
     public static final String LOCAL_HOST = System.getProperty(
         "net.algart.pyramid.http.localHost", "localhost");
     public static final int MAX_NUMBER_OF_PYRAMIDS_IN_POOL = Math.max(16, Integer.getInteger(
-        "net.algart.pyramid.http.imageCachingMemory", 256));
+        "net.algart.pyramid.http.maxNumberOfPyramidsInPool", 256));
 
     public static final long IMAGE_CACHING_MEMORY = Math.max(16, Long.getLong(
         "net.algart.pyramid.http.imageCachingMemory", 256L * 1024L * 1024L));

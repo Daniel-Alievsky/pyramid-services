@@ -60,10 +60,11 @@ import static net.algart.simagis.pyramid.PlanePyramidSource.DIM_WIDTH;
 class StandardPlanePyramid implements PlanePyramid {
     /**
      * Timeout (in milliseconds), after which the pyramid, if there are no access to it, is automatically
-     * closed and removed from pool.
+     * closed and removed from pool. Zero value means infinite timeout; in this case, pyramids will closed
+     * and removed only after overflow of the pyramid pool.
      */
-    public static final long PYRAMID_TIMEOUT = Math.max(16, Integer.getInteger(
-        "net.algart.pyramid.standard.pyramidTimeout", 30000));
+    public static final long PYRAMID_TIMEOUT = Integer.getInteger(
+        "net.algart.pyramid.standard.pyramidTimeout", 30000);
 
     private static final boolean USE_QUICK_BMP_WRITER = true;
 
@@ -238,7 +239,7 @@ class StandardPlanePyramid implements PlanePyramid {
 
     @Override
     public boolean isTimeout() {
-        return System.currentTimeMillis() - lastAccessTime > PYRAMID_TIMEOUT;
+        return PYRAMID_TIMEOUT > 0 && System.currentTimeMillis() - lastAccessTime > PYRAMID_TIMEOUT;
     }
 
     @Override
