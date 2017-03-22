@@ -294,7 +294,7 @@ public final class HttpProxy {
     @Override
     public String toString() {
         return "AlgART HTTP Proxy" + (ssl ? " (SSL)" : " (not SSL)")
-            + " at " + proxyHost + ":" + proxyPort + " (server detector: " + serverResolver + ")";
+            + " at " + proxyHost + ":" + proxyPort + ", server detector: " + serverResolver;
     }
 
     static String correctLocationFor3XXResponse(
