@@ -66,6 +66,7 @@ class ProxyClientProcessor extends BaseFilter {
     private volatile boolean firstReply = true;
     private volatile boolean connectionToServerClosed = false;
     private volatile boolean allClosed = false;
+    private volatile boolean timeoutOccurred = false;
 
     private final Object lock = new Object();
     private final StringBuilder debugStringBuilder = DEBUG_MODE ? new StringBuilder() : null;
@@ -122,6 +123,7 @@ class ProxyClientProcessor extends BaseFilter {
             public boolean onTimeout(Response responseInTimeout) {
                 closeAndReturnError("Timeout while waiting for the server response: waiting more than "
                     + proxy.getReadingFromServerTimeoutInMs() / 1000 + " seconds");
+                timeoutOccurred = true;
                 try {
                     proxy.getServerFailureHandler().onServerTimeout(
                         serverAddress,
@@ -267,10 +269,29 @@ class ProxyClientProcessor extends BaseFilter {
         }
         final ProxyWriteHandler handler = new ProxyWriteHandler(contentBuffer, last);
         outputStreamToClient.notifyCanWrite(handler);
+        final long timestamp = System.currentTimeMillis();
         synchronized (lock) {
             while (!handler.writingStarted) {
+                if (!connectionToClient.isOpen()) {
+                    HttpProxy.LOG.config("Waiting for sending data stopped: connection to the client is closed ("
+                        + request.getRequestURL() + ")");
+                    break;
+                }
+                if (timeoutOccurred) {
+                    // To be on the safe side: no sense to wait after timeout (should not occur:
+                    // connection with the client should be closed and the previous check should be true)
+                    HttpProxy.LOG.config("Waiting for sending data stopped: timeout ("
+                        + request.getRequestURL() + ")");
+                    break;
+                }
+                if (System.currentTimeMillis() - timestamp > 3000 + proxy.getReadingFromServerTimeoutInMs()) {
+                    // Also to be on the safe side: guaranteedly avoiding infinite loop
+                    HttpProxy.LOG.warning("Waiting for sending data is too long ("
+                        + request.getRequestURL() + ")");
+                    break;
+                }
                 try {
-                    lock.wait();
+                    lock.wait(100);
                     // We need to wait until onWritePossible() method will enter to synchronized section
                     // and really start sending data. After this, we can be sure that the next call
                     // of this handleRead method will be delayed at the "synchronized" operator
