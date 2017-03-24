@@ -46,6 +46,7 @@ public class HttpPyramidServer {
             throw new AssertionError("Invalid constant DEFAULT_HTTP_PYRAMID_SERVER_CLASS_NAME");
         }
     }
+
     private static final int STOP_PROBLEM_NUMBER_OF_ATTEMPTS = 3;
 
     private static final Logger LOG = Logger.getLogger(HttpPyramidServer.class.getName());
@@ -203,11 +204,13 @@ public class HttpPyramidServer {
         }
         if (args.length < startArgIndex + 2 || groupId == null) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s --groupId=xxxxxxx projectRoot specificServerConfigurationFile%n"
-                , HttpPyramidServer.class.getName());
+            System.out.printf("    %s [--tryToStopIfAlreadyRunning] "
+                    + "--groupId=xxxxxxx projectRoot specificServerConfigurationFile%n",
+                HttpPyramidServer.class.getName());
             System.out.printf("or%n");
-            System.out.printf("    %s --groupId=xxxxxxx projectRoot somePath/.global-configuration.json "
-                + "somePath/.format1.json somePath/.format2.json ... specificServerConfigurationFile%n",
+            System.out.printf("    %s [--tryToStopIfAlreadyRunning] "
+                    + "--groupId=xxxxxxx projectRoot somePath/.global-configuration.json "
+                    + "somePath/.format1.json somePath/.format2.json ... specificServerConfigurationFile%n",
                 HttpPyramidServer.class.getName());
             if (groupId == null) {
                 System.out.printf("--groupId is not specified%n");
