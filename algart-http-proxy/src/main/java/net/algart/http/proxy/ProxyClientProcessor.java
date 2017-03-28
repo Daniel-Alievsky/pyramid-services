@@ -267,8 +267,13 @@ class ProxyClientProcessor extends BaseFilter {
                 debugStringBuilder.append("N");
             }
         }
-        final ProxyWriteHandler handler = new ProxyWriteHandler(contentBuffer, last);
+        final ProxyWriteHandler handler = new ProxyWriteHandler(contentBuffer, ctx, last);
+//        final NextAction suspendAction = ctx.getSuspendAction();
         outputStreamToClient.notifyCanWrite(handler);
+//        if (true) {
+//            return suspendAction;
+//        }
+
         final long timestamp = System.currentTimeMillis();
         synchronized (lock) {
             while (!handler.writingStarted) {
@@ -336,7 +341,7 @@ class ProxyClientProcessor extends BaseFilter {
                 response.setContentType("text/plain; charset=utf-8");
                 final Buffer contentBuffer = Buffers.wrap(null, "AlgART Proxy: " + message);
                 // Connections will be closed by the following ProxyWriteHandler
-                outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, true));
+                outputStreamToClient.notifyCanWrite(new ProxyWriteHandler(contentBuffer, null, true));
             }
             HttpProxy.LOG.warning("Error: " + message + " ("
                 + request.getRequestURL() + ", forwarded to " + serverAddress + ")");
@@ -393,19 +398,22 @@ class ProxyClientProcessor extends BaseFilter {
     }
 
     private class ProxyWriteHandler implements WriteHandler {
+//        private final FilterChainContext ctx;
         private final Buffer contentBuffer;
         private final boolean last;
         private volatile boolean writingStarted = false;
 
-        ProxyWriteHandler(Buffer contentBuffer, boolean last) {
+        ProxyWriteHandler(Buffer contentBuffer, FilterChainContext ctx, boolean last) {
             assert contentBuffer != null;
             this.contentBuffer = contentBuffer;
+//            this.ctx = ctx;
             this.last = last;
         }
 
         @Override
         public void onWritePossible() throws Exception {
             synchronized (lock) {
+//                ctx.resumeNext();
                 writingStarted = true;
                 lock.notifyAll();
                 if (debugStringBuilder != null) {
@@ -428,6 +436,11 @@ class ProxyClientProcessor extends BaseFilter {
         public void onError(Throwable t) {
             HttpProxy.LOG.config("Error while sending data to client (" + request.getRequestURL() + "): " + t);
             // - this is not a serious problem, just the client cannot receive data too quickly (internet is slow)
+//            synchronized (lock) {
+//                if (!writingStarted) {
+//                    ctx.completeAndRecycle();
+//                }
+//            }
         }
     }
 }
