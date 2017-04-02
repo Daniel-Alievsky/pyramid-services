@@ -268,12 +268,11 @@ class ProxyClientProcessor extends BaseFilter {
             }
         }
         final ProxyWriteHandler handler = new ProxyWriteHandler(contentBuffer, ctx, last);
-//        final NextAction suspendAction = ctx.getSuspendAction();
+        final NextAction suspendAction = ctx.getSuspendAction();
         outputStreamToClient.notifyCanWrite(handler);
-//        if (true) {
-//            return suspendAction;
-//        }
-
+        return suspendAction;
+        /*
+        // Obsolete solution...
         final long timestamp = System.currentTimeMillis();
         synchronized (lock) {
             while (!handler.writingStarted) {
@@ -310,6 +309,7 @@ class ProxyClientProcessor extends BaseFilter {
             }
         }
         return ctx.getStopAction();
+        */
     }
 
     @Override
@@ -398,24 +398,24 @@ class ProxyClientProcessor extends BaseFilter {
     }
 
     private class ProxyWriteHandler implements WriteHandler {
-//        private final FilterChainContext ctx;
+        private final FilterChainContext ctx;
         private final Buffer contentBuffer;
         private final boolean last;
         private volatile boolean writingStarted = false;
 
         ProxyWriteHandler(Buffer contentBuffer, FilterChainContext ctx, boolean last) {
-            assert contentBuffer != null;
+            assert contentBuffer != null && ctx != null;
             this.contentBuffer = contentBuffer;
-//            this.ctx = ctx;
+            this.ctx = ctx;
             this.last = last;
         }
 
         @Override
         public void onWritePossible() throws Exception {
             synchronized (lock) {
-//                ctx.resumeNext();
+                ctx.resumeNext();
                 writingStarted = true;
-                lock.notifyAll();
+                // lock.notifyAll(); - obsolete solution
                 if (debugStringBuilder != null) {
                     debugStringBuilder.append("b");
                 }
@@ -436,11 +436,11 @@ class ProxyClientProcessor extends BaseFilter {
         public void onError(Throwable t) {
             HttpProxy.LOG.config("Error while sending data to client (" + request.getRequestURL() + "): " + t);
             // - this is not a serious problem, just the client cannot receive data too quickly (internet is slow)
-//            synchronized (lock) {
-//                if (!writingStarted) {
-//                    ctx.completeAndRecycle();
-//                }
-//            }
+            synchronized (lock) {
+                if (!writingStarted) {
+                    ctx.completeAndRecycle();
+                }
+            }
         }
     }
 }
