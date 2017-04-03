@@ -49,6 +49,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 class ProxyClientProcessor extends BaseFilter {
+    private static final boolean AVOID_LOCK_FOR_SERVER_CONNECTION_SYNCHRONIZATION = true;
+    // - the version with locking (false value) is little more simple and stable
     private static final boolean DEBUG_MODE = false;
 
     private final HttpProxy proxy;
@@ -268,48 +270,49 @@ class ProxyClientProcessor extends BaseFilter {
             }
         }
         final ProxyWriteHandler handler = new ProxyWriteHandler(contentBuffer, ctx, last);
-        final NextAction suspendAction = ctx.getSuspendAction();
-        outputStreamToClient.notifyCanWrite(handler);
-        return suspendAction;
-        /*
-        // Obsolete solution...
-        final long timestamp = System.currentTimeMillis();
-        synchronized (lock) {
-            while (!handler.writingStarted) {
-                if (!connectionToClient.isOpen()) {
-                    HttpProxy.LOG.config("Waiting for sending data stopped: connection to the client is closed ("
-                        + request.getRequestURL() + ")");
-                    break;
-                }
-                if (timeoutOccurred) {
-                    // To be on the safe side: no sense to wait after timeout (should not occur:
-                    // connection with the client should be closed and the previous check should be true)
-                    HttpProxy.LOG.config("Waiting for sending data stopped: timeout ("
-                        + request.getRequestURL() + ")");
-                    break;
-                }
-                if (System.currentTimeMillis() - timestamp > 3000 + proxy.getReadingFromServerTimeoutInMs()) {
-                    // Also to be on the safe side: guaranteedly avoiding infinite loop
-                    HttpProxy.LOG.warning("Waiting for sending data is too long ("
-                        + request.getRequestURL() + ")");
-                    break;
-                }
-                try {
-                    lock.wait(100);
-                    // We need to wait until onWritePossible() method will enter to synchronized section
-                    // and really start sending data. After this, we can be sure that the next call
-                    // of this handleRead method will be delayed at the "synchronized" operator
-                    // in the beginning of this method. In other case, there is a risk that the next call
-                    // of this method will occur BEFORE starting onWritePossible(), and notifyCanWrite
-                    // method will throw an exception
-                    // "Illegal attempt to set a new handler before the existing handler has been notified"
-                } catch (InterruptedException e) {
-                    // just exiting with STOP_ACTION
+        if (AVOID_LOCK_FOR_SERVER_CONNECTION_SYNCHRONIZATION) {
+            final NextAction suspendAction = ctx.getSuspendAction();
+            outputStreamToClient.notifyCanWrite(handler);
+            return suspendAction;
+        } else {
+            outputStreamToClient.notifyCanWrite(handler);
+            final long timestamp = System.currentTimeMillis();
+            synchronized (lock) {
+                while (!handler.writingStarted) {
+                    if (!connectionToClient.isOpen()) {
+                        HttpProxy.LOG.config("Waiting for sending data stopped: connection to the client is closed ("
+                            + request.getRequestURL() + ")");
+                        break;
+                    }
+                    if (timeoutOccurred) {
+                        // To be on the safe side: no sense to wait after timeout (should not occur:
+                        // connection with the client should be closed and the previous check should be true)
+                        HttpProxy.LOG.config("Waiting for sending data stopped: timeout ("
+                            + request.getRequestURL() + ")");
+                        break;
+                    }
+                    if (System.currentTimeMillis() - timestamp > 3000 + proxy.getReadingFromServerTimeoutInMs()) {
+                        // Also to be on the safe side: guaranteedly avoiding infinite loop
+                        HttpProxy.LOG.warning("Waiting for sending data is too long ("
+                            + request.getRequestURL() + ")");
+                        break;
+                    }
+                    try {
+                        lock.wait(100);
+                        // We need to wait until onWritePossible() method will enter to synchronized section
+                        // and really start sending data. After this, we can be sure that the next call
+                        // of this handleRead method will be delayed at the "synchronized" operator
+                        // in the beginning of this method. In other case, there is a risk that the next call
+                        // of this method will occur BEFORE starting onWritePossible(), and notifyCanWrite
+                        // method will throw an exception
+                        // "Illegal attempt to set a new handler before the existing handler has been notified"
+                    } catch (InterruptedException e) {
+                        // just exiting with STOP_ACTION
+                    }
                 }
             }
+            return ctx.getStopAction();
         }
-        return ctx.getStopAction();
-        */
     }
 
     @Override
@@ -413,9 +416,10 @@ class ProxyClientProcessor extends BaseFilter {
         @Override
         public void onWritePossible() throws Exception {
             synchronized (lock) {
-                ctx.resumeNext();
                 writingStarted = true;
-                // lock.notifyAll(); - obsolete solution
+                if (!AVOID_LOCK_FOR_SERVER_CONNECTION_SYNCHRONIZATION) {
+                    lock.notifyAll();
+                }
                 if (debugStringBuilder != null) {
                     debugStringBuilder.append("b");
                 }
@@ -426,6 +430,11 @@ class ProxyClientProcessor extends BaseFilter {
                 }
 //                for (long t = System.currentTimeMillis(); System.currentTimeMillis() - t < 5500; ) ;
 //                System.out.println("!!!DELAY!! " + contentBuffer + "; " + last + "; " + new java.util.Date());
+                if (AVOID_LOCK_FOR_SERVER_CONNECTION_SYNCHRONIZATION) {
+                    ctx.resumeNext();
+                    // - must be called AFTER "write" call, in other case some complex systems like Vaadin
+                    // will be not proxied correctly
+                }
                 if (last) {
                     closeConnectionsAndResponse();
                 }
@@ -436,9 +445,11 @@ class ProxyClientProcessor extends BaseFilter {
         public void onError(Throwable t) {
             HttpProxy.LOG.config("Error while sending data to client (" + request.getRequestURL() + "): " + t);
             // - this is not a serious problem, just the client cannot receive data too quickly (internet is slow)
-            synchronized (lock) {
-                if (!writingStarted) {
-                    ctx.completeAndRecycle();
+            if (AVOID_LOCK_FOR_SERVER_CONNECTION_SYNCHRONIZATION) {
+                synchronized (lock) {
+                    if (!writingStarted) {
+                        ctx.completeAndRecycle();
+                    }
                 }
             }
         }
