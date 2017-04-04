@@ -22,46 +22,27 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.api.tests.http;
+package net.algart.pyramid.api.http.tests;
 
-import net.algart.pyramid.api.common.IllegalJREException;
 import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class JavaExecutableTest {
-    public static void main(String[] args) throws IOException {
-        if (args.length < 2) {
-            System.out.printf("Usage: %s jreName specificServerConfigurationFile%n",
-                JavaExecutableTest.class.getName());
+public class HttpPyramidSpecificServerConfigurationTest {
+    public static void main(String args[]) throws IOException {
+        if (args.length == 0) {
+            System.out.printf("Usage: %s specificServerConfigurationFile%n",
+                HttpPyramidSpecificServerConfigurationTest.class.getName());
             return;
         }
-        final String jreName = args[0];
-        final Path configurationFile = Paths.get(args[1]);
+        final Path configurationFile = Paths.get(args[0]);
         final HttpPyramidSpecificServerConfiguration configuration =
             HttpPyramidSpecificServerConfiguration.readFromFile(configurationFile);
-        System.out.printf("jreHome():%n  %s%n%n", configuration.jreHome());
-        try {
-            System.out.printf("javaExecutable() (current Java executable):%n");
-//            System.setProperty("java.home", "/illegal-path");
-            final Path currentJavaExecutable = configuration.javaExecutable();
-            System.out.printf("  %s%n%n", currentJavaExecutable);
-        } catch (IllegalJREException e) {
-            e.printStackTrace(System.out);
-        }
-        try {
-            System.out.printf("jreHome(jreName):%n");
-            System.out.printf("  %s%n%n", configuration.jreHome(jreName));
-        } catch (IllegalJREException e) {
-            e.printStackTrace(System.out);
-        }
-        try {
-            System.out.printf("javaExecutable(jreName):%n");
-            System.out.printf("  %s%n%n", configuration.javaExecutable(jreName));
-        } catch (IllegalJREException e) {
-            e.printStackTrace(System.out);
+        System.out.println(configuration);
+        if (configuration.getSslSettings() != null) {
+            System.out.println("SSL keystore absolute path: " + configuration.getSslSettings().keystoreFile());
         }
     }
 }

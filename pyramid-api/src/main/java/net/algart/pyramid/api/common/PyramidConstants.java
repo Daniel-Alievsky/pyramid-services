@@ -37,7 +37,7 @@ public class PyramidConstants {
         "NET_ALGART_PYRAMID_CONFIGURATION_FOLDER_IN_PROJECT_ROOT", "pyramid-services/conf/services"));
 
     public static final String FORMAT_NAME_IN_PYRAMID_FACTORY_CONFIGURATION_JSON = "formatName";
-    public static final String EXTENSIONS_IN_PYRAMID_FACTORY_CONFIGURATION_JSON = "extensions";
+    public static final String FILE_REG_EXP_IN_PYRAMID_FACTORY_CONFIGURATION_JSON = "fileRegExp";
     public static final String PLANE_PYRAMID_SUB_FACTORY_IN_PYRAMID_FACTORY_CONFIGURATION_JSON =
         "planePyramidSubFactory";
 

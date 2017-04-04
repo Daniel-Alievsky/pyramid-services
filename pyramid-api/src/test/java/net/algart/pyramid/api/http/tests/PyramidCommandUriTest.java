@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.api.tests.http;
+package net.algart.pyramid.api.http.tests;
 
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
 

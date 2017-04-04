@@ -1,8 +1,5 @@
 {
   "formatName": "loci",
-  "extensions": [
-    "*"
-  ],
   "groupId": "com.simagis.pyramid.loci",
   "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
   "planePyramidSubFactory": "com.simagis.pyramid.loci.server.LociPlanePyramidSourceFactory",

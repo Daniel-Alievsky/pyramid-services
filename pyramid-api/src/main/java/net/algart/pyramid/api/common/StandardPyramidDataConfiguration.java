@@ -79,7 +79,7 @@ public class StandardPyramidDataConfiguration {
             try (final DirectoryStream<Path> files = Files.newDirectoryStream(pyramidPath)) {
                 for (Path file : files) {
                     for (PyramidFormat format : actualFormats) {
-                        if (format.matches(file)) {
+                        if (format.matchesPath(file)) {
                             matched.add(file);
                         }
                     }
@@ -92,12 +92,12 @@ public class StandardPyramidDataConfiguration {
                     + "pyramid data configuration json " + pyramidDataConfigFile.toAbsolutePath()
                     + " does not contain \"" + PyramidConstants.FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE
                     + "\" value, and there are " + (matched.isEmpty() ? "no" : "more than 1")
-                    + " files with suitable extensions among formats:" + toPrettyString(actualFormats));
+                    + " files with suitable filenames among formats:" + toPrettyString(actualFormats));
             }
         }
         if (currentFormat == null) {
             for (PyramidFormat format : supportedFormats) {
-                if (format.matches(dataFile)) {
+                if (format.matchesPath(dataFile)) {
                     currentFormat = format;
                     break;
                 }
@@ -106,7 +106,7 @@ public class StandardPyramidDataConfiguration {
                 throw new UnknownPyramidDataFormatException("Cannot detect pyramid format: "
                     + "pyramid data configuration json " + pyramidDataConfigFile.toAbsolutePath()
                     + " does not contain \"" + PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE
-                    + "\" value, and an extension  of the pyramid data file " + dataFile
+                    + "\" value, and filename of the pyramid data file " + dataFile
                     + " does not match any supported format among formats:" + toPrettyString(supportedFormats));
             }
         }
@@ -141,6 +141,14 @@ public class StandardPyramidDataConfiguration {
 
     public String getSubFormatName() {
         return subFormatName;
+    }
+
+    @Override
+    public String toString() {
+        return "StandardPyramidDataConfiguration: format name \"" + formatName
+            + "\", subformat name \"" + subFormatName
+            + "\", data file \"" + pyramidDataFile
+            + "\", pyramidDataJson " + pyramidDataJson;
     }
 
     private static String toPrettyString(Collection<?> objects) {

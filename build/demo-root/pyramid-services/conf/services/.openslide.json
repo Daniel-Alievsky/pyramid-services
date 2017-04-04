@@ -1,8 +1,5 @@
 {
   "formatName": "openslide",
-  "extensions": [
-    "*"
-  ],
   "groupId": "com.simagis.pyramid.openslide",
   "planePyramidFactory": "net.algart.pyramid.standard.StandardPlanePyramidFactory",
   "planePyramidSubFactory": "com.simagis.pyramid.openslide.server.OpenSlidePlanePyramidSourceFactory",

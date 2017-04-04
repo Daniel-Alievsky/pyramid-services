@@ -116,10 +116,6 @@ public class HttpPyramidServicesConfiguration {
             return pyramidFormat.getFormatName();
         }
 
-        public Collection<String> getExtensions() {
-            return pyramidFormat.getExtensions();
-        }
-
         public int getRecognitionPriority() {
             return pyramidFormat.getRecognitionPriority();
         }
@@ -171,7 +167,13 @@ public class HttpPyramidServicesConfiguration {
         JsonObject toJson() {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
             builder.add("formatName", pyramidFormat.getFormatName());
-            builder.add("extensions", toJsonArray(pyramidFormat.getExtensions()));
+            builder.add("fileRegExp", pyramidFormat.getFileRegExp());
+            if (pyramidFormat.getFileInFolderRegExp() != null) {
+                builder.add("fileInFolderRegExp", pyramidFormat.getFileInFolderRegExp());
+            }
+            if (!pyramidFormat.getAccompanyingFiles().isEmpty()) {
+                builder.add("accompanyingFiles", toJsonArray(pyramidFormat.getAccompanyingFiles()));
+            }
             builder.add("recognitionPriority", pyramidFormat.getRecognitionPriority());
             builder.add("groupId", groupId);
             builder.add("planePyramidFactory", planePyramidFactory);

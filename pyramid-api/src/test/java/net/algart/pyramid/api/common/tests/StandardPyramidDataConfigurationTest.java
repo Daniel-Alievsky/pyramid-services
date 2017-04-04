@@ -22,32 +22,31 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.api.tests.http;
+package net.algart.pyramid.api.common.tests;
 
+import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
+import net.algart.pyramid.api.common.UnknownPyramidDataFormatException;
 import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class HttpPyramidServiceConfigurationTest {
-    public static void main(String args[]) throws IOException {
+public class StandardPyramidDataConfigurationTest {
+    public static void main(String[] args) throws IOException, UnknownPyramidDataFormatException {
         if (args.length == 0) {
-            System.out.printf("Usage: %s projectRoot%n", HttpPyramidServiceConfigurationTest.class.getName());
+            System.out.printf("Usage: %s projectRoot pyramidPath %n", StandardPyramidDataConfigurationTest.class.getName());
             return;
         }
+//        String fileName = "data.gif";
+//        String fileRegExp = ".*gif$";
+//        System.out.println(Pattern.compile(fileRegExp).matcher(fileName).matches());
+
         final Path projectRoot = Paths.get(args[0]);
+        final Path pyramidPath = Paths.get(args[1]);
         final HttpPyramidServicesConfiguration configuration =
             HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
-        System.out.println(configuration);
-        for (HttpPyramidServicesConfiguration.Process process : configuration.getProcesses().values()) {
-            System.out.printf("%nInformation about process \"%s\"%n", process.getGroupId());
-            System.out.printf("    ports: %s%n", process.allPorts());
-            System.out.printf("    jreName: %s%n", process.jreName());
-            System.out.printf("    workingDirectory: %s%n", process.workingDirectory());
-            System.out.printf("    classPath: %s%n", process.classPath(false));
-            System.out.printf("    vmOptions: %s%n", process.vmOptions());
-            System.out.printf("    xmxOption: %s%n", process.xmxOption());
-        }
+        System.out.println(
+            StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidPath, configuration.allFormats()));
     }
 }
