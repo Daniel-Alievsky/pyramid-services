@@ -49,8 +49,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 class ProxyClientProcessor extends BaseFilter {
-    private static final boolean AVOID_LOCK_FOR_SERVER_CONNECTION_SYNCHRONIZATION = true;
-    // - the version with locking (false value) is little more simple and stable
+    private static final boolean AVOID_LOCK_FOR_SERVER_CONNECTION_SYNCHRONIZATION = false;
+    // - the version with locking (false value) is more simple and stable
     private static final boolean DEBUG_MODE = false;
 
     private final HttpProxy proxy;
@@ -424,7 +424,11 @@ class ProxyClientProcessor extends BaseFilter {
                     debugStringBuilder.append("b");
                 }
                 resetTimeout();
+//                long t1 = System.nanoTime();
                 outputStreamToClient.write(contentBuffer);
+//                long t2 = System.nanoTime();
+//                System.out.printf("Writing in %.3f mcs: %d bytes%n", (t2 - t1) * 1e-3, contentBuffer.limit());
+                // - uncommenting this debug print leads to problem while proxying Vaadin
                 if (debugStringBuilder != null) {
                     debugStringBuilder.append("e\n");
                 }
