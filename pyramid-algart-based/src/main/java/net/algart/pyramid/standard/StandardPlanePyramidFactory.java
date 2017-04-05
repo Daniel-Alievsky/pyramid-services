@@ -70,14 +70,6 @@ public class StandardPlanePyramidFactory implements PlanePyramidFactory {
     }
 
     @Override
-    public List<String> accompanyingResources(String pyramidDataPath) {
-        if (planePyramidSourceFactory == null) {
-            throw new IllegalStateException("Factory is not initialized yet");
-        }
-        return planePyramidSourceFactory.accompanyingResources(pyramidDataPath);
-    }
-
-    @Override
     public String toString() {
         return getClass().getSimpleName() + " based on " + planePyramidSourceFactory.getClass().getName();
     }

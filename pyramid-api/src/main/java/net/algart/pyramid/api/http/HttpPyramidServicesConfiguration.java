@@ -61,6 +61,7 @@ public class HttpPyramidServicesConfiguration {
         private final String groupId;
         private final String planePyramidFactory;
         private final String planePyramidSubFactory;
+        private final String formatAnalysisUtility;
         private final String jreName;
         private final Set<String> classPath;
         private final Set<String> vmOptions;
@@ -80,6 +81,7 @@ public class HttpPyramidServicesConfiguration {
             this.planePyramidFactory = getRequiredString(json, "planePyramidFactory", configurationFile);
             this.planePyramidSubFactory = json.getString(
                 PyramidConstants.PLANE_PYRAMID_SUB_FACTORY_IN_PYRAMID_FACTORY_CONFIGURATION_JSON,null);
+            this.formatAnalysisUtility = json.getString("formatAnalysisUtility", null);
             this.jreName = json.getString("jreName", null);
             final JsonArray classPath = getRequiredJsonArray(json, CLASS_PATH_FIELD, configurationFile);
             this.classPath = new TreeSet<>();
@@ -128,8 +130,14 @@ public class HttpPyramidServicesConfiguration {
             return planePyramidFactory;
         }
 
+        // Note: usually this method is not called directly; instead, the custom pyramid factory extracts this value
+        // from JSON via PyramidConstants.PLANE_PYRAMID_SUB_FACTORY_IN_PYRAMID_FACTORY_CONFIGURATION_JSON key.
         public String getPlanePyramidSubFactory() {
             return planePyramidSubFactory;
+        }
+
+        public String getFormatAnalysisUtility() {
+            return formatAnalysisUtility;
         }
 
         public String getJREName() {
@@ -179,6 +187,9 @@ public class HttpPyramidServicesConfiguration {
             builder.add("planePyramidFactory", planePyramidFactory);
             if (planePyramidSubFactory != null) {
                 builder.add("planePyramidSubFactory", planePyramidSubFactory);
+            }
+            if (formatAnalysisUtility != null) {
+                builder.add("formatAnalysisUtility", formatAnalysisUtility);
             }
             if (jreName != null) {
                 builder.add("jreName", jreName);
@@ -462,11 +473,27 @@ public class HttpPyramidServicesConfiguration {
         return Collections.unmodifiableMap(allServices);
     }
 
+    public Map<String, Service> allSortedServices() {
+        final List<PyramidFormat> formats = allSortedFormats();
+        final Map<String, Service> result = new LinkedHashMap<>();
+        for (PyramidFormat format : formats) {
+            final String name = format.getFormatName();
+            result.put(name, allServices.get(name));
+        }
+        return result;
+    }
+
     public List<PyramidFormat> allFormats() {
         final List<PyramidFormat> result = new ArrayList<>();
         for (Service service : allServices.values()) {
             result.add(service.getPyramidFormat());
         }
+        return result;
+    }
+
+    public List<PyramidFormat> allSortedFormats() {
+        final List<PyramidFormat> result = allFormats();
+        Collections.sort(result);
         return result;
     }
 

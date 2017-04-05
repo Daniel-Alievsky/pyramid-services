@@ -33,21 +33,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class StandardPyramidDataConfiguration {
     private final JsonObject pyramidDataJson;
     private final Path pyramidDataFile;
+    private final PyramidFormat format;
     private final String formatName;
     private final String subFormatName;
 
-    private StandardPyramidDataConfiguration(Path pyramidPath, List<PyramidFormat> supportedFormats)
+    private StandardPyramidDataConfiguration(Path pyramidFolder, List<PyramidFormat> supportedFormats)
         throws IOException, UnknownPyramidDataFormatException
     {
-        final Path pyramidDataConfigFile = pyramidPath.resolve(PyramidConstants.PYRAMID_DATA_CONFIG_FILE_NAME);
+        Objects.requireNonNull(pyramidFolder, "Null pyramidFolder");
+        Objects.requireNonNull(supportedFormats, "Null supportedFormats");
+        supportedFormats = new ArrayList<>(supportedFormats);
+        Collections.sort(supportedFormats);
+        final Path pyramidDataConfigFile = pyramidFolder.resolve(PyramidConstants.PYRAMID_DATA_CONFIG_FILE_NAME);
         if (!Files.exists(pyramidDataConfigFile)) {
             this.pyramidDataJson = Json.createObjectBuilder().build();
         } else {
@@ -71,12 +73,12 @@ public class StandardPyramidDataConfiguration {
         }
         final String dataFileName = pyramidDataJson.getString(
             PyramidConstants.FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
-        Path dataFile = dataFileName == null ? null : pyramidPath.resolve(dataFileName);
+        Path dataFile = dataFileName == null ? null : pyramidFolder.resolve(dataFileName);
         if (dataFile == null) {
             final Collection<PyramidFormat> actualFormats =
                 currentFormat != null ? Collections.singleton(currentFormat) : supportedFormats;
             final List<Path> matched = new ArrayList<>();
-            try (final DirectoryStream<Path> files = Files.newDirectoryStream(pyramidPath)) {
+            try (final DirectoryStream<Path> files = Files.newDirectoryStream(pyramidFolder)) {
                 for (Path file : files) {
                     for (PyramidFormat format : actualFormats) {
                         if (format.matchesPath(file)) {
@@ -115,16 +117,17 @@ public class StandardPyramidDataConfiguration {
             throw new PyramidDataFileNotFoundException("Pyramid data file at "
                 + pyramidDataFile + " does not exist");
         }
+        this.format = currentFormat;
         this.formatName = currentFormat.getFormatName();
         this.subFormatName = PyramidFormat.getFileExtension(pyramidDataFile.getFileName().toString().toLowerCase());
     }
 
     public static StandardPyramidDataConfiguration readFromPyramidFolder(
-        Path pyramidPath,
+        Path pyramidFolder,
         List<PyramidFormat> supportedFormats)
         throws IOException, UnknownPyramidDataFormatException
     {
-        return new StandardPyramidDataConfiguration(pyramidPath, supportedFormats);
+        return new StandardPyramidDataConfiguration(pyramidFolder, supportedFormats);
     }
 
     public JsonObject getPyramidDataJson() {
@@ -135,12 +138,20 @@ public class StandardPyramidDataConfiguration {
         return pyramidDataFile;
     }
 
+    public PyramidFormat getFormat() {
+        return format;
+    }
+
     public String getFormatName() {
         return formatName;
     }
 
     public String getSubFormatName() {
         return subFormatName;
+    }
+
+    public List<Path> accompanyingFiles() {
+        return format.accompanyingFiles(pyramidDataFile);
     }
 
     @Override

@@ -29,24 +29,34 @@ import net.algart.pyramid.api.common.UnknownPyramidDataFormatException;
 import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class StandardPyramidDataConfigurationTest {
     public static void main(String[] args) throws IOException, UnknownPyramidDataFormatException {
         if (args.length == 0) {
-            System.out.printf("Usage: %s projectRoot pyramidPath %n", StandardPyramidDataConfigurationTest.class.getName());
+            System.out.printf("Usage: %s pyramidFolder projectRoot%n",
+                StandardPyramidDataConfigurationTest.class.getName());
             return;
         }
 //        String fileName = "data.gif";
 //        String fileRegExp = ".*gif$";
 //        System.out.println(Pattern.compile(fileRegExp).matcher(fileName).matches());
 
-        final Path projectRoot = Paths.get(args[0]);
-        final Path pyramidPath = Paths.get(args[1]);
-        final HttpPyramidServicesConfiguration configuration =
+        final Path pyramidFolder = Paths.get(args[0]);
+        final Path projectRoot = Paths.get(args[1]);
+        final HttpPyramidServicesConfiguration servicesConfiguration =
             HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
-        System.out.println(
-            StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidPath, configuration.allFormats()));
+        final StandardPyramidDataConfiguration configuration =
+            StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidFolder, servicesConfiguration.allFormats());
+        System.out.printf("Pyramid data configuration:%n  %s%n%n", configuration);
+        final List<Path> files = configuration.accompanyingFiles();
+        System.out.printf("Accompanying files or folders:%s%n", files.isEmpty() ? " no files" : "");
+        for (Path f : files) {
+            System.out.printf("  %s (%s)%n",
+                f, !Files.exists(f) ? "NOT exists" : Files.isDirectory(f) ? "existing folder" : "existing file");
+        }
     }
 }

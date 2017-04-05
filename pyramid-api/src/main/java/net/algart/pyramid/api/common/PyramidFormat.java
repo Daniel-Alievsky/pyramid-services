@@ -33,15 +33,16 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PyramidFormat {
+public final class PyramidFormat implements Comparable<PyramidFormat> {
     private final String formatName;
     private final String fileRegExp;
     private final String fileInFolderRegExp;
     private final List<String> accompanyingFiles;
     private final int recognitionPriority;
-    // - fileInFolderRegExp, accompanyingFiles and priority are not used by current version of services,
+    // - fileInFolderRegExp and accompanyingFiles are not used by current version of services,
     // but may be used by other systems like uploaders
 
     private PyramidFormat(
@@ -68,7 +69,7 @@ public class PyramidFormat {
         final List<String> accompanyingFiles = new ArrayList<>();
         if (jsonAccompanyingFiles != null) {
             for (int k = 0, n = jsonAccompanyingFiles.size(); k < n; k++) {
-                accompanyingFiles.add(jsonAccompanyingFiles.getString(k).toLowerCase());
+                accompanyingFiles.add(jsonAccompanyingFiles.getString(k));
             }
         }
         final int recognitionPriority = json.getInt("recognitionPriority", 0);
@@ -84,7 +85,7 @@ public class PyramidFormat {
      * In particular, it is used for automatic search of the pyramid file by {@link StandardPyramidDataConfiguration}
      * when {@link PyramidConstants#PYRAMID_DATA_CONFIG_FILE_NAME} configuration file is absent or incorrect.
      *
-     * <p>Typical example: ".*(\.tif$|\.tiff)$". If this value is absent in JSON, the default value is "";
+     * <p>Typical example: "(.*)(\.tif$|\.tiff)$". If this value is absent in JSON, the default value is "";
      * it means that there are no preferred file names for this format (format must be detected by other way).</p>
      *
      * <p>Note: regular expression must contain only lowercase characters (we always check the filenames
@@ -172,12 +173,72 @@ public class PyramidFormat {
         return false;
     }
 
+    public List<Path> accompanyingFiles(Path pyramidDataFileOrFolder) {
+        Objects.requireNonNull(pyramidDataFileOrFolder, "Null pyramidDataFileOrFolder");
+        if (!matchesPath(pyramidDataFileOrFolder)) {
+            throw new IllegalArgumentException("pyramidDataFileOrFolder \"" + pyramidDataFileOrFolder
+                + "\" does not match this " + this);
+        }
+        final String fileName = pyramidDataFileOrFolder.getFileName().toString().toLowerCase();
+        final Matcher m = Pattern.compile(fileRegExp).matcher(fileName);
+        final List<Path> result = new ArrayList<>();
+        for (String replacement : accompanyingFiles) {
+            final String accompanyingFileName = m.replaceFirst(replacement);
+            result.add(pyramidDataFileOrFolder.getParent().resolve(accompanyingFileName));
+        }
+        return result;
+    }
+
     @Override
     public String toString() {
         return "pyramid format \"" + formatName + "\", fileRegExp \"" + fileRegExp + "\""
             + (fileInFolderRegExp == null ? "" : ", fileInFolderRegExp \"" + fileInFolderRegExp + "\"")
             + (accompanyingFiles.isEmpty() ? "" : ", accompanyingFiles " + accompanyingFiles)
             + (recognitionPriority == 0 ? "" : ", recognition priority " + recognitionPriority);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        PyramidFormat that = (PyramidFormat) o;
+        if (recognitionPriority != that.recognitionPriority) {
+            return false;
+        }
+        if (!formatName.equals(that.formatName)) {
+            return false;
+        }
+        if (!fileRegExp.equals(that.fileRegExp)) {
+            return false;
+        }
+        if (fileInFolderRegExp != null ? !fileInFolderRegExp.equals(that.fileInFolderRegExp)
+            : that.fileInFolderRegExp != null)
+        {
+            return false;
+        }
+        return accompanyingFiles.equals(that.accompanyingFiles);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = formatName.hashCode();
+        result = 31 * result + fileRegExp.hashCode();
+        result = 31 * result + (fileInFolderRegExp != null ? fileInFolderRegExp.hashCode() : 0);
+        result = 31 * result + accompanyingFiles.hashCode();
+        result = 31 * result + recognitionPriority;
+        return result;
+    }
+
+    @Override
+    public int compareTo(PyramidFormat o) {
+        return recognitionPriority > o.recognitionPriority ? -1
+            : recognitionPriority < o.recognitionPriority ? 1
+            : formatName.compareTo(o.formatName);
+
     }
 
     static String getFileExtension(String fileName) {
