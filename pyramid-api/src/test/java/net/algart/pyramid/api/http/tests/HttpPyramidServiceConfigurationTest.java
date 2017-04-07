@@ -24,6 +24,7 @@
 
 package net.algart.pyramid.api.http.tests;
 
+import net.algart.pyramid.api.common.PyramidFormat;
 import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
 
 import java.io.IOException;
@@ -48,6 +49,14 @@ public class HttpPyramidServiceConfigurationTest {
             System.out.printf("    classPath: %s%n", process.classPath(false));
             System.out.printf("    vmOptions: %s%n", process.vmOptions());
             System.out.printf("    xmxOption: %s%n", process.xmxOption());
+        }
+        System.out.printf("%nList of sorted service names:%n");
+        for (String formatName : configuration.allSortedServices().keySet()) {
+            System.out.printf("    %s%n", formatName);
+        }
+        System.out.printf("%nList of sorted formats:%n");
+        for (PyramidFormat pyramidFormat : configuration.allSortedFormats()) {
+            System.out.printf("    %s%n", pyramidFormat);
         }
     }
 }

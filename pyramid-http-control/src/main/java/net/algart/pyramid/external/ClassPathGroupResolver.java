@@ -49,7 +49,7 @@ public class ClassPathGroupResolver {
 
     public Map<Path, JsonObject> resolveAllClassPaths() throws IOException {
         final Map<Path, JsonObject> result = new LinkedHashMap<>();
-        for (HttpPyramidServicesConfiguration.Service service : configuration.allServices().values()) {
+        for (HttpPyramidServicesConfiguration.Service service : configuration.allSortedServices().values()) {
             final JsonObject json = toJson(service.toJsonString());
             final JsonObject resolved = resolveClassPath(
                 json, HttpPyramidServicesConfiguration.Service.CLASS_PATH_FIELD);

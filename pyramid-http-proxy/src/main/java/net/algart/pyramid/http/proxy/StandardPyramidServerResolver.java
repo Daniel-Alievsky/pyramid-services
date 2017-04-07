@@ -47,7 +47,7 @@ class StandardPyramidServerResolver implements HttpServerResolver {
 
     private final Map<String, HttpServerAddress> pool = new ServerAddressHashMap();
     private final HttpPyramidServicesConfiguration configuration;
-    private final List<PyramidFormat> allFormats;
+    private final Collection<PyramidFormat> allSortedFormats;
     private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
     private final HttpPyramidSpecificServerConfiguration.ProxySettings proxyConfiguration;
     private final List<HttpPyramidIdFinder> pyramidIdFinders = new ArrayList<>();
@@ -60,7 +60,7 @@ class StandardPyramidServerResolver implements HttpServerResolver {
         assert configuration != null && specificServerConfiguration != null;
         assert specificServerConfiguration.getProxySettings() != null;
         this.configuration = configuration;
-        this.allFormats = configuration.allFormats();
+        this.allSortedFormats = configuration.allSortedFormats();
         this.specificServerConfiguration = specificServerConfiguration;
         this.proxyConfiguration = specificServerConfiguration.getProxySettings();
     }
@@ -116,7 +116,8 @@ class StandardPyramidServerResolver implements HttpServerResolver {
         final Path pyramidPath = PyramidApiTools.getPyramidPath(config);
         final StandardPyramidDataConfiguration pyramidDataConfiguration;
         try {
-            pyramidDataConfiguration = StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidPath, allFormats);
+            pyramidDataConfiguration = StandardPyramidDataConfiguration.readFromPyramidFolder(
+                pyramidPath, allSortedFormats);
         } catch (UnknownPyramidDataFormatException e) {
             throw new IOException(e);
         }

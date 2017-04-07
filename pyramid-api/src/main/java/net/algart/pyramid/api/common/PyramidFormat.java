@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 
 public final class PyramidFormat implements Comparable<PyramidFormat> {
     private final String formatName;
+    private final String formatTitle;
     private final String fileRegExp;
     private final String fileInFolderRegExp;
     private final List<String> accompanyingFiles;
@@ -47,12 +48,14 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
 
     private PyramidFormat(
         String formatName,
+        String formatTitle,
         String fileRegExp,
         String fileInFolderRegExp,
         List<String> accompanyingFiles,
         int recognitionPriority)
     {
         this.formatName = Objects.requireNonNull(formatName, "Null formatName");
+        this.formatTitle = formatTitle;
         this.fileRegExp = Objects.requireNonNull(fileRegExp, "Null fileRegExp");
         this.fileInFolderRegExp = fileInFolderRegExp;
         this.accompanyingFiles =  Objects.requireNonNull(accompanyingFiles, "Null accompanyingFiles");
@@ -62,6 +65,7 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
     public static PyramidFormat getInstance(JsonObject json) {
         final String formatName = getRequiredString(json,
             PyramidConstants.FORMAT_NAME_IN_PYRAMID_FACTORY_CONFIGURATION_JSON);
+        final String formatTitle = json.getString("formatTitle", null);
         final String fileRegExp = json.getString(
             PyramidConstants.FILE_REG_EXP_IN_PYRAMID_FACTORY_CONFIGURATION_JSON, "");
         final String fileInFolderRegExp = json.getString("fileInFolderRegExp", null);
@@ -73,11 +77,16 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
             }
         }
         final int recognitionPriority = json.getInt("recognitionPriority", 0);
-        return new PyramidFormat(formatName, fileRegExp, fileInFolderRegExp, accompanyingFiles, recognitionPriority);
+        return new PyramidFormat(
+            formatName, formatTitle, fileRegExp, fileInFolderRegExp, accompanyingFiles, recognitionPriority);
     }
 
     public String getFormatName() {
         return formatName;
+    }
+
+    public String getFormatTitle() {
+        return formatTitle;
     }
 
     /**
@@ -191,7 +200,9 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
 
     @Override
     public String toString() {
-        return "pyramid format \"" + formatName + "\", fileRegExp \"" + fileRegExp + "\""
+        return "pyramid format \"" + formatName + "\""
+            + (formatTitle == null ? "" : " (\"" + formatTitle + "\")")
+            + ", fileRegExp \"" + fileRegExp + "\""
             + (fileInFolderRegExp == null ? "" : ", fileInFolderRegExp \"" + fileInFolderRegExp + "\"")
             + (accompanyingFiles.isEmpty() ? "" : ", accompanyingFiles " + accompanyingFiles)
             + (recognitionPriority == 0 ? "" : ", recognition priority " + recognitionPriority);
@@ -212,6 +223,9 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
         if (!formatName.equals(that.formatName)) {
             return false;
         }
+        if (formatTitle != null ? !formatTitle.equals(that.formatTitle) : that.formatTitle != null) {
+            return false;
+        }
         if (!fileRegExp.equals(that.fileRegExp)) {
             return false;
         }
@@ -226,6 +240,7 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
     @Override
     public int hashCode() {
         int result = formatName.hashCode();
+        result = 31 * result + (formatTitle != null ? formatTitle.hashCode() : 0);
         result = 31 * result + fileRegExp.hashCode();
         result = 31 * result + (fileInFolderRegExp != null ? fileInFolderRegExp.hashCode() : 0);
         result = 31 * result + accompanyingFiles.hashCode();

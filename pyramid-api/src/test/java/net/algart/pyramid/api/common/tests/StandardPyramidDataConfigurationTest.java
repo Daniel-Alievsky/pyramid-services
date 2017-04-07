@@ -50,7 +50,8 @@ public class StandardPyramidDataConfigurationTest {
         final HttpPyramidServicesConfiguration servicesConfiguration =
             HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
         final StandardPyramidDataConfiguration configuration =
-            StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidFolder, servicesConfiguration.allFormats());
+            StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidFolder,
+                servicesConfiguration.allSortedFormats());
         System.out.printf("Pyramid data configuration:%n  %s%n%n", configuration);
         final List<Path> files = configuration.accompanyingFiles();
         System.out.printf("Accompanying files or folders:%s%n", files.isEmpty() ? " no files" : "");

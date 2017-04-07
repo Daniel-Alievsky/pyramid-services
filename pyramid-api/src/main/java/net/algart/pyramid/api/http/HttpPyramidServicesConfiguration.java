@@ -114,14 +114,6 @@ public class HttpPyramidServicesConfiguration {
             return pyramidFormat;
         }
 
-        public String getFormatName() {
-            return pyramidFormat.getFormatName();
-        }
-
-        public int getRecognitionPriority() {
-            return pyramidFormat.getRecognitionPriority();
-        }
-
         public String getGroupId() {
             return groupId;
         }
@@ -175,6 +167,9 @@ public class HttpPyramidServicesConfiguration {
         JsonObject toJson() {
             final JsonObjectBuilder builder = Json.createObjectBuilder();
             builder.add("formatName", pyramidFormat.getFormatName());
+            if (pyramidFormat.getFormatTitle() != null) {
+                builder.add("formatTitle", pyramidFormat.getFormatTitle());
+            }
             builder.add("fileRegExp", pyramidFormat.getFileRegExp());
             if (pyramidFormat.getFileInFolderRegExp() != null) {
                 builder.add("fileInFolderRegExp", pyramidFormat.getFileInFolderRegExp());
@@ -354,7 +349,8 @@ public class HttpPyramidServicesConfiguration {
     }
 
     private final Map<String, Process> processes;
-    private final Map<String, Service> allServices;
+    private final List<PyramidFormat> allSortedFormats;
+    private final Map<String, Service> allSortedServices;
     private final Path projectRoot;
     private final Path pyramidServicesFolder;
     private final Path globalConfigurationFile;
@@ -402,14 +398,24 @@ public class HttpPyramidServicesConfiguration {
         this.commonMemory = commonMemory != null ? parseLongWithMetricalSuffixes(commonMemory) : null;
         this.systemCommandsFolder = globalConfiguration.getString("systemCommandsFolder",
             HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER);
-        this.allServices = new LinkedHashMap<>();
+        final Map<String, Service> services = new HashMap<>();
+        this.allSortedFormats = new ArrayList<>();
         for (Process process : processList) {
             for (Service service : process.services) {
-                if (allServices.putIfAbsent(service.pyramidFormat.getFormatName(), service) != null) {
+                if (services.putIfAbsent(service.pyramidFormat.getFormatName(), service) != null) {
                     throw new JsonException("Invalid configuration JSON: two or more services "
-                        + "with the single format \"" + service.pyramidFormat.getFormatName()+ "\"");
+                        + "with the same format name \"" + service.pyramidFormat.getFormatName()+ "\"");
+                }
+                if (!allSortedFormats.add(service.pyramidFormat)) {
+                    throw new AssertionError("Invalid comparator in " + PyramidFormat.class);
                 }
             }
+        }
+        Collections.sort(allSortedFormats);
+        this.allSortedServices = new LinkedHashMap<>();
+        for (PyramidFormat pyramidFormat : allSortedFormats) {
+            final String name = pyramidFormat.getFormatName();
+            allSortedServices.put(name, services.get(name));
         }
     }
 
@@ -469,36 +475,16 @@ public class HttpPyramidServicesConfiguration {
         return Collections.unmodifiableSet(processes.keySet());
     }
 
-    public Map<String, Service> allServices() {
-        return Collections.unmodifiableMap(allServices);
+    public Collection<PyramidFormat> allSortedFormats() {
+        return Collections.unmodifiableList(allSortedFormats);
     }
 
     public Map<String, Service> allSortedServices() {
-        final List<PyramidFormat> formats = allSortedFormats();
-        final Map<String, Service> result = new LinkedHashMap<>();
-        for (PyramidFormat format : formats) {
-            final String name = format.getFormatName();
-            result.put(name, allServices.get(name));
-        }
-        return result;
-    }
-
-    public List<PyramidFormat> allFormats() {
-        final List<PyramidFormat> result = new ArrayList<>();
-        for (Service service : allServices.values()) {
-            result.add(service.getPyramidFormat());
-        }
-        return result;
-    }
-
-    public List<PyramidFormat> allSortedFormats() {
-        final List<PyramidFormat> result = allFormats();
-        Collections.sort(result);
-        return result;
+        return Collections.unmodifiableMap(allSortedServices);
     }
 
     public Service findServiceByFormatName(String formatName) {
-        return allServices.get(formatName);
+        return allSortedServices.get(formatName);
     }
 
     public int numberOfProcesses() {
@@ -506,7 +492,7 @@ public class HttpPyramidServicesConfiguration {
     }
 
     public int numberOfServices() {
-        return allServices.size();
+        return allSortedFormats.size();
     }
 
     public int numberOfProcessServices(String groupId) {

@@ -42,13 +42,11 @@ public class StandardPyramidDataConfiguration {
     private final String formatName;
     private final String subFormatName;
 
-    private StandardPyramidDataConfiguration(Path pyramidFolder, List<PyramidFormat> supportedFormats)
+    private StandardPyramidDataConfiguration(Path pyramidFolder, Collection<PyramidFormat> sortedFormats)
         throws IOException, UnknownPyramidDataFormatException
     {
         Objects.requireNonNull(pyramidFolder, "Null pyramidFolder");
-        Objects.requireNonNull(supportedFormats, "Null supportedFormats");
-        supportedFormats = new ArrayList<>(supportedFormats);
-        Collections.sort(supportedFormats);
+        Objects.requireNonNull(sortedFormats, "Null sortedFormats");
         final Path pyramidDataConfigFile = pyramidFolder.resolve(PyramidConstants.PYRAMID_DATA_CONFIG_FILE_NAME);
         if (!Files.exists(pyramidDataConfigFile)) {
             this.pyramidDataJson = Json.createObjectBuilder().build();
@@ -65,7 +63,7 @@ public class StandardPyramidDataConfiguration {
         final String formatName = this.pyramidDataJson.getString(
             PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE, null);
         PyramidFormat currentFormat = null;
-        for (PyramidFormat format : supportedFormats) {
+        for (PyramidFormat format : sortedFormats) {
             if (formatName != null && formatName.equals(format.getFormatName())) {
                 currentFormat = format;
                 break;
@@ -76,7 +74,7 @@ public class StandardPyramidDataConfiguration {
         Path dataFile = dataFileName == null ? null : pyramidFolder.resolve(dataFileName);
         if (dataFile == null) {
             final Collection<PyramidFormat> actualFormats =
-                currentFormat != null ? Collections.singleton(currentFormat) : supportedFormats;
+                currentFormat != null ? Collections.singleton(currentFormat) : sortedFormats;
             final List<Path> matched = new ArrayList<>();
             try (final DirectoryStream<Path> files = Files.newDirectoryStream(pyramidFolder)) {
                 for (Path file : files) {
@@ -98,8 +96,9 @@ public class StandardPyramidDataConfiguration {
             }
         }
         if (currentFormat == null) {
-            for (PyramidFormat format : supportedFormats) {
+            for (PyramidFormat format : sortedFormats) {
                 if (format.matchesPath(dataFile)) {
+                    // Note: here it is important that formats are sorted by decreasing priority
                     currentFormat = format;
                     break;
                 }
@@ -109,7 +108,7 @@ public class StandardPyramidDataConfiguration {
                     + "pyramid data configuration json " + pyramidDataConfigFile.toAbsolutePath()
                     + " does not contain \"" + PyramidConstants.FORMAT_NAME_IN_PYRAMID_DATA_CONFIG_FILE
                     + "\" value, and filename of the pyramid data file " + dataFile
-                    + " does not match any supported format among formats:" + toPrettyString(supportedFormats));
+                    + " does not match any supported format among formats:" + toPrettyString(sortedFormats));
             }
         }
         this.pyramidDataFile = dataFile;
@@ -124,10 +123,10 @@ public class StandardPyramidDataConfiguration {
 
     public static StandardPyramidDataConfiguration readFromPyramidFolder(
         Path pyramidFolder,
-        List<PyramidFormat> supportedFormats)
+        Collection<PyramidFormat> sortedFormats)
         throws IOException, UnknownPyramidDataFormatException
     {
-        return new StandardPyramidDataConfiguration(pyramidFolder, supportedFormats);
+        return new StandardPyramidDataConfiguration(pyramidFolder, sortedFormats);
     }
 
     public JsonObject getPyramidDataJson() {
