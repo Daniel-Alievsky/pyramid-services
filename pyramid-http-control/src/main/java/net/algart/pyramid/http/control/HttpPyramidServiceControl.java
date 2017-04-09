@@ -24,8 +24,9 @@
 
 package net.algart.pyramid.http.control;
 
+import net.algart.pyramid.api.common.PyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
-import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
 
 import java.io.IOException;
@@ -45,27 +46,28 @@ public final class HttpPyramidServiceControl implements PyramidAccessControl {
 
     public HttpPyramidServiceControl(
         String host,
-        HttpPyramidServicesConfiguration.Service serviceConfiguration)
+        PyramidServicesConfiguration.Service serviceConfiguration)
     {
         this(host, serviceConfiguration, false);
     }
 
     public HttpPyramidServiceControl(
         String host,
-        HttpPyramidServicesConfiguration.Service serviceConfiguration,
+        PyramidServicesConfiguration.Service serviceConfiguration,
         boolean https)
     {
         this(host,
             Objects.requireNonNull(serviceConfiguration, "Null serviceConfiguration").getPort(),
-            serviceConfiguration.parentProcess().parentConfiguration().systemCommandsFolder(),
+            HttpPyramidApiTools.systemCommandsFolder(
+                serviceConfiguration.parentProcess().parentConfiguration().getProjectRoot()),
             https);
     }
 
     public HttpPyramidServiceControl(String host, int port, Path systemCommandsFolder, boolean https) {
         this.host = Objects.requireNonNull(host, "Null host");
-        if (port <= 0 || port > HttpPyramidConstants.MAX_ALLOWED_PORT) {
+        if (port <= 0 || port > PyramidConstants.MAX_ALLOWED_PORT) {
             throw new IllegalArgumentException("Invalid port number " + port
-                + " (must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT + ")");
+                + " (must be in range 1.." + PyramidConstants.MAX_ALLOWED_PORT + ")");
         }
         this.port = port;
         this.systemCommandsFolder = Objects.requireNonNull(systemCommandsFolder, "Null systemCommandsFolder");

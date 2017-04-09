@@ -24,9 +24,9 @@
 
 package net.algart.pyramid.http.control;
 
-import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
-import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.api.http.HttpServerConfiguration;
 
 import java.io.IOError;
 import java.io.IOException;
@@ -46,26 +46,25 @@ public final class HttpPyramidServersLauncher {
     private static final int PROBLEM_NUMBER_OF_ATTEMPTS = 3;
     private static final int SLOW_START_NUMBER_OF_ATTEMPTS = 10;
 
-    private final HttpPyramidServicesConfiguration configuration;
-    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
+    private final PyramidServicesConfiguration servicesConfiguration;
+    private final HttpServerConfiguration serverConfiguration;
     private final Map<String, Process> runningProcesses;
 
     public HttpPyramidServersLauncher(
-        HttpPyramidServicesConfiguration configuration,
-        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+        PyramidServicesConfiguration servicesConfiguration,
+        HttpServerConfiguration serverConfiguration)
     {
-        this.configuration = Objects.requireNonNull(configuration, "Null configuration");
-        this.specificServerConfiguration = Objects.requireNonNull(specificServerConfiguration,
-            "Null specificServerConfiguration");
+        this.servicesConfiguration = Objects.requireNonNull(servicesConfiguration, "Null servicesConfiguration");
+        this.serverConfiguration = Objects.requireNonNull(serverConfiguration, "Null serverConfiguration");
         this.runningProcesses = Collections.synchronizedMap(new LinkedHashMap<>());
     }
 
-    public HttpPyramidServicesConfiguration getConfiguration() {
-        return configuration;
+    public PyramidServicesConfiguration getServicesConfiguration() {
+        return servicesConfiguration;
     }
 
-    public HttpPyramidSpecificServerConfiguration getSpecificServerConfiguration() {
-        return specificServerConfiguration;
+    public HttpServerConfiguration getServerConfiguration() {
+        return serverConfiguration;
     }
 
     /**
@@ -82,31 +81,31 @@ public final class HttpPyramidServersLauncher {
      */
     public void startAll(boolean skipAlreadyAlive) throws IOException {
         int serviceCount = 0, processCount = 0;
-        for (String groupId : configuration.allGroupId()) {
+        for (String groupId : servicesConfiguration.allGroupId()) {
             if (startPyramidServicesGroup(groupId, skipAlreadyAlive)) {
                 processCount++;
-                serviceCount += configuration.numberOfProcessServices(groupId);
+                serviceCount += servicesConfiguration.numberOfProcessServices(groupId);
             }
         }
         boolean proxy = false;
-        if (specificServerConfiguration.hasProxy()) {
+        if (serverConfiguration.hasProxy()) {
             proxy = startPyramidProxy(skipAlreadyAlive);
         }
         LOG.info(String.format("%n%d services in %d processes started, %s",
             serviceCount, processCount, proxy ? "1 proxy started" :
-                specificServerConfiguration.hasProxy() ? "1 proxy FAILED" : "proxy absent"));
+                serverConfiguration.hasProxy() ? "1 proxy FAILED" : "proxy absent"));
     }
 
     public AsyncPyramidCommand stopAllRequest(boolean skipNotAlive) throws InvalidFileConfigurationException {
         final List<AsyncPyramidCommand> allSubCommands = new ArrayList<>();
         final List<AsyncPyramidCommand> serviceCommands = new ArrayList<>();
-        final List<String> allGroupId = new ArrayList<>(configuration.allGroupId());
+        final List<String> allGroupId = new ArrayList<>(servicesConfiguration.allGroupId());
         for (String groupId : allGroupId) {
             serviceCommands.add(stopPyramidServicesGroupRequest(groupId, skipNotAlive));
         }
         allSubCommands.addAll(serviceCommands);
         final AsyncPyramidCommand proxyCommand;
-        if (specificServerConfiguration.hasProxy()) {
+        if (serverConfiguration.hasProxy()) {
             proxyCommand = stopPyramidProxyRequest(skipNotAlive);
             allSubCommands.add(proxyCommand);
         } else {
@@ -117,26 +116,26 @@ public final class HttpPyramidServersLauncher {
             for (int i = 0; i < serviceCommands.size(); i++) {
                 if (serviceCommands.get(i).isAccepted()) {
                     processCount++;
-                    serviceCount += configuration.numberOfProcessServices(allGroupId.get(i));
+                    serviceCount += servicesConfiguration.numberOfProcessServices(allGroupId.get(i));
                 }
             }
             LOG.info(String.format("%n%d services in %d processes normally stopped, %s",
                 serviceCount, processCount, proxyCommand != null && proxyCommand.isAccepted() ?
                     "1 proxy stopped" :
-                    specificServerConfiguration.hasProxy() ? "1 proxy FAILED to stop" : "proxy absent"));
+                    serverConfiguration.hasProxy() ? "1 proxy FAILED to stop" : "proxy absent"));
         });
     }
 
     public AsyncPyramidCommand restartAllRequest(boolean skipAlreadyAlive) throws IOException {
         final List<AsyncPyramidCommand> allSubCommands = new ArrayList<>();
         final List<AsyncPyramidCommand> serviceCommands = new ArrayList<>();
-        final List<String> allGroupId = new ArrayList<>(configuration.allGroupId());
+        final List<String> allGroupId = new ArrayList<>(servicesConfiguration.allGroupId());
         for (String groupId : allGroupId) {
             serviceCommands.add(restartPyramidServicesGroupRequest(groupId, skipAlreadyAlive));
         }
         allSubCommands.addAll(serviceCommands);
         final AsyncPyramidCommand proxyCommand;
-        if (specificServerConfiguration.hasProxy()) {
+        if (serverConfiguration.hasProxy()) {
             proxyCommand = restartPyramidProxyRequest(skipAlreadyAlive);
             allSubCommands.add(proxyCommand);
         } else {
@@ -147,59 +146,59 @@ public final class HttpPyramidServersLauncher {
             for (int i = 0; i < serviceCommands.size(); i++) {
                 if (serviceCommands.get(i).isAccepted()) {
                     processCount++;
-                    serviceCount += configuration.numberOfProcessServices(allGroupId.get(i));
+                    serviceCount += servicesConfiguration.numberOfProcessServices(allGroupId.get(i));
                 }
             }
             LOG.info(String.format("%n%d services in %d processes restarted, %s",
                 serviceCount, processCount, proxyCommand != null && proxyCommand.isAccepted() ?
                     "1 proxy restarted" :
-                    specificServerConfiguration.hasProxy() ? "1 proxy not restarted" : "proxy absent"));
+                    serverConfiguration.hasProxy() ? "1 proxy not restarted" : "proxy absent"));
         });
     }
 
     public boolean startPyramidServicesGroup(String groupId, boolean skipIfAlive)
         throws IOException
     {
-        final HttpPyramidServicesConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
+        final PyramidServicesConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return startProcess(new HttpPyramidProcessControl(
-            HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
+            HttpPyramidConstants.LOCAL_HOST, processConfiguration, serverConfiguration), skipIfAlive);
     }
 
     public AsyncPyramidCommand stopPyramidServicesGroupRequest(String groupId, boolean skipIfNotAlive)
         throws InvalidFileConfigurationException
     {
-        final HttpPyramidServicesConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
+        final PyramidServicesConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return stopProcessRequest(new HttpPyramidProcessControl(
-            HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfNotAlive);
+            HttpPyramidConstants.LOCAL_HOST, processConfiguration, serverConfiguration), skipIfNotAlive);
     }
 
     public AsyncPyramidCommand restartPyramidServicesGroupRequest(String groupId, boolean skipIfAlive)
         throws InvalidFileConfigurationException
     {
-        final HttpPyramidServicesConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
+        final PyramidServicesConfiguration.Process processConfiguration = getProcessConfiguration(groupId);
         return restartProcessRequest(new HttpPyramidProcessControl(
-            HttpPyramidConstants.LOCAL_HOST, processConfiguration, specificServerConfiguration), skipIfAlive);
+            HttpPyramidConstants.LOCAL_HOST, processConfiguration, serverConfiguration), skipIfAlive);
     }
 
     public boolean startPyramidProxy(boolean skipIfAlive)
         throws IOException
     {
         return startProcess(new HttpPyramidProxyControl(
-            HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
+            HttpPyramidConstants.LOCAL_HOST, servicesConfiguration, serverConfiguration), skipIfAlive);
     }
 
     public AsyncPyramidCommand stopPyramidProxyRequest(boolean skipIfNotAlive)
         throws InvalidFileConfigurationException
     {
         return stopProcessRequest(new HttpPyramidProxyControl(
-            HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfNotAlive);
+            HttpPyramidConstants.LOCAL_HOST, servicesConfiguration, serverConfiguration), skipIfNotAlive);
     }
 
     public AsyncPyramidCommand restartPyramidProxyRequest(boolean skipIfAlive)
         throws InvalidFileConfigurationException
     {
         return restartProcessRequest(new HttpPyramidProxyControl(
-            HttpPyramidConstants.LOCAL_HOST, configuration, specificServerConfiguration), skipIfAlive);
+            HttpPyramidConstants.LOCAL_HOST, servicesConfiguration, serverConfiguration), skipIfAlive);
     }
 
     private boolean startProcess(JavaProcessControl control, boolean skipIfAlive)
@@ -372,8 +371,8 @@ public final class HttpPyramidServersLauncher {
         };
     }
 
-    private HttpPyramidServicesConfiguration.Process getProcessConfiguration(String groupId) {
-        final HttpPyramidServicesConfiguration.Process result = configuration.getProcess(groupId);
+    private PyramidServicesConfiguration.Process getProcessConfiguration(String groupId) {
+        final PyramidServicesConfiguration.Process result = servicesConfiguration.getProcess(groupId);
         if (result == null) {
             throw new IllegalArgumentException("Service group " + groupId + " not found");
         }
@@ -471,7 +470,7 @@ public final class HttpPyramidServersLauncher {
         if (args.length < startArgIndex + 3) {
             System.out.printf("Usage:%n");
             System.out.printf("    %s [--checkAlive] [--serviceMode] [--consoleWaiting] [--groupId=xxxxxxx] "
-                    + "start|stop|restart projectRoot specificServerConfigurationFile%n",
+                    + "start|stop|restart projectRoot serverConfigurationFile%n",
                 HttpPyramidServersLauncher.class.getName());
             System.out.println("xxxxxxx (if present) should be \"groupId\" value for some service group or "
                 + "special keyword PROXY to control the proxy.");
@@ -479,10 +478,10 @@ public final class HttpPyramidServersLauncher {
         }
         final String command = args[startArgIndex].toLowerCase();
         final Path projectRoot = Paths.get(args[startArgIndex + 1]);
-        final Path specificServerConfigurationFile = Paths.get(args[startArgIndex + 2]);
+        final Path serverConfigurationFile = Paths.get(args[startArgIndex + 2]);
         final HttpPyramidServersLauncher launcher = new HttpPyramidServersLauncher(
-            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot),
-            HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile));
+            PyramidServicesConfiguration.readFromRootFolder(projectRoot),
+            HttpServerConfiguration.readFromFile(serverConfigurationFile));
         try {
             long t1 = System.nanoTime();
             switch (command) {

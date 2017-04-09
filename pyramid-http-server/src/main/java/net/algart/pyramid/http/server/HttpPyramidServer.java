@@ -26,9 +26,10 @@ package net.algart.pyramid.http.server;
 
 import net.algart.pyramid.PlanePyramidFactory;
 import net.algart.pyramid.api.common.PyramidApiTools;
-import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
+import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
-import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.api.http.HttpServerConfiguration;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -51,22 +52,22 @@ public class HttpPyramidServer {
 
     private static final Logger LOG = Logger.getLogger(HttpPyramidServer.class.getName());
 
-    private final HttpPyramidServicesConfiguration.Process processConfiguration;
-    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
+    private final PyramidServicesConfiguration.Process processConfiguration;
+    private final HttpServerConfiguration serverConfiguration;
     private volatile List<HttpPyramidService> services = null;
 
     public HttpPyramidServer(
-        HttpPyramidServicesConfiguration.Process processConfiguration,
-        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+        PyramidServicesConfiguration.Process processConfiguration,
+        HttpServerConfiguration serverConfiguration)
     {
         this.processConfiguration = Objects.requireNonNull(processConfiguration);
-        this.specificServerConfiguration = Objects.requireNonNull(specificServerConfiguration);
+        this.serverConfiguration = Objects.requireNonNull(serverConfiguration);
     }
 
     public void start(boolean tryToStopIfAlreadyRunning) throws Exception {
         final List<HttpPyramidService> services = new ArrayList<>();
         try {
-            for (HttpPyramidServicesConfiguration.Service serviceConfiguration : processConfiguration.getServices()) {
+            for (PyramidServicesConfiguration.Service serviceConfiguration : processConfiguration.getServices()) {
                 final String planePyramidFactory = serviceConfiguration.getPlanePyramidFactory();
                 final int port = serviceConfiguration.getPort();
                 final Class<?> factoryClass = Class.forName(planePyramidFactory);
@@ -122,7 +123,7 @@ public class HttpPyramidServer {
         LOG.info("Finishing pyramid server for ports " + processConfiguration.allPorts());
     }
 
-    public HttpPyramidServicesConfiguration.Process getProcessConfiguration() {
+    public PyramidServicesConfiguration.Process getProcessConfiguration() {
         return processConfiguration;
     }
 
@@ -170,8 +171,8 @@ public class HttpPyramidServer {
         return new HttpPyramidService(
             factory,
             port,
-            processConfiguration.parentConfiguration().systemCommandsFolder())
-            .setSpecificConfiguration(specificServerConfiguration);
+            HttpPyramidApiTools.systemCommandsFolder(processConfiguration.parentConfiguration().getProjectRoot()))
+            .setServerConfiguration(serverConfiguration);
     }
 
     protected void addHandlers(HttpPyramidService service) {
@@ -205,12 +206,12 @@ public class HttpPyramidServer {
         if (args.length < startArgIndex + 2 || groupId == null) {
             System.out.printf("Usage:%n");
             System.out.printf("    %s [--tryToStopIfAlreadyRunning] "
-                    + "--groupId=xxxxxxx projectRoot specificServerConfigurationFile%n",
+                    + "--groupId=xxxxxxx projectRoot serverConfigurationFile%n",
                 HttpPyramidServer.class.getName());
             System.out.printf("or%n");
             System.out.printf("    %s [--tryToStopIfAlreadyRunning] "
                     + "--groupId=xxxxxxx projectRoot somePath/.global-configuration.json "
-                    + "somePath/.format1.json somePath/.format2.json ... specificServerConfigurationFile%n",
+                    + "somePath/.format1.json somePath/.format2.json ... serverConfigurationFile%n",
                 HttpPyramidServer.class.getName());
             if (groupId == null) {
                 System.out.printf("--groupId is not specified%n");
@@ -218,9 +219,9 @@ public class HttpPyramidServer {
             return;
         }
         final Path projectRoot = Paths.get(args[startArgIndex]);
-        final Path specificServerConfigurationFile = Paths.get(args[args.length - 1]);
-        // Note: specificServerConfigurationFile is used for finding configRootDir and configFileName
-        final HttpPyramidServicesConfiguration configuration;
+        final Path serverConfigurationFile = Paths.get(args[args.length - 1]);
+        // Note: serverConfigurationFile is used for finding configRootDir and configFileName
+        final PyramidServicesConfiguration servicesConfiguration;
         final HttpPyramidServer server;
         try {
             if (args.length > startArgIndex + 2) {
@@ -229,18 +230,18 @@ public class HttpPyramidServer {
                 for (int index = startArgIndex + 2; index < args.length - 1; index++) {
                     files.add(Paths.get(args[index]));
                 }
-                configuration = HttpPyramidServicesConfiguration.readFromFiles(
+                servicesConfiguration = PyramidServicesConfiguration.readFromFiles(
                     projectRoot, globalConfigurationFile, files);
             } else {
-                configuration = HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
+                servicesConfiguration = PyramidServicesConfiguration.readFromRootFolder(projectRoot);
             }
-            final HttpPyramidServicesConfiguration.Process process = configuration.getProcess(groupId);
+            final PyramidServicesConfiguration.Process process = servicesConfiguration.getProcess(groupId);
             if (process == null) {
                 throw new IllegalArgumentException("Process with groupId \"" + groupId + "\" is not found");
             }
-            final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
-                HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
-            server = new HttpPyramidServer(process, specificServerConfiguration);
+            final HttpServerConfiguration serverConfiguration =
+                HttpServerConfiguration.readFromFile(serverConfigurationFile);
+            server = new HttpPyramidServer(process, serverConfiguration);
             server.start(tryToStopIfAlreadyRunning);
         } catch (Exception e) {
             if (serviceMode) {

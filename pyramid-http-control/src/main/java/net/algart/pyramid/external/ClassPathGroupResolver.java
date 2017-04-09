@@ -25,7 +25,7 @@
 package net.algart.pyramid.external;
 
 
-import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
 
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
@@ -41,24 +41,24 @@ import java.util.*;
 
 public class ClassPathGroupResolver {
 
-    private final HttpPyramidServicesConfiguration configuration;
+    private final PyramidServicesConfiguration configuration;
 
-    public ClassPathGroupResolver(HttpPyramidServicesConfiguration configuration) {
+    public ClassPathGroupResolver(PyramidServicesConfiguration configuration) {
         this.configuration = Objects.requireNonNull(configuration);
     }
 
     public Map<Path, JsonObject> resolveAllClassPaths() throws IOException {
         final Map<Path, JsonObject> result = new LinkedHashMap<>();
-        for (HttpPyramidServicesConfiguration.Service service : configuration.allSortedServices().values()) {
+        for (PyramidServicesConfiguration.Service service : configuration.allSortedServices().values()) {
             final JsonObject json = toJson(service.toJsonString());
             final JsonObject resolved = resolveClassPath(
-                json, HttpPyramidServicesConfiguration.Service.CLASS_PATH_FIELD);
+                json, PyramidServicesConfiguration.Service.CLASS_PATH_FIELD);
             if (resolved != null) {
                 result.put(service.getConfigurationFile(), resolved);
             }
         }
         final JsonObject json = toJson(configuration.toJsonString(false));
-        final JsonObject resolved = resolveClassPath(json, HttpPyramidServicesConfiguration.COMMON_CLASS_PATH_FIELD);
+        final JsonObject resolved = resolveClassPath(json, PyramidServicesConfiguration.COMMON_CLASS_PATH_FIELD);
         if (resolved != null) {
             result.put(configuration.getGlobalConfigurationFile(), resolved);
         }
@@ -164,10 +164,10 @@ public class ClassPathGroupResolver {
                 ClassPathGroupResolver.class.getName());
             return;
         }
-        HttpPyramidServicesConfiguration.setGlobalConfigurationFileRequired(false);
+        PyramidServicesConfiguration.setGlobalConfigurationFileRequired(false);
         final Path projectRoot = Paths.get(args[startIndex]);
-        final HttpPyramidServicesConfiguration configuration =
-            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
+        final PyramidServicesConfiguration configuration =
+            PyramidServicesConfiguration.readFromRootFolder(projectRoot);
         final Map<Path, JsonObject> correctedJsons = new ClassPathGroupResolver(configuration).resolveAllClassPaths();
         if (correctedJsons.isEmpty()) {
             System.out.printf("Nothing to do%n");

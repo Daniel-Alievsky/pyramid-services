@@ -26,7 +26,7 @@ package net.algart.pyramid.api.common.tests;
 
 import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
 import net.algart.pyramid.api.common.UnknownPyramidDataFormatException;
-import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -47,8 +47,8 @@ public class StandardPyramidDataConfigurationTest {
 
         final Path pyramidFolder = Paths.get(args[0]);
         final Path projectRoot = Paths.get(args[1]);
-        final HttpPyramidServicesConfiguration servicesConfiguration =
-            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
+        final PyramidServicesConfiguration servicesConfiguration =
+            PyramidServicesConfiguration.readFromRootFolder(projectRoot);
         final StandardPyramidDataConfiguration configuration =
             StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidFolder,
                 servicesConfiguration.allSortedFormats());

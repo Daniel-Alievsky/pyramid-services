@@ -22,26 +22,26 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.api.http.tests;
+package net.algart.pyramid.api.common.tests;
 
 import net.algart.pyramid.api.common.PyramidFormat;
-import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class HttpPyramidServiceConfigurationTest {
+public class PyramidServiceConfigurationTest {
     public static void main(String args[]) throws IOException {
         if (args.length == 0) {
-            System.out.printf("Usage: %s projectRoot%n", HttpPyramidServiceConfigurationTest.class.getName());
+            System.out.printf("Usage: %s projectRoot%n", PyramidServiceConfigurationTest.class.getName());
             return;
         }
         final Path projectRoot = Paths.get(args[0]);
-        final HttpPyramidServicesConfiguration configuration =
-            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
+        final PyramidServicesConfiguration configuration =
+            PyramidServicesConfiguration.readFromRootFolder(projectRoot);
         System.out.println(configuration);
-        for (HttpPyramidServicesConfiguration.Process process : configuration.getProcesses().values()) {
+        for (PyramidServicesConfiguration.Process process : configuration.getProcesses().values()) {
             System.out.printf("%nInformation about process \"%s\"%n", process.getGroupId());
             System.out.printf("    ports: %s%n", process.allPorts());
             System.out.printf("    jreName: %s%n", process.jreName());

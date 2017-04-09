@@ -50,8 +50,6 @@ public class HttpPyramidConstants {
     public static final int CLIENT_READ_TIMEOUT = 90000;
     // - read timeout should be greater than timeout SERVER_WAITING_IN_QUEUE_AND_READING_TIMEOUT
 
-    public static final int MAX_ALLOWED_PORT = 30000;
-
     public static final int SYSTEM_COMMANDS_DELAY = 300;
     public static final int SYSTEM_COMMANDS_DELAY_AFTER_FINISH = 500;
 
@@ -82,9 +80,9 @@ public class HttpPyramidConstants {
         private CommandPrefixes() {}
     }
 
-    public static final String DEFAULT_SYSTEM_COMMANDS_FOLDER = ".system.commands";
+    public static final String SYSTEM_COMMANDS_FOLDER = ".system.commands";
     /**
-     * Names of key files in {@link #DEFAULT_SYSTEM_COMMANDS_FOLDER} start from this prefix,
+     * Names of key files in {@link #SYSTEM_COMMANDS_FOLDER} start from this prefix,
      * where %d is replaced with the port number.
      */
     public static final String SYSTEM_COMMANDS_FILE_PREFIX = ".command.%d.";

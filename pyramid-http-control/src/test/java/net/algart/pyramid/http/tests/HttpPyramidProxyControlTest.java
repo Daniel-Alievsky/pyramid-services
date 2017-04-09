@@ -24,8 +24,8 @@
 
 package net.algart.pyramid.http.tests;
 
-import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
-import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
+import net.algart.pyramid.api.http.HttpServerConfiguration;
 import net.algart.pyramid.http.control.HttpPyramidProxyControl;
 
 import java.io.IOException;
@@ -35,23 +35,23 @@ import java.nio.file.Paths;
 public class HttpPyramidProxyControlTest {
     public static void main(String[] args) throws IOException {
         if (args.length < 4) {
-            System.out.printf("Usage: %s host start|alive|stop projectRoot specificServerConfigurationFile%n",
+            System.out.printf("Usage: %s host start|alive|stop projectRoot serverConfigurationFile%n",
                 HttpPyramidProxyControlTest.class.getName());
             return;
         }
         final String host = args[0];
         final String command = args[1].toLowerCase();
         final Path projectRoot = Paths.get(args[2]);
-        final Path specificServerConfigurationFile = Paths.get(args[3]);
-        final HttpPyramidServicesConfiguration configuration =
-            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
-        final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
-            HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
+        final Path serverConfigurationFile = Paths.get(args[3]);
+        final PyramidServicesConfiguration servicesConfiguration =
+            PyramidServicesConfiguration.readFromRootFolder(projectRoot);
+        final HttpServerConfiguration serverConfiguration =
+            HttpServerConfiguration.readFromFile(serverConfigurationFile);
 
         HttpPyramidProxyControl client = new HttpPyramidProxyControl(
             host,
-            configuration,
-            specificServerConfiguration);
+            servicesConfiguration,
+            serverConfiguration);
         long t1 = System.nanoTime();
         try {
             switch (command) {

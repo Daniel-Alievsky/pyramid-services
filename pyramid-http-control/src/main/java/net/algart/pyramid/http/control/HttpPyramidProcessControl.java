@@ -25,9 +25,9 @@
 package net.algart.pyramid.http.control;
 
 import net.algart.pyramid.api.common.IllegalJREException;
-import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
-import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.api.http.HttpServerConfiguration;
 
 import java.io.File;
 import java.io.IOError;
@@ -42,21 +42,20 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
     private static final Logger LOG = Logger.getLogger(HttpPyramidProcessControl.class.getName());
 
     private final String host;
-    private final HttpPyramidServicesConfiguration.Process processConfiguration;
-    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
+    private final PyramidServicesConfiguration.Process processConfiguration;
+    private final HttpServerConfiguration serverConfiguration;
     private final List<HttpPyramidServiceControl> serviceControls;
 
     public HttpPyramidProcessControl(
         String host,
-        HttpPyramidServicesConfiguration.Process processConfiguration,
-        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+        PyramidServicesConfiguration.Process processConfiguration,
+        HttpServerConfiguration serverConfiguration)
     {
         this.host = Objects.requireNonNull(host, "Null host");
         this.processConfiguration = Objects.requireNonNull(processConfiguration, "Null processConfiguration");
-        this.specificServerConfiguration = Objects.requireNonNull(
-            specificServerConfiguration, "Null specificServerConfiguration");
+        this.serverConfiguration = Objects.requireNonNull(serverConfiguration, "Null serverConfiguration");
         this.serviceControls = new ArrayList<>();
-        for (HttpPyramidServicesConfiguration.Service service : processConfiguration.getServices()) {
+        for (PyramidServicesConfiguration.Service service : processConfiguration.getServices()) {
             this.serviceControls.add(new HttpPyramidServiceControl(host, service));
         }
     }
@@ -65,7 +64,7 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
         return host;
     }
 
-    public HttpPyramidServicesConfiguration.Process getProcessConfiguration() {
+    public PyramidServicesConfiguration.Process getProcessConfiguration() {
         return processConfiguration;
     }
 
@@ -106,10 +105,10 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
 
     @Override
     public Process startOnLocalhost() throws InvalidFileConfigurationException {
-        final HttpPyramidServicesConfiguration configuration = processConfiguration.parentConfiguration();
+        final PyramidServicesConfiguration servicesConfiguration = processConfiguration.parentConfiguration();
         final Path javaPath;
         try {
-            javaPath = specificServerConfiguration.javaExecutable(processConfiguration.jreName());
+            javaPath = serverConfiguration.javaExecutable(processConfiguration.jreName());
         } catch (IllegalJREException e) {
             throw new InvalidFileConfigurationException(e);
         }
@@ -132,12 +131,12 @@ public final class HttpPyramidProcessControl extends JavaProcessControl {
         command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVER_CLASS_NAME);
         command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVICE_MODE_FLAG);
         command.add("--groupId=" + processConfiguration.getGroupId());
-        command.add(configuration.getProjectRoot().toAbsolutePath().toString());
-        command.add(configuration.getGlobalConfigurationFile().toAbsolutePath().toString());
-        for (HttpPyramidServicesConfiguration.Service service : processConfiguration.getServices()) {
+        command.add(servicesConfiguration.getProjectRoot().toAbsolutePath().toString());
+        command.add(servicesConfiguration.getGlobalConfigurationFile().toAbsolutePath().toString());
+        for (PyramidServicesConfiguration.Service service : processConfiguration.getServices()) {
             command.add(service.getConfigurationFile().toAbsolutePath().toString());
         }
-        command.add(specificServerConfiguration.getSpecificServerConfigurationFile().toAbsolutePath().toString());
+        command.add(serverConfiguration.getServerConfigurationFile().toAbsolutePath().toString());
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilder.directory(processConfiguration.workingDirectory().toFile());
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);

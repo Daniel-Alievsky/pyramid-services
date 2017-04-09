@@ -25,8 +25,8 @@
 package net.algart.pyramid.http.tests;
 
 import net.algart.pyramid.PlanePyramidInformation;
-import net.algart.pyramid.http.control.HttpPyramidServiceControl;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
+import net.algart.pyramid.http.control.HttpPyramidServiceControl;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -44,7 +44,7 @@ public class HttpPyramidControlTest {
         HttpPyramidServiceControl client = new HttpPyramidServiceControl(
             host,
             port,
-            Paths.get(HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER),
+            Paths.get(HttpPyramidConstants.SYSTEM_COMMANDS_FOLDER),
             false);
         final boolean alive;
         long t1 = System.nanoTime();

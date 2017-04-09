@@ -29,8 +29,13 @@ import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.common.PyramidConstants;
 
 import javax.json.*;
+import javax.json.stream.JsonGenerator;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -39,19 +44,19 @@ import java.util.Objects;
  * Configuration of the pyramid proxy server and other features that can very for specific servers.
  * Customized by system administrator for each server.
  */
-public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
+public class HttpServerConfiguration extends ConvertibleToJson {
     public static class JRE extends ConvertibleToJson {
         public static String DEFAULT_NAME = "default";
 
         private final String name;
         private final String homePath;
-        private final HttpPyramidSpecificServerConfiguration parentConfiguration;
+        private final HttpServerConfiguration parentConfiguration;
 
-        private JRE(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
-            this.name = HttpPyramidServicesConfiguration.getRequiredString(json, "name",
-                parentConfiguration.specificServerConfigurationFile);
-            this.homePath = HttpPyramidServicesConfiguration.getRequiredString(json, "homePath",
-                parentConfiguration.specificServerConfigurationFile);
+        private JRE(HttpServerConfiguration parentConfiguration, JsonObject json) {
+            this.name = getRequiredString(json, "name",
+                parentConfiguration.serverConfigurationFile);
+            this.homePath = getRequiredString(json, "homePath",
+                parentConfiguration.serverConfigurationFile);
             this.parentConfiguration = parentConfiguration;
         }
 
@@ -63,7 +68,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             return homePath;
         }
 
-        public HttpPyramidSpecificServerConfiguration parentConfiguration() {
+        public HttpServerConfiguration parentConfiguration() {
             return parentConfiguration;
         }
 
@@ -83,13 +88,13 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         private final String keystoreFile;
         private final String keystorePassword;
         private final String keyPassword;
-        private final HttpPyramidSpecificServerConfiguration parentConfiguration;
+        private final HttpServerConfiguration parentConfiguration;
 
-        private SSLSettings(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
-            this.keystoreFile = HttpPyramidServicesConfiguration.getRequiredString(json, "keystoreFile",
-                parentConfiguration.specificServerConfigurationFile);
-            this.keystorePassword = HttpPyramidServicesConfiguration.getRequiredString(json, "keystorePassword",
-                parentConfiguration.specificServerConfigurationFile);
+        private SSLSettings(HttpServerConfiguration parentConfiguration, JsonObject json) {
+            this.keystoreFile = getRequiredString(json, "keystoreFile",
+                parentConfiguration.serverConfigurationFile);
+            this.keystorePassword = getRequiredString(json, "keystorePassword",
+                parentConfiguration.serverConfigurationFile);
             this.keyPassword = json.getString("keyPassword", keystorePassword);
             this.parentConfiguration = parentConfiguration;
         }
@@ -107,7 +112,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         }
 
         public Path keystoreFile() {
-            return parentConfiguration.specificServerConfigurationFile
+            return parentConfiguration.serverConfigurationFile
                 .getParent().resolve(keystoreFile).toAbsolutePath();
         }
 
@@ -115,7 +120,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             return toJson().toString();
         }
 
-        public HttpPyramidSpecificServerConfiguration parentConfiguration() {
+        public HttpServerConfiguration parentConfiguration() {
             return parentConfiguration;
         }
 
@@ -145,7 +150,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
                 this.port = json.getInt("port", 80);
                 if (port <= 0) {
                     throw new JsonException("Invalid proxy configuration JSON "
-                        + parentProxySettings.parentConfiguration.specificServerConfigurationFile + ": "
+                        + parentProxySettings.parentConfiguration.serverConfigurationFile + ": "
                         + "zero or negative default server port number " + port);
                 }
                 this.parentProxySettings = parentProxySettings;
@@ -185,19 +190,19 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         private final boolean ssl;
         private final DefaultServer defaultServer;
         private final boolean autoRevivingByManager;
-        private final HttpPyramidSpecificServerConfiguration parentConfiguration;
+        private final HttpServerConfiguration parentConfiguration;
 
-        private ProxySettings(HttpPyramidSpecificServerConfiguration parentConfiguration, JsonObject json) {
+        private ProxySettings(HttpServerConfiguration parentConfiguration, JsonObject json) {
             Objects.requireNonNull(parentConfiguration);
             Objects.requireNonNull(json);
             this.parentConfiguration = parentConfiguration;
-            this.proxyPort = HttpPyramidServicesConfiguration.getRequiredInt(json, "proxyPort",
-                parentConfiguration.specificServerConfigurationFile);
-            if (proxyPort <= 0 || proxyPort > HttpPyramidConstants.MAX_ALLOWED_PORT) {
+            this.proxyPort = getRequiredInt(json, "proxyPort",
+                parentConfiguration.serverConfigurationFile);
+            if (proxyPort <= 0 || proxyPort > PyramidConstants.MAX_ALLOWED_PORT) {
                 throw new JsonException("Invalid proxy configuration JSON"
-                    + parentConfiguration.specificServerConfigurationFile + ":"
+                    + parentConfiguration.serverConfigurationFile + ":"
                     + " invalid proxy port number " + proxyPort
-                    + " (must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT + ")");
+                    + " (must be in range 1.." + PyramidConstants.MAX_ALLOWED_PORT + ")");
             }
             this.pyramidHost = json.getString("pyramidHost", "localhost");
             this.ssl = json.getBoolean("ssl", false);
@@ -237,7 +242,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             return toJson().toString();
         }
 
-        public HttpPyramidSpecificServerConfiguration parentConfiguration() {
+        public HttpServerConfiguration parentConfiguration() {
             return parentConfiguration;
         }
 
@@ -261,12 +266,12 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
     private final boolean proxy;
     private final ProxySettings proxySettings;
     private final SSLSettings sslSettings;
-    private final Path specificServerConfigurationFile;
+    private final Path serverConfigurationFile;
 
-    private HttpPyramidSpecificServerConfiguration(Path specificServerConfigurationFile, JsonObject json) {
-        Objects.requireNonNull(specificServerConfigurationFile);
+    private HttpServerConfiguration(Path serverConfigurationFile, JsonObject json) {
+        Objects.requireNonNull(serverConfigurationFile);
         Objects.requireNonNull(json);
-        this.specificServerConfigurationFile = specificServerConfigurationFile;
+        this.serverConfigurationFile = serverConfigurationFile;
         this.configRootDir = json.getString("configRootDir", PyramidConstants.DEFAULT_CONFIG_ROOT_DIR);
         this.configFileName = json.getString("configFileName", PyramidConstants.DEFAULT_CONFIG_FILE_NAME);
         this.imagesRootDir = json.getString("imagesRootDir", PyramidConstants.DEFAULT_IMAGES_ROOT_DIR);
@@ -283,7 +288,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         this.proxy = json.getBoolean("proxy", false);
         final JsonObject proxySettingsJson = json.getJsonObject("proxySettings");
         if (proxy && proxySettingsJson == null) {
-            throw new JsonException("Invalid configuration JSON " + specificServerConfigurationFile + ": "
+            throw new JsonException("Invalid configuration JSON " + serverConfigurationFile + ": "
                 + "\"proxySettings\" value required when \"proxy\" mode is used");
         }
         this.proxySettings = proxySettingsJson == null ?
@@ -291,7 +296,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             new ProxySettings(this, proxySettingsJson);
         final JsonObject sslSettingsJson = json.getJsonObject("sslSettings");
         if (proxySettings != null && proxySettings.ssl && sslSettingsJson == null) {
-            throw new JsonException("Invalid configuration JSON " + specificServerConfigurationFile + ": "
+            throw new JsonException("Invalid configuration JSON " + serverConfigurationFile + ": "
                 + "\"sslSettings\" value required when \"proxySettings\".\"ssl\" mode is used");
         }
         this.sslSettings = sslSettingsJson == null ? null : new SSLSettings(this, sslSettingsJson);
@@ -317,8 +322,8 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         return sslSettings;
     }
 
-    public Path getSpecificServerConfigurationFile() {
-        return specificServerConfigurationFile;
+    public Path getServerConfigurationFile() {
+        return serverConfigurationFile;
     }
 
     public String jreHome() {
@@ -333,7 +338,7 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
         final JRE jre = jreMap.get(jreName);
         if (jre == null) {
             throw new IllegalJREException("Unknown JRE with name \"" + jreName
-                + "\": such JRE is not specified in " + specificServerConfigurationFile);
+                + "\": such JRE is not specified in " + serverConfigurationFile);
         }
         return jre.getHomePath();
     }
@@ -368,16 +373,16 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
     }
 
     public String toString() {
-        return HttpPyramidServicesConfiguration.jsonToPrettyString(toJson());
+        return jsonToPrettyString(toJson());
     }
 
-    public static HttpPyramidSpecificServerConfiguration readFromFile(Path specificServerConfigurationFile)
+    public static HttpServerConfiguration readFromFile(Path serverConfigurationFile)
         throws IOException
     {
-        Objects.requireNonNull(specificServerConfigurationFile, "Null specificServerConfigurationFile");
-        return new HttpPyramidSpecificServerConfiguration(
-            specificServerConfigurationFile,
-            HttpPyramidServicesConfiguration.readJson(specificServerConfigurationFile));
+        Objects.requireNonNull(serverConfigurationFile, "Null serverConfigurationFile");
+        return new HttpServerConfiguration(
+            serverConfigurationFile,
+            readJson(serverConfigurationFile));
     }
 
     JsonObject toJson() {
@@ -398,6 +403,38 @@ public class HttpPyramidSpecificServerConfiguration extends ConvertibleToJson {
             builder.add("sslSettings", sslSettings.toJson());
         }
         return builder.build();
+    }
+
+    private static String getRequiredString(JsonObject json, String name, Path file) {
+        final JsonString result = json.getJsonString(name);
+        if (result == null) {
+            throw new JsonException("Invalid configuration JSON " + file + ": \"" + name + "\" value required");
+        }
+        return result.getString();
+    }
+
+    private static int getRequiredInt(JsonObject json, String name, Path file) {
+        final JsonNumber result = json.getJsonNumber(name);
+        if (result == null) {
+            throw new JsonException("Invalid configuration JSON " + file + ": \"" + name + "\" value required");
+        }
+        return result.intValueExact();
+    }
+
+    private static JsonObject readJson(Path path) throws IOException {
+        try (final JsonReader reader = Json.createReader(Files.newBufferedReader(path, StandardCharsets.UTF_8))) {
+            return reader.readObject();
+        }
+    }
+
+    private static String jsonToPrettyString(JsonObject json) {
+        JsonWriterFactory jsonWriterFactory = Json.createWriterFactory(
+            Collections.singletonMap(JsonGenerator.PRETTY_PRINTING, true));
+        StringWriter stringWriter = new StringWriter();
+        try (JsonWriter jsonWriter = jsonWriterFactory.createWriter(stringWriter)) {
+            jsonWriter.writeObject(json);
+            return stringWriter.toString();
+        }
     }
 }
 

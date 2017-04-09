@@ -22,27 +22,11 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.api.http.tests;
+package net.algart.pyramid.api.common;
 
-import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import javax.json.JsonObject;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-public class HttpPyramidSpecificServerConfigurationTest {
-    public static void main(String args[]) throws IOException {
-        if (args.length == 0) {
-            System.out.printf("Usage: %s specificServerConfigurationFile%n",
-                HttpPyramidSpecificServerConfigurationTest.class.getName());
-            return;
-        }
-        final Path configurationFile = Paths.get(args[0]);
-        final HttpPyramidSpecificServerConfiguration configuration =
-            HttpPyramidSpecificServerConfiguration.readFromFile(configurationFile);
-        System.out.println(configuration);
-        if (configuration.getSslSettings() != null) {
-            System.out.println("SSL keystore absolute path: " + configuration.getSslSettings().keystoreFile());
-        }
-    }
+// Class, not interface: method toJson should not be public, to avoid extra dependency from JsonObject
+abstract class ConvertibleToJson {
+    abstract JsonObject toJson();
 }

@@ -26,9 +26,9 @@ package net.algart.pyramid.http.control;
 
 import net.algart.pyramid.api.common.IllegalJREException;
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
-import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
-import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.api.http.HttpServerConfiguration;
 
 import java.io.File;
 import java.io.IOError;
@@ -52,24 +52,25 @@ public class HttpPyramidProxyControl extends JavaProcessControl implements Pyram
 
     private final String proxyHost;
     private final int proxyPort;
-    private final HttpPyramidServicesConfiguration configuration;
-    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
+    private final PyramidServicesConfiguration servicesConfiguration;
+    private final HttpServerConfiguration serverConfiguration;
     private final Path systemCommandsFolder;
 
     public HttpPyramidProxyControl(
         String proxyHost,
-        HttpPyramidServicesConfiguration configuration,
-        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+        PyramidServicesConfiguration servicesConfiguration,
+        HttpServerConfiguration serverConfiguration)
     {
         this.proxyHost = Objects.requireNonNull(proxyHost, "Null proxyHost");
-        this.configuration = Objects.requireNonNull(configuration, "Null configuration");
-        this.specificServerConfiguration = Objects.requireNonNull(specificServerConfiguration,
-            "Null specificServerConfiguration");
-        if (!specificServerConfiguration.hasProxy()) {
+        this.servicesConfiguration = Objects.requireNonNull(
+            servicesConfiguration, "Null servicesConfiguration");
+        this.serverConfiguration = Objects.requireNonNull(serverConfiguration,
+            "Null serverConfiguration");
+        if (!serverConfiguration.hasProxy()) {
             throw new IllegalArgumentException("Proxy is not used in this configuration");
         }
-        this.proxyPort = specificServerConfiguration.getProxySettings().getProxyPort();
-        this.systemCommandsFolder = configuration.systemCommandsFolder();
+        this.proxyPort = serverConfiguration.getProxySettings().getProxyPort();
+        this.systemCommandsFolder = HttpPyramidApiTools.systemCommandsFolder(servicesConfiguration.getProjectRoot());
     }
 
     public String getProxyHost() {
@@ -105,19 +106,19 @@ public class HttpPyramidProxyControl extends JavaProcessControl implements Pyram
     public Process startOnLocalhost() throws InvalidFileConfigurationException {
         final Path javaPath;
         try {
-            javaPath = specificServerConfiguration.javaExecutable();
+            javaPath = serverConfiguration.javaExecutable();
         } catch (IllegalJREException e) {
             throw new InvalidFileConfigurationException(e);
         }
         List<String> command = new ArrayList<>();
         command.add(javaPath.toAbsolutePath().toString());
-        final String xmxOption = configuration.commonXmxOption();
+        final String xmxOption = servicesConfiguration.commonXmxOption();
         if (xmxOption != null) {
             command.add(xmxOption);
         }
-        command.addAll(configuration.getCommonVmOptions());
+        command.addAll(servicesConfiguration.getCommonVmOptions());
         StringBuilder cp = new StringBuilder();
-        for (String p : configuration.classPath(false)) {
+        for (String p : servicesConfiguration.classPath(false)) {
             if (cp.length() > 0) {
                 cp.append(File.pathSeparatorChar);
             }
@@ -127,10 +128,10 @@ public class HttpPyramidProxyControl extends JavaProcessControl implements Pyram
         command.add(cp.toString());
         command.add(HttpPyramidConstants.HTTP_PYRAMID_PROXY_SERVER_CLASS_NAME);
         command.add(HttpPyramidConstants.HTTP_PYRAMID_SERVICE_MODE_FLAG);
-        command.add(configuration.getProjectRoot().toAbsolutePath().toString());
-        command.add(specificServerConfiguration.getSpecificServerConfigurationFile().toAbsolutePath().toString());
+        command.add(servicesConfiguration.getProjectRoot().toAbsolutePath().toString());
+        command.add(serverConfiguration.getServerConfigurationFile().toAbsolutePath().toString());
         ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.directory(configuration.getPyramidServicesFolder().toAbsolutePath().toFile());
+        processBuilder.directory(servicesConfiguration.getPyramidServicesFolder().toAbsolutePath().toFile());
         processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
         processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
         LOG.info(JavaProcessControl.commandLineToString(processBuilder));
@@ -171,7 +172,7 @@ public class HttpPyramidProxyControl extends JavaProcessControl implements Pyram
             // Unfortunately, some other exceptions like javax.net.ssl.SSLHandshakeException can lead to the same.
             if (logWhenFails) {
                 LOG.log(Level.INFO, "Cannot connect to proxy " +
-                    (specificServerConfiguration.getProxySettings().isSsl() ? "https" : "http")
+                    (serverConfiguration.getProxySettings().isSsl() ? "https" : "http")
                     + "://" + proxyHost + ":" + proxyPort + ": " + e);
             }
             return false;
@@ -179,7 +180,7 @@ public class HttpPyramidProxyControl extends JavaProcessControl implements Pyram
     }
 
     public final URI connectionURI(String pathAndQuery) {
-        final boolean useSSL = specificServerConfiguration.getProxySettings().isSsl();
+        final boolean useSSL = serverConfiguration.getProxySettings().isSsl();
         try {
             return new URL(useSSL ? "https" : "http", proxyHost, proxyPort, pathAndQuery).toURI();
         } catch (MalformedURLException | URISyntaxException e) {

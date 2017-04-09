@@ -30,7 +30,7 @@ import net.algart.pyramid.api.common.PyramidApiTools;
 import net.algart.pyramid.api.common.PyramidConstants;
 import net.algart.pyramid.api.http.HttpPyramidApiTools;
 import net.algart.pyramid.api.http.HttpPyramidConstants;
-import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.api.http.HttpServerConfiguration;
 import net.algart.pyramid.http.server.handlers.*;
 import net.algart.pyramid.requests.PlanePyramidRequest;
 import org.glassfish.grizzly.http.server.*;
@@ -76,9 +76,9 @@ public class HttpPyramidService {
     {
         Objects.requireNonNull(factory, "Null plane pyramid factory");
         Objects.requireNonNull(systemCommandsFolder, "Null folder for managing service by key files");
-        if (port <= 0 || port > HttpPyramidConstants.MAX_ALLOWED_PORT) {
+        if (port <= 0 || port > PyramidConstants.MAX_ALLOWED_PORT) {
             throw new IllegalArgumentException("Invalid port " + port
-                + ": must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT);
+                + ": must be in range 1.." + PyramidConstants.MAX_ALLOWED_PORT);
         }
         if (!Files.isDirectory(systemCommandsFolder)) {
             throw new IOException("Invalid folder for managing service by key files \""
@@ -99,12 +99,12 @@ public class HttpPyramidService {
         addHandler(new AliveStatusCommand(this));
     }
 
-    public HttpPyramidService setSpecificConfiguration(
-        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+    public HttpPyramidService setServerConfiguration(
+        HttpServerConfiguration serverConfiguration)
     {
-        Objects.requireNonNull(specificServerConfiguration, "Null configuration for specific server");
-        this.configRootDir = specificServerConfiguration.getConfigRootDir();
-        this.configFileName = specificServerConfiguration.getConfigFileName();
+        Objects.requireNonNull(serverConfiguration, "Null configuration for specific server");
+        this.configRootDir = serverConfiguration.getConfigRootDir();
+        this.configFileName = serverConfiguration.getConfigFileName();
         assert configRootDir != null;
         assert configFileName != null;
         return this;

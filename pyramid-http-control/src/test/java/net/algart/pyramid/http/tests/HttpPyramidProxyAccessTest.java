@@ -25,8 +25,8 @@
 package net.algart.pyramid.http.tests;
 
 import net.algart.pyramid.PlanePyramidInformation;
-import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
-import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
+import net.algart.pyramid.api.http.HttpServerConfiguration;
 import net.algart.pyramid.http.control.HttpPyramidProxyControl;
 import net.algart.pyramid.requests.PlanePyramidReadSpecialImageRequest;
 
@@ -39,25 +39,25 @@ public class HttpPyramidProxyAccessTest {
     public static void main(String[] args) throws IOException {
         if (args.length < 6) {
             System.out.printf("Usage: %s "
-                    + "host projectRoot specificServerConfigurationFile pyramidId outputFolder compression%n",
+                    + "host projectRoot serverConfigurationFile pyramidId outputFolder compression%n",
                 HttpPyramidProxyControlTest.class.getName());
             return;
         }
         final String host = args[0];
         final Path projectRoot = Paths.get(args[1]);
-        final Path specificServerConfigurationFile = Paths.get(args[2]);
+        final Path serverConfigurationFile = Paths.get(args[2]);
         final String pyramidId = args[3];
         final Path outputFolder = Paths.get(args[4]);
         final double compression = Double.parseDouble(args[5]);
-        final HttpPyramidServicesConfiguration configuration =
-            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot);
-        final HttpPyramidSpecificServerConfiguration specificServerConfiguration =
-            HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile);
+        final PyramidServicesConfiguration servicesConfiguration =
+            PyramidServicesConfiguration.readFromRootFolder(projectRoot);
+        final HttpServerConfiguration serverConfiguration =
+            HttpServerConfiguration.readFromFile(serverConfigurationFile);
 
         HttpPyramidProxyControl client = new HttpPyramidProxyControl(
             host,
-            configuration,
-            specificServerConfiguration);
+            servicesConfiguration,
+            serverConfiguration);
 
         final PlanePyramidInformation information = client.information(pyramidId);
         System.out.printf("Pyramid information:%n%s%n", information);

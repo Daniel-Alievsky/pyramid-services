@@ -87,7 +87,7 @@ class SimpleHttpPyramidServer {
 
     protected HttpPyramidService newService(PlanePyramidFactory factory, int port) throws IOException {
         return new HttpPyramidService(factory, port,
-            Paths.get(HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER));
+            Paths.get(HttpPyramidConstants.SYSTEM_COMMANDS_FOLDER));
     }
 
     protected void addHandlers(HttpPyramidService service) {

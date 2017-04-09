@@ -40,6 +40,10 @@ public class HttpPyramidApiTools {
         return systemCommandsFolder.resolve(keyFileFrefix + urlPrefix.substring(1, urlPrefix.length()));
     }
 
+    public static Path systemCommandsFolder(Path projectRoot) {
+        return projectRoot.resolve(HttpPyramidConstants.SYSTEM_COMMANDS_FOLDER).toAbsolutePath();
+    }
+
     public static boolean isUriPyramidCommand(String uriPath) {
         return uriPath.matches(HttpPyramidConstants.CommandPrefixes.PREXIX_START_REG_EXP);
     }

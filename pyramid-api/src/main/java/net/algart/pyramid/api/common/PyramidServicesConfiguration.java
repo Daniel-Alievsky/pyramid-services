@@ -22,10 +22,7 @@
  * SOFTWARE.
  */
 
-package net.algart.pyramid.api.http;
-
-import net.algart.pyramid.api.common.PyramidConstants;
-import net.algart.pyramid.api.common.PyramidFormat;
+package net.algart.pyramid.api.common;
 
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
@@ -42,7 +39,7 @@ import java.util.*;
  * Configuration of the set of services. Usually created on the compilation stage
  * and copied to the server without changes.
  */
-public class HttpPyramidServicesConfiguration {
+public class PyramidServicesConfiguration {
     public static final String GLOBAL_CONFIGURATION_FILE_NAME = ".global-configuration.json";
     public static final String CONFIGURATION_FILE_MASK = ".*.json";
     public static final String COMMON_CLASS_PATH_FIELD = "commonClassPath";
@@ -99,10 +96,10 @@ public class HttpPyramidServicesConfiguration {
             final String memory = getStringOrInt(json, "memory");
             this.memory = memory != null ? parseLongWithMetricalSuffixes(memory) : null;
             this.port = getRequiredInt(json, "port", configurationFile);
-            if (port <= 0 || port > HttpPyramidConstants.MAX_ALLOWED_PORT) {
+            if (port <= 0 || port > PyramidConstants.MAX_ALLOWED_PORT) {
                 throw new JsonException("Invalid configuration JSON " + configurationFile + ":"
                     + " invalid port number " + port
-                    + " (must be in range 1.." + HttpPyramidConstants.MAX_ALLOWED_PORT + ")");
+                    + " (must be in range 1.." + PyramidConstants.MAX_ALLOWED_PORT + ")");
             }
         }
 
@@ -208,7 +205,7 @@ public class HttpPyramidServicesConfiguration {
         private final String jreName;
         private final String workingDirectory;
         private final long requiredMemory;
-        private HttpPyramidServicesConfiguration parentConfiguration;
+        private PyramidServicesConfiguration parentConfiguration;
 
         private Process(String groupId, List<Service> services) {
             this.groupId = Objects.requireNonNull(groupId);
@@ -319,10 +316,10 @@ public class HttpPyramidServicesConfiguration {
         }
 
         public String xmxOption() {
-            return HttpPyramidServicesConfiguration.xmxOption(xmx());
+            return PyramidServicesConfiguration.xmxOption(xmx());
         }
 
-        public HttpPyramidServicesConfiguration parentConfiguration() {
+        public PyramidServicesConfiguration parentConfiguration() {
             return parentConfiguration;
         }
 
@@ -360,9 +357,8 @@ public class HttpPyramidServicesConfiguration {
     // - for example, here we can add -ea -esa to all processes
     private final Long commonMemory;
     // - actual -Xmx for every process is a maximum of this value and its xmx()
-    private String systemCommandsFolder;
 
-    private HttpPyramidServicesConfiguration(
+    private PyramidServicesConfiguration(
         Path projectRoot,
         Path globalConfigurationFile,
         JsonObject globalConfiguration,
@@ -396,8 +392,6 @@ public class HttpPyramidServicesConfiguration {
         }
         final String commonMemory = getStringOrInt(globalConfiguration, "commonMemory");
         this.commonMemory = commonMemory != null ? parseLongWithMetricalSuffixes(commonMemory) : null;
-        this.systemCommandsFolder = globalConfiguration.getString("systemCommandsFolder",
-            HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER);
         final Map<String, Service> services = new HashMap<>();
         this.allSortedFormats = new ArrayList<>();
         for (Process process : processList) {
@@ -451,20 +445,12 @@ public class HttpPyramidServicesConfiguration {
         return commonMemory;
     }
 
-    public String getSystemCommandsFolder() {
-        return systemCommandsFolder;
-    }
-
     public Collection<String> classPath(boolean resolve) {
         final Set<String> result = new TreeSet<>();
         for (String p : commonClassPath) {
             result.add(resolve ? resolveClassPath(p) : p);
         }
         return result;
-    }
-
-    public Path systemCommandsFolder() {
-        return projectRoot.resolve(systemCommandsFolder).toAbsolutePath();
     }
 
     public String commonXmxOption() {
@@ -507,7 +493,7 @@ public class HttpPyramidServicesConfiguration {
         return jsonToPrettyString(toJson(true));
     }
 
-    public static HttpPyramidServicesConfiguration readFromRootFolder(Path projectRoot) throws IOException {
+    public static PyramidServicesConfiguration readFromRootFolder(Path projectRoot) throws IOException {
         Objects.requireNonNull(projectRoot, "Null projectRoot");
         final Path configurationFolder = projectRoot.resolve(
             PyramidConstants.CONFIGURATION_FOLDER_IN_PROJECT_ROOT);
@@ -523,7 +509,7 @@ public class HttpPyramidServicesConfiguration {
         }
     }
 
-    public static HttpPyramidServicesConfiguration readFromFiles(
+    public static PyramidServicesConfiguration readFromFiles(
         Path projectRoot,
         Path globalConfigurationFile,
         Iterable<Path> configurationFiles)
@@ -566,7 +552,7 @@ public class HttpPyramidServicesConfiguration {
             final String groupId = entry.getKey();
             processes.put(groupId, new Process(groupId, entry.getValue()));
         }
-        return new HttpPyramidServicesConfiguration(
+        return new PyramidServicesConfiguration(
             projectRoot,
             globalConfigurationFile,
             globalConfiguration,
@@ -582,10 +568,10 @@ public class HttpPyramidServicesConfiguration {
      *                                        global configuration file; default is <tt>true</tt>.
      */
     public static void setGlobalConfigurationFileRequired(boolean globalConfigurationFileRequired) {
-        HttpPyramidServicesConfiguration.globalConfigurationFileRequired = globalConfigurationFileRequired;
+        PyramidServicesConfiguration.globalConfigurationFileRequired = globalConfigurationFileRequired;
     }
 
-    static String getStringOrInt(JsonObject json, String name) {
+    private static String getStringOrInt(JsonObject json, String name) {
         final JsonValue jsonValue = json.get(name);
         if (jsonValue instanceof JsonString) {
             return ((JsonString) jsonValue).getString();
@@ -596,7 +582,7 @@ public class HttpPyramidServicesConfiguration {
         return null;
     }
 
-    static String getRequiredString(JsonObject json, String name, Path file) {
+    private static String getRequiredString(JsonObject json, String name, Path file) {
         final JsonString result = json.getJsonString(name);
         if (result == null) {
             throw new JsonException("Invalid configuration JSON " + file + ": \"" + name + "\" value required");
@@ -604,7 +590,7 @@ public class HttpPyramidServicesConfiguration {
         return result.getString();
     }
 
-    static int getRequiredInt(JsonObject json, String name, Path file) {
+    private static int getRequiredInt(JsonObject json, String name, Path file) {
         final JsonNumber result = json.getJsonNumber(name);
         if (result == null) {
             throw new JsonException("Invalid configuration JSON " + file + ": \"" + name + "\" value required");
@@ -612,7 +598,7 @@ public class HttpPyramidServicesConfiguration {
         return result.intValueExact();
     }
 
-    static JsonArray getRequiredJsonArray(JsonObject json, String name, Path file) {
+    private static JsonArray getRequiredJsonArray(JsonObject json, String name, Path file) {
         final JsonArray result = json.getJsonArray(name);
         if (result == null) {
             throw new JsonException("Invalid configuration JSON " + file + ": \"" + name + "\" value required");
@@ -620,7 +606,7 @@ public class HttpPyramidServicesConfiguration {
         return result;
     }
 
-    static JsonArray toJsonArray(Collection<?> collection) {
+    private static JsonArray toJsonArray(Collection<?> collection) {
         final JsonArrayBuilder builder = Json.createArrayBuilder();
         for (Object o : collection) {
             if (o instanceof ConvertibleToJson) {
@@ -632,13 +618,13 @@ public class HttpPyramidServicesConfiguration {
         return builder.build();
     }
 
-    static JsonObject readJson(Path path) throws IOException {
+    private static JsonObject readJson(Path path) throws IOException {
         try (final JsonReader reader = Json.createReader(Files.newBufferedReader(path, StandardCharsets.UTF_8))) {
             return reader.readObject();
         }
     }
 
-    static String jsonToPrettyString(JsonObject json) {
+    private static String jsonToPrettyString(JsonObject json) {
         JsonWriterFactory jsonWriterFactory = Json.createWriterFactory(
             Collections.singletonMap(JsonGenerator.PRETTY_PRINTING, true));
         StringWriter stringWriter = new StringWriter();

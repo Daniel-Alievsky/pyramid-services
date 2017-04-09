@@ -26,10 +26,7 @@ package net.algart.pyramid.http.proxy;
 
 import net.algart.http.proxy.HttpServerAddress;
 import net.algart.http.proxy.HttpServerResolver;
-import net.algart.pyramid.api.common.PyramidApiTools;
-import net.algart.pyramid.api.common.PyramidFormat;
-import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
-import net.algart.pyramid.api.common.UnknownPyramidDataFormatException;
+import net.algart.pyramid.api.common.*;
 import net.algart.pyramid.api.http.*;
 import org.glassfish.grizzly.http.util.Parameters;
 
@@ -46,23 +43,23 @@ class StandardPyramidServerResolver implements HttpServerResolver {
     private static final Logger LOG = Logger.getLogger(StandardPyramidServerResolver.class.getName());
 
     private final Map<String, HttpServerAddress> pool = new ServerAddressHashMap();
-    private final HttpPyramidServicesConfiguration configuration;
+    private final PyramidServicesConfiguration servicesConfiguration;
     private final Collection<PyramidFormat> allSortedFormats;
-    private final HttpPyramidSpecificServerConfiguration specificServerConfiguration;
-    private final HttpPyramidSpecificServerConfiguration.ProxySettings proxyConfiguration;
+    private final HttpServerConfiguration serverConfiguration;
+    private final HttpServerConfiguration.ProxySettings proxyConfiguration;
     private final List<HttpPyramidIdFinder> pyramidIdFinders = new ArrayList<>();
     private final Object lock = new Object();
 
     StandardPyramidServerResolver(
-        HttpPyramidServicesConfiguration configuration,
-        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+        PyramidServicesConfiguration servicesConfiguration,
+        HttpServerConfiguration serverConfiguration)
     {
-        assert configuration != null && specificServerConfiguration != null;
-        assert specificServerConfiguration.getProxySettings() != null;
-        this.configuration = configuration;
-        this.allSortedFormats = configuration.allSortedFormats();
-        this.specificServerConfiguration = specificServerConfiguration;
-        this.proxyConfiguration = specificServerConfiguration.getProxySettings();
+        assert servicesConfiguration != null && serverConfiguration != null;
+        assert serverConfiguration.getProxySettings() != null;
+        this.servicesConfiguration = servicesConfiguration;
+        this.allSortedFormats = servicesConfiguration.allSortedFormats();
+        this.serverConfiguration = serverConfiguration;
+        this.proxyConfiguration = serverConfiguration.getProxySettings();
     }
 
     public void addPyramidIdFinder(HttpPyramidIdFinder pyramidIdFinder) {
@@ -110,8 +107,8 @@ class StandardPyramidServerResolver implements HttpServerResolver {
     private HttpServerAddress pyramidIdToServerAddress(String pyramidId) throws IOException {
         final String pyramidConfiguration = PyramidApiTools.pyramidIdToConfiguration(
             pyramidId,
-            specificServerConfiguration.getConfigRootDir(),
-            specificServerConfiguration.getConfigFileName());
+            serverConfiguration.getConfigRootDir(),
+            serverConfiguration.getConfigFileName());
         final JsonObject config = PyramidApiTools.configurationToJson(pyramidConfiguration);
         final Path pyramidPath = PyramidApiTools.getPyramidPath(config);
         final StandardPyramidDataConfiguration pyramidDataConfiguration;
@@ -122,7 +119,7 @@ class StandardPyramidServerResolver implements HttpServerResolver {
             throw new IOException(e);
         }
         final String formatName = pyramidDataConfiguration.getFormatName();
-        final HttpPyramidServicesConfiguration.Service service = configuration.findServiceByFormatName(formatName);
+        final PyramidServicesConfiguration.Service service = servicesConfiguration.findServiceByFormatName(formatName);
         if (service == null) {
             throw new IOException("Service not found for pyramid format \"" + formatName + "\"");
         }

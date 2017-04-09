@@ -24,8 +24,8 @@
 
 package net.algart.pyramid.http.control;
 
-import net.algart.pyramid.api.http.HttpPyramidServicesConfiguration;
-import net.algart.pyramid.api.http.HttpPyramidSpecificServerConfiguration;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
+import net.algart.pyramid.api.http.HttpServerConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -50,38 +50,38 @@ public class HttpPyramidServersManager {
     private final Object lock = new Object();
 
     private HttpPyramidServersManager(
-        HttpPyramidServicesConfiguration configuration,
-        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+        PyramidServicesConfiguration servicesConfiguration,
+        HttpServerConfiguration serverConfiguration)
     {
-        this.launcher = new HttpPyramidServersLauncher(configuration, specificServerConfiguration);
+        this.launcher = new HttpPyramidServersLauncher(servicesConfiguration, serverConfiguration);
     }
 
     public static HttpPyramidServersManager newInstance(
-        HttpPyramidServicesConfiguration configuration,
-        HttpPyramidSpecificServerConfiguration specificServerConfiguration)
+        PyramidServicesConfiguration servicesConfiguration,
+        HttpServerConfiguration serverConfiguration)
     {
-        return new HttpPyramidServersManager(configuration, specificServerConfiguration);
+        return new HttpPyramidServersManager(servicesConfiguration, serverConfiguration);
     }
 
     public static HttpPyramidServersManager newInstance(
         Path projectRoot,
-        Path specificServerConfigurationFile) throws IOException
+        Path serverConfigurationFile) throws IOException
     {
         return new HttpPyramidServersManager(
-            HttpPyramidServicesConfiguration.readFromRootFolder(projectRoot),
-            HttpPyramidSpecificServerConfiguration.readFromFile(specificServerConfigurationFile));
+            PyramidServicesConfiguration.readFromRootFolder(projectRoot),
+            HttpServerConfiguration.readFromFile(serverConfigurationFile));
     }
 
     public HttpPyramidServersLauncher getLauncher() {
         return launcher;
     }
 
-    public HttpPyramidServicesConfiguration getConfiguration() {
-        return launcher.getConfiguration();
+    public PyramidServicesConfiguration getServicesConfiguration() {
+        return launcher.getServicesConfiguration();
     }
 
-    public HttpPyramidSpecificServerConfiguration getSpecificServerConfiguration() {
-        return launcher.getSpecificServerConfiguration();
+    public HttpServerConfiguration getServerConfiguration() {
+        return launcher.getServerConfiguration();
     }
 
     public void startAll() throws IOException {
@@ -112,7 +112,7 @@ public class HttpPyramidServersManager {
     private void reviveAll() throws InvalidFileConfigurationException {
         final List<AsyncPyramidCommand> allSubCommands = new ArrayList<>();
         final List<AsyncPyramidCommand> serviceCommands = new ArrayList<>();
-        final List<String> allGroupId = new ArrayList<>(launcher.getConfiguration().allGroupId());
+        final List<String> allGroupId = new ArrayList<>(launcher.getServicesConfiguration().allGroupId());
         for (String groupId : allGroupId) {
             final AsyncPyramidCommand command = launcher.restartPyramidServicesGroupRequest(groupId, true);
             if (!(command instanceof ImmediatePyramidCommand)) {
@@ -121,9 +121,9 @@ public class HttpPyramidServersManager {
         }
         allSubCommands.addAll(serviceCommands);
         final AsyncPyramidCommand proxyCommand;
-        final boolean hasProxy = launcher.getSpecificServerConfiguration().hasProxy();
+        final boolean hasProxy = launcher.getServerConfiguration().hasProxy();
         final boolean revivingByManager = hasProxy
-            && launcher.getSpecificServerConfiguration().getProxySettings().isAutoRevivingByManager();
+            && launcher.getServerConfiguration().getProxySettings().isAutoRevivingByManager();
         if (revivingByManager) {
             proxyCommand = launcher.restartPyramidProxyRequest(true);
             if (!(proxyCommand instanceof ImmediatePyramidCommand)) {
@@ -138,7 +138,7 @@ public class HttpPyramidServersManager {
                 for (int i = 0; i < serviceCommands.size(); i++) {
                     if (serviceCommands.get(i).isAccepted()) {
                         processCount++;
-                        serviceCount += launcher.getConfiguration().numberOfProcessServices(allGroupId.get(i));
+                        serviceCount += launcher.getServicesConfiguration().numberOfProcessServices(allGroupId.get(i));
                     }
                 }
                 LOG.info(String.format("%n%d services in %d processes successfully revived, %s",
@@ -194,13 +194,13 @@ public class HttpPyramidServersManager {
     public static void main(String[] args) throws IOException {
         if (args.length < 2) {
             System.out.printf("Usage:%n");
-            System.out.printf("    %s projectRoot specificServerConfigurationFile%n",
+            System.out.printf("    %s projectRoot serverConfigurationFile%n",
                 HttpPyramidServersManager.class.getName());
             return;
         }
         final Path projectRoot = Paths.get(args[0]);
-        final Path specificServerConfigurationFile = Paths.get(args[1]);
-        final HttpPyramidServersManager manager = newInstance(projectRoot, specificServerConfigurationFile);
+        final Path serverConfigurationFile = Paths.get(args[1]);
+        final HttpPyramidServersManager manager = newInstance(projectRoot, serverConfigurationFile);
         try {
             manager.startAll();
         } catch (Throwable e) {

@@ -31,6 +31,8 @@ public class PyramidConstants {
     private PyramidConstants() {
     }
 
+    public static final int MAX_ALLOWED_PORT = 30000;
+
     public static final Path PYRAMID_SERVICES_IN_PROJECT_ROOT = Paths.get(getStringEnv(
         "NET_ALGART_PYRAMID_PYRAMID_SERVICES_IN_PROJECT_ROOT", "pyramid-services"));
     public static final Path CONFIGURATION_FOLDER_IN_PROJECT_ROOT = Paths.get(getStringEnv(
@@ -42,7 +44,7 @@ public class PyramidConstants {
         "planePyramidSubFactory";
 
     // The following 2 constants usually do not change, but theoretically can be customized via
-    // HttpPyramidConfiguration.GLOBAL_CONFIGURATION_FILE_NAME (json-file), "commonVmOptions" section.
+    // PyramidServicesConfiguration.GLOBAL_CONFIGURATION_FILE_NAME (json-file), "commonVmOptions" section.
     public static final String PYRAMID_PATH_NAME_IN_CONFIGURATION_JSON = System.getProperty(
         "net.algart.pyramid.api.common.pyramidPathNameInJson", "pyramidPath");
     public static final String PYRAMID_DATA_CONFIG_FILE_NAME = System.getProperty(
@@ -52,8 +54,8 @@ public class PyramidConstants {
         FORMAT_NAME_IN_PYRAMID_FACTORY_CONFIGURATION_JSON;
     public static final String FILE_NAME_IN_PYRAMID_DATA_CONFIG_FILE = "fileName";
 
-    // The following constants can be customized also by more simple way:
-    // HttpPyramidSpecificServerConfiguration json-file
+    // The following constants can be also customized also by more simple way:
+    // HttpServerConfiguration json-file
     public static final String DEFAULT_CONFIG_ROOT_DIR = System.getProperty(
         "net.algart.pyramid.api.common.configRoot", "/pp-links");
     public static final String DEFAULT_CONFIG_FILE_NAME = System.getProperty(

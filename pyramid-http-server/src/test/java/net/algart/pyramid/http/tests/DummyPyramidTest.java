@@ -76,7 +76,7 @@ public class DummyPyramidTest {
         final HttpPyramidService service = new HttpPyramidService(
             new MyPyramidFactory(),
             81,
-            projectRoot.resolve(HttpPyramidConstants.DEFAULT_SYSTEM_COMMANDS_FOLDER))
+            projectRoot.resolve(HttpPyramidConstants.SYSTEM_COMMANDS_FOLDER))
         {
             @Override
             public String pyramidIdToConfiguration(String pyramidId) throws IOException {

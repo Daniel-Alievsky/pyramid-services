@@ -27,7 +27,6 @@ package net.algart.pyramid.api.common;
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.JsonObject;
-import javax.json.JsonReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
