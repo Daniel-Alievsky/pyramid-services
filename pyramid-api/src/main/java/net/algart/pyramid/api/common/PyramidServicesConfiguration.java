@@ -192,7 +192,7 @@ public class PyramidServicesConfiguration {
                 builder.add("workingDirectory", workingDirectory);
             }
             if (memory != null) {
-                builder.add("memory", memory);
+                builder.add("memory", toStringWithMetricalSuffixes(memory));
             }
             builder.add("port", port);
             return builder.build();
@@ -659,7 +659,7 @@ public class PyramidServicesConfiguration {
         builder.add(COMMON_CLASS_PATH_FIELD, toJsonArray(commonClassPath));
         builder.add("commonVmOptions", toJsonArray(commonVmOptions));
         if (commonMemory != null) {
-            builder.add("commonMemory", commonMemory);
+            builder.add("commonMemory", toStringWithMetricalSuffixes(commonMemory));
         }
         return builder.build();
     }
@@ -667,14 +667,20 @@ public class PyramidServicesConfiguration {
     private static String xmxOption(Long xmx) {
         if (xmx == null) {
             return null;
-        } else if (xmx % (1024 * 1024 * 1024) == 0) {
-            return "-Xmx" + xmx / (1024 * 1024 * 1024) + "g";
-        } else if (xmx % (1024 * 1024) == 0) {
-            return "-Xmx" + xmx / (1024 * 1024) + "m";
-        } else if (xmx % 1024 == 0) {
-            return "-Xmx" + xmx / 1024 + "k";
         } else {
-            return "-Xmx" + xmx;
+            return "-Xmx" + toStringWithMetricalSuffixes(xmx);
+        }
+    }
+
+    private static String toStringWithMetricalSuffixes(long memory) {
+        if (memory % (1024 * 1024 * 1024) == 0) {
+            return memory / (1024 * 1024 * 1024) + "g";
+        } else if (memory % (1024 * 1024) == 0) {
+            return memory / (1024 * 1024) + "m";
+        } else if (memory % 1024 == 0) {
+            return memory / 1024 + "k";
+        } else {
+            return String.valueOf(memory);
         }
     }
 

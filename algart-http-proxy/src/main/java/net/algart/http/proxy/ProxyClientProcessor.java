@@ -406,8 +406,9 @@ class ProxyClientProcessor extends BaseFilter {
         private final boolean last;
         private volatile boolean writingStarted = false;
 
-        ProxyWriteHandler(Buffer contentBuffer, FilterChainContext ctx, boolean last) {
-            assert contentBuffer != null && ctx != null;
+        private ProxyWriteHandler(Buffer contentBuffer, FilterChainContext ctx, boolean last) {
+            assert contentBuffer != null : "Null contentBuffer";
+            // ctx is null in simple situation: closeAndReturnError
             this.contentBuffer = contentBuffer;
             this.ctx = ctx;
             this.last = last;
@@ -435,7 +436,9 @@ class ProxyClientProcessor extends BaseFilter {
 //                for (long t = System.currentTimeMillis(); System.currentTimeMillis() - t < 5500; ) ;
 //                System.out.println("!!!DELAY!! " + contentBuffer + "; " + last + "; " + new java.util.Date());
                 if (AVOID_LOCK_FOR_SERVER_CONNECTION_SYNCHRONIZATION) {
-                    ctx.resumeNext();
+                    if (ctx != null) {
+                        ctx.resumeNext();
+                    }
                     // - must be called AFTER "write" call, in other case some complex systems like Vaadin
                     // will be not proxied correctly
                 }
@@ -451,7 +454,7 @@ class ProxyClientProcessor extends BaseFilter {
             // - this is not a serious problem, just the client cannot receive data too quickly (internet is slow)
             if (AVOID_LOCK_FOR_SERVER_CONNECTION_SYNCHRONIZATION) {
                 synchronized (lock) {
-                    if (!writingStarted) {
+                    if (!writingStarted && ctx != null) {
                         ctx.completeAndRecycle();
                     }
                 }
