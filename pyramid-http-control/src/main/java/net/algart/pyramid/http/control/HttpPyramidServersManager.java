@@ -27,6 +27,7 @@ package net.algart.pyramid.http.control;
 import net.algart.pyramid.api.common.PyramidServicesConfiguration;
 import net.algart.pyramid.api.http.HttpServerConfiguration;
 
+import java.io.IOError;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -166,7 +167,15 @@ public class HttpPyramidServersManager {
                     while (!shutdown) {
                         lock.wait(REVIVING_DELAY_IN_MILLISECONDS);
                         if (AUTO_REVIVE) {
-                            reviveAll();
+                            try {
+                                reviveAll();
+                            } catch (IOError e) {
+                                LOG.log(Level.SEVERE, "Strange I/O error while attemt to revive services", e);
+                                // Additional pause: maybe, the problem will be resolved
+                                // (for example, someone killed the process and quickly acquired the port)
+                                Thread.sleep(REVIVING_DELAY_IN_MILLISECONDS);
+                                // ...and continuing the reviving loop
+                            }
                         }
                     }
                 } catch (InterruptedException e) {
@@ -223,6 +232,7 @@ public class HttpPyramidServersManager {
             System.in.read();
         } catch (IOException ignored) {
         }
+        System.out.printf("Exiting pyramid servers manager...%n%n");
         manager.stopAll();
     }
 }
