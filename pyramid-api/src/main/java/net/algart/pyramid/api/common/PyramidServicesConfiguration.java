@@ -461,10 +461,24 @@ public class PyramidServicesConfiguration {
         return Collections.unmodifiableSet(processes.keySet());
     }
 
+    /**
+     * Returns all pyramid formats from all services in order of decreasing
+     * {@link PyramidFormat#getRecognitionPriority() recognition priority}: the maximal priority will be first,
+     * the mininal will be last.
+     *
+     * @return all pyramid formats from all services sorted by decreasing recognition priority.
+     */
     public Collection<PyramidFormat> allSortedFormats() {
         return Collections.unmodifiableList(allSortedFormats);
     }
 
+    /**
+     * Returns map of all services (name => service). This map is roted in order of decreasing
+     * {@link PyramidFormat#getRecognitionPriority() recognition priority} of the format:
+     * the service with maximal priority of its format will be first.
+     *
+     * @return the map of all services sorted by decreasing recognition priority.
+     */
     public Map<String, Service> allSortedServices() {
         return Collections.unmodifiableMap(allSortedServices);
     }
