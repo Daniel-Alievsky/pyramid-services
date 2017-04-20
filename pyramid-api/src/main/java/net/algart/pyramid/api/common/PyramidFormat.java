@@ -136,7 +136,12 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
      *
      * <p>Never returns <tt>null</tt>, but returns an empty list for single-file or single-folder formats.</p>
      *
-     * <p>Not used by current version of the services.</p>
+     * <p>Note that the order of the returned filenames must be stable for this format:
+     * in particular, if we want to make a copy of the main file, then the file/folder #k
+     * from accompanying files of the source main file should be copied to the file/folder #k
+     * from accompanying files of the target main file.</p>
+     *
+     * <p>Not used by current version of the services, but may be used by other systems like uploaders.</p>
      *
      * @return names or replacements for all files that contain image data in addition to the mail image file.
      */
@@ -151,8 +156,6 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
      * Then, if the pyramid is written in some custom microscope format, supported by LOCI,
      * it will be detected correctly, but if it is a usual planar TIFF, not supported by LOCI (and LOCI library
      * will return error while attempt to read it), this file will be processed by built-in Java library.
-     *
-     * <p>Not used by current version of the services.</p>
      *
      * @return priority of this format for recognition procedure.
      */
