@@ -136,7 +136,7 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
      *
      * <p>Never returns <tt>null</tt>, but returns an empty list for single-file or single-folder formats.</p>
      *
-     * <p>Note that the order of the returned filenames must be stable for this format:
+     * <p>Note that the order of the returned filenames is stable for this format:
      * in particular, if we want to make a copy of the main file, then the file/folder #k
      * from accompanying files of the source main file should be copied to the file/folder #k
      * from accompanying files of the target main file.</p>
