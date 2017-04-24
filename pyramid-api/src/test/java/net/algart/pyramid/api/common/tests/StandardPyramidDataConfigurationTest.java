@@ -24,6 +24,7 @@
 
 package net.algart.pyramid.api.common.tests;
 
+import net.algart.pyramid.api.common.PyramidFormat;
 import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
 import net.algart.pyramid.api.common.UnknownPyramidDataFormatException;
 import net.algart.pyramid.api.common.PyramidServicesConfiguration;
@@ -59,5 +60,19 @@ public class StandardPyramidDataConfigurationTest {
             System.out.printf("  %s (%s)%n",
                 f, !Files.exists(f) ? "NOT exists" : Files.isDirectory(f) ? "existing folder" : "existing file");
         }
+        System.out.printf("%nMatchings file %s for all format:%n", configuration.getPyramidDataFile());
+        for (PyramidFormat format : servicesConfiguration.allSortedFormats()) {
+            if (format.matchesPath(configuration.getPyramidDataFile())) {
+                System.out.printf("  \"%s\"%n", format.getFormatName());
+            }
+        }
+        final Path probableFolder = files.size() > 0 ? files.get(0) : configuration.getPyramidDataFile();
+        System.out.printf("%nMatchings subfolder %s for all format:%n", probableFolder);
+        for (PyramidFormat format : servicesConfiguration.allSortedFormats()) {
+            if (format.matchesFolder(probableFolder)) {
+                System.out.printf("  \"%s\"%n", format.getFormatName());
+            }
+        }
+
     }
 }

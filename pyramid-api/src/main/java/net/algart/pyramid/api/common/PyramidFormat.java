@@ -42,43 +42,31 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
     private final String fileRegExp;
     private final String fileInFolderRegExp;
     private final List<String> accompanyingFiles;
+    private final boolean accompanyingFilesRequired;
     private final int recognitionPriority;
-    // - fileInFolderRegExp and accompanyingFiles are not used by current version of services,
-    // but may be used by other systems like uploaders
+    // - fileInFolderRegExp, accompanyingFiles and accompanyingFilesRequired
+    // are not used by current version of services, but may be used by other systems like uploaders
 
-    private PyramidFormat(
-        String formatName,
-        String formatTitle,
-        String fileRegExp,
-        String fileInFolderRegExp,
-        List<String> accompanyingFiles,
-        int recognitionPriority)
-    {
-        this.formatName = Objects.requireNonNull(formatName, "Null formatName");
-        this.formatTitle = formatTitle;
-        this.fileRegExp = Objects.requireNonNull(fileRegExp, "Null fileRegExp");
-        this.fileInFolderRegExp = fileInFolderRegExp;
-        this.accompanyingFiles =  Objects.requireNonNull(accompanyingFiles, "Null accompanyingFiles");
-        this.recognitionPriority = recognitionPriority;
-    }
-
-    public static PyramidFormat getInstance(JsonObject json) {
-        final String formatName = getRequiredString(json,
+    private PyramidFormat(JsonObject json) {
+        this.formatName = getRequiredString(json,
             PyramidConstants.FORMAT_NAME_IN_PYRAMID_FACTORY_CONFIGURATION_JSON);
-        final String formatTitle = json.getString("formatTitle", null);
-        final String fileRegExp = json.getString(
+        this.formatTitle = json.getString("formatTitle", null);
+        this.fileRegExp = json.getString(
             PyramidConstants.FILE_REG_EXP_IN_PYRAMID_FACTORY_CONFIGURATION_JSON, "");
-        final String fileInFolderRegExp = json.getString("fileInFolderRegExp", null);
+        this.fileInFolderRegExp = json.getString("fileInFolderRegExp", null);
         final JsonArray jsonAccompanyingFiles = json.getJsonArray("accompanyingFiles");
-        final List<String> accompanyingFiles = new ArrayList<>();
+        this.accompanyingFiles = new ArrayList<>();
         if (jsonAccompanyingFiles != null) {
             for (int k = 0, n = jsonAccompanyingFiles.size(); k < n; k++) {
                 accompanyingFiles.add(jsonAccompanyingFiles.getString(k));
             }
         }
-        final int recognitionPriority = json.getInt("recognitionPriority", 0);
-        return new PyramidFormat(
-            formatName, formatTitle, fileRegExp, fileInFolderRegExp, accompanyingFiles, recognitionPriority);
+        this.accompanyingFilesRequired = json.getBoolean("accompanyingFilesRequired", false);
+        this.recognitionPriority = json.getInt("recognitionPriority", 0);
+    }
+
+    public static PyramidFormat getInstance(JsonObject json) {
+        return new PyramidFormat(json);
     }
 
     public String getFormatName() {
@@ -97,8 +85,7 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
      * <p>Typical example: "(.*)(\.tif$|\.tiff)$". If this value is absent in JSON, the default value is "";
      * it means that there are no preferred file names for this format (format must be detected by other way).</p>
      *
-     * <p>Note: regular expression must contain only lowercase characters (we always check the filenames
-     * lowercase).</p>
+     * <p>Note: this regular expression is used in case-insensitive mode.</p>
      *
      * <p>Never returns <tt>null</tt>.</p>
      *
@@ -113,10 +100,9 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
      * (instead of usual file or pair file + folder). If the image is stored in a folder and this regexp is
      * not <tt>null</tt>, the folder must contain some files with names matched this regexp.
      *
-     * <p>Note: regular expression must contain only lowercase characters (we always check the filenames
-     * lowercase).</p>
+     * <p>Note: this regular expression is used in case-insensitive mode.</p>
      *
-     * <p>Must return <tt>null</tt> if the main image file is not a folder.</p>
+     * <p>May return <tt>null</tt>. Must return <tt>null</tt> for single-file formats.</p>
      *
      * @return regular expression for names of files, containing in the folder, representing this image format.
      */
@@ -150,6 +136,18 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
     }
 
     /**
+     * Returns <tt>true</tt> if this format requires one or more accompanying files (that can be found by
+     * {@link #getAccompanyingFiles()} method). Note that some multi-file formats can work even in a case,
+     * when we have only one main file with some draft picture, but other formats require additional files,
+     * because the main file does not contain an actual image.
+     *
+     * @return <tt>true</tt> if this format requires one or more accompanying files.
+     */
+    public boolean isAccompanyingFilesRequired() {
+        return accompanyingFilesRequired;
+    }
+
+    /**
      * The priority of this format for recognition procedure.
      * For example, if we have some large <tt>.tiff</tt>-file, we can assign  the priority 500 to LOCI BioFormats
      * pyramid reader and 0 to the reader based on standard <tt>javax.imageio.ImageIO</tt> class.
@@ -165,19 +163,20 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
 
     public boolean matchesPath(Path pyramidDataFileOrFolder) {
         Objects.requireNonNull(pyramidDataFileOrFolder, "Null pyramidDataFileOrFolder");
-        final String fileName = pyramidDataFileOrFolder.getFileName().toString().toLowerCase();
-        return !fileRegExp.isEmpty() && Pattern.compile(fileRegExp).matcher(fileName).matches();
+        final String fileName = pyramidDataFileOrFolder.getFileName().toString();
+        return !fileRegExp.isEmpty()
+            && Pattern.compile(fileRegExp, Pattern.CASE_INSENSITIVE).matcher(fileName).matches();
     }
 
     public boolean matchesFolder(Path pyramidDataFolder) throws IOException {
         Objects.requireNonNull(pyramidDataFolder, "Null pyramidDataFolder");
-        if (!Files.isDirectory(pyramidDataFolder)) {
+        if (fileInFolderRegExp == null || !Files.isDirectory(pyramidDataFolder)) {
             return false;
         }
-        final Pattern pattern = Pattern.compile(fileInFolderRegExp);
+        final Pattern pattern = Pattern.compile(fileInFolderRegExp, Pattern.CASE_INSENSITIVE);
         try (final DirectoryStream<Path> files = Files.newDirectoryStream(pyramidDataFolder)) {
             for (Path file : files) {
-                if (pattern.matcher(file.getFileName().toString().toLowerCase()).matches()) {
+                if (pattern.matcher(file.getFileName().toString()).matches()) {
                     return true;
                 }
             }
@@ -187,13 +186,12 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
 
     public List<Path> accompanyingFiles(Path pyramidDataFileOrFolder) {
         Objects.requireNonNull(pyramidDataFileOrFolder, "Null pyramidDataFileOrFolder");
-        if (!matchesPath(pyramidDataFileOrFolder)) {
-            throw new IllegalArgumentException("pyramidDataFileOrFolder \"" + pyramidDataFileOrFolder
-                + "\" does not match this " + this);
-        }
-        final String fileName = pyramidDataFileOrFolder.getFileName().toString().toLowerCase();
-        final Matcher m = Pattern.compile(fileRegExp).matcher(fileName);
+        final String fileName = pyramidDataFileOrFolder.getFileName().toString();
         final List<Path> result = new ArrayList<>();
+        if (fileRegExp.isEmpty()) {
+            return result;
+        }
+        final Matcher m = Pattern.compile(fileRegExp, Pattern.CASE_INSENSITIVE).matcher(fileName);
         for (String replacement : accompanyingFiles) {
             final String accompanyingFileName = m.replaceFirst(replacement);
             result.add(pyramidDataFileOrFolder.getParent().resolve(accompanyingFileName));
@@ -208,6 +206,7 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
             + ", fileRegExp \"" + fileRegExp + "\""
             + (fileInFolderRegExp == null ? "" : ", fileInFolderRegExp \"" + fileInFolderRegExp + "\"")
             + (accompanyingFiles.isEmpty() ? "" : ", accompanyingFiles " + accompanyingFiles)
+            + (accompanyingFilesRequired ? " (accompanying files required)" : "")
             + (recognitionPriority == 0 ? "" : ", recognition priority " + recognitionPriority);
     }
 
@@ -237,6 +236,9 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
         {
             return false;
         }
+        if (accompanyingFilesRequired != that.accompanyingFilesRequired) {
+            return false;
+        }
         return accompanyingFiles.equals(that.accompanyingFiles);
     }
 
@@ -247,6 +249,7 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
         result = 31 * result + fileRegExp.hashCode();
         result = 31 * result + (fileInFolderRegExp != null ? fileInFolderRegExp.hashCode() : 0);
         result = 31 * result + accompanyingFiles.hashCode();
+        result = 31 * result + (accompanyingFilesRequired ? 1 : 0);
         result = 31 * result + recognitionPriority;
         return result;
     }

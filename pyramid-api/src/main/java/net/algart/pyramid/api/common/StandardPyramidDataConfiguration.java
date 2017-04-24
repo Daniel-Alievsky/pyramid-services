@@ -133,10 +133,20 @@ public class StandardPyramidDataConfiguration {
         return pyramidDataJson;
     }
 
+    /**
+     * Returns main pyramid data file. Never returns <tt>null</tt>.
+     *
+     * @return main pyramid data file.
+     */
     public Path getPyramidDataFile() {
         return pyramidDataFile;
     }
 
+    /**
+     * Returns pyramid format. Never returns <tt>null</tt>.
+     *
+     * @return pyramid format.
+     */
     public PyramidFormat getFormat() {
         return format;
     }
