@@ -174,8 +174,8 @@ public class PyramidServicesConfiguration {
             if (!pyramidFormat.getAccompanyingFiles().isEmpty()) {
                 builder.add("accompanyingFiles", toJsonArray(pyramidFormat.getAccompanyingFiles()));
             }
-            builder.add("recognitionPriority", pyramidFormat.getRecognitionPriority());
             builder.add("accompanyingFilesRequired", pyramidFormat.isAccompanyingFilesRequired());
+            builder.add("recognitionPriority", pyramidFormat.getRecognitionPriority());
             builder.add("groupId", groupId);
             builder.add("planePyramidFactory", planePyramidFactory);
             if (planePyramidSubFactory != null) {
