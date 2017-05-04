@@ -46,6 +46,8 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
     private final int recognitionPriority;
     // - fileInFolderRegExp, accompanyingFiles and accompanyingFilesRequired
     // are not used by current version of services, but may be used by other systems like uploaders
+    private final Pattern filePattern;
+    private final Pattern fileInFolderPattern;
 
     private PyramidFormat(JsonObject json) {
         this.formatName = getRequiredString(json,
@@ -53,7 +55,10 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
         this.formatTitle = json.getString("formatTitle", null);
         this.fileRegExp = json.getString(
             PyramidConstants.FILE_REG_EXP_IN_PYRAMID_FACTORY_CONFIGURATION_JSON, "");
+        this.filePattern = Pattern.compile(fileRegExp, Pattern.CASE_INSENSITIVE);
         this.fileInFolderRegExp = json.getString("fileInFolderRegExp", null);
+        this.fileInFolderPattern = fileInFolderRegExp == null ? null :
+            Pattern.compile(fileInFolderRegExp, Pattern.CASE_INSENSITIVE);
         final JsonArray jsonAccompanyingFiles = json.getJsonArray("accompanyingFiles");
         this.accompanyingFiles = new ArrayList<>();
         if (jsonAccompanyingFiles != null) {
@@ -164,8 +169,7 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
     public boolean matchesPath(Path pyramidDataFileOrFolder) {
         Objects.requireNonNull(pyramidDataFileOrFolder, "Null pyramidDataFileOrFolder");
         final String fileName = pyramidDataFileOrFolder.getFileName().toString();
-        return !fileRegExp.isEmpty()
-            && Pattern.compile(fileRegExp, Pattern.CASE_INSENSITIVE).matcher(fileName).matches();
+        return !fileRegExp.isEmpty() && filePattern.matcher(fileName).matches();
     }
 
     public boolean matchesFolder(Path pyramidDataFolder) throws IOException {
@@ -173,12 +177,19 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
         if (fileInFolderRegExp == null || !Files.isDirectory(pyramidDataFolder)) {
             return false;
         }
-        final Pattern pattern = Pattern.compile(fileInFolderRegExp, Pattern.CASE_INSENSITIVE);
         try (final DirectoryStream<Path> files = Files.newDirectoryStream(pyramidDataFolder)) {
-            for (Path file : files) {
-                if (pattern.matcher(file.getFileName().toString()).matches()) {
-                    return true;
-                }
+            return matchesFolder(files);
+        }
+    }
+
+    public boolean matchesFolder(Iterable<Path> pyramidDataFilesInFolder) throws IOException {
+        Objects.requireNonNull(pyramidDataFilesInFolder, "Null pyramidDataFilesInFolder");
+        if (fileInFolderRegExp == null) {
+            return false;
+        }
+        for (Path file : pyramidDataFilesInFolder) {
+            if (fileInFolderPattern.matcher(file.getFileName().toString()).matches()) {
+                return true;
             }
         }
         return false;
@@ -187,16 +198,16 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
     public List<Path> accompanyingFiles(Path pyramidDataFileOrFolder) {
         Objects.requireNonNull(pyramidDataFileOrFolder, "Null pyramidDataFileOrFolder");
         final String fileName = pyramidDataFileOrFolder.getFileName().toString();
-        final List<Path> result = new ArrayList<>();
         if (fileRegExp.isEmpty()) {
-            return result;
+            return Collections.emptyList();
         }
+        final Set<Path> result = new LinkedHashSet<>();
         final Matcher m = Pattern.compile(fileRegExp, Pattern.CASE_INSENSITIVE).matcher(fileName);
         for (String replacement : accompanyingFiles) {
             final String accompanyingFileName = m.replaceFirst(replacement);
             result.add(pyramidDataFileOrFolder.getParent().resolve(accompanyingFileName));
         }
-        return result;
+        return new ArrayList<>(result);
     }
 
     @Override

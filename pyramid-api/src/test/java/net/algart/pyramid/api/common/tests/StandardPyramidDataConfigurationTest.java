@@ -25,15 +25,15 @@
 package net.algart.pyramid.api.common.tests;
 
 import net.algart.pyramid.api.common.PyramidFormat;
+import net.algart.pyramid.api.common.PyramidServicesConfiguration;
 import net.algart.pyramid.api.common.StandardPyramidDataConfiguration;
 import net.algart.pyramid.api.common.UnknownPyramidDataFormatException;
-import net.algart.pyramid.api.common.PyramidServicesConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.Collection;
 
 public class StandardPyramidDataConfigurationTest {
     public static void main(String[] args) throws IOException, UnknownPyramidDataFormatException {
@@ -54,7 +54,7 @@ public class StandardPyramidDataConfigurationTest {
             StandardPyramidDataConfiguration.readFromPyramidFolder(pyramidFolder,
                 servicesConfiguration.allSortedFormats());
         System.out.printf("Pyramid data configuration:%n  %s%n%n", configuration);
-        final List<Path> files = configuration.accompanyingFiles();
+        final Collection<Path> files = configuration.accompanyingFiles();
         System.out.printf("Accompanying files or folders:%s%n", files.isEmpty() ? " no files" : "");
         for (Path f : files) {
             System.out.printf("  %s (%s)%n",
@@ -66,7 +66,7 @@ public class StandardPyramidDataConfigurationTest {
                 System.out.printf("  \"%s\"%n", format.getFormatName());
             }
         }
-        final Path probableFolder = files.size() > 0 ? files.get(0) : configuration.getPyramidDataFile();
+        final Path probableFolder = files.size() > 0 ? files.iterator().next() : configuration.getPyramidDataFile();
         System.out.printf("%nMatchings subfolder %s for all format:%n", probableFolder);
         for (PyramidFormat format : servicesConfiguration.allSortedFormats()) {
             if (format.matchesFolder(probableFolder)) {
