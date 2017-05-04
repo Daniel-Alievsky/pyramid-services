@@ -172,17 +172,7 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
         return !fileRegExp.isEmpty() && filePattern.matcher(fileName).matches();
     }
 
-    public boolean matchesFolder(Path pyramidDataFolder) throws IOException {
-        Objects.requireNonNull(pyramidDataFolder, "Null pyramidDataFolder");
-        if (fileInFolderRegExp == null || !Files.isDirectory(pyramidDataFolder)) {
-            return false;
-        }
-        try (final DirectoryStream<Path> files = Files.newDirectoryStream(pyramidDataFolder)) {
-            return matchesFolder(files);
-        }
-    }
-
-    public boolean matchesFolder(Iterable<Path> pyramidDataFilesInFolder) throws IOException {
+    public boolean matchesFolder(Iterable<Path> pyramidDataFilesInFolder) {
         Objects.requireNonNull(pyramidDataFilesInFolder, "Null pyramidDataFilesInFolder");
         if (fileInFolderRegExp == null) {
             return false;
@@ -193,6 +183,16 @@ public final class PyramidFormat implements Comparable<PyramidFormat> {
             }
         }
         return false;
+    }
+
+    public boolean matchesFolder(Path pyramidDataFolder) throws IOException {
+        Objects.requireNonNull(pyramidDataFolder, "Null pyramidDataFolder");
+        if (fileInFolderRegExp == null || !Files.isDirectory(pyramidDataFolder)) {
+            return false;
+        }
+        try (final DirectoryStream<Path> files = Files.newDirectoryStream(pyramidDataFolder)) {
+            return matchesFolder(files);
+        }
     }
 
     public List<Path> accompanyingFiles(Path pyramidDataFileOrFolder) {
