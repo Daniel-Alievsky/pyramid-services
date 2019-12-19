@@ -60,11 +60,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>net.algart</groupId>
-            <artifactId>algart</artifactId>
-            <version>1.2.7</version>
-        </dependency>
-        <dependency>
             <groupId>net.algart.simagis</groupId>
             <artifactId>simagis-plane-pyramid-sdk</artifactId>
             <version>1.2.18</version>

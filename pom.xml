@@ -78,15 +78,23 @@
 
     <repositories>
         <repository>
-            <id>simagis-open-releases</id>
-            <url>https://simagis.artifactoryonline.com/simagis/open-releases-local</url>
+            <id>siams-snapshots</id>
+            <url>http://maven.siams.com/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>siams</id>
+            <url>http://maven.siams.com/nexus/content/repositories/releases/</url>
         </repository>
     </repositories>
 
     <distributionManagement>
+        <snapshotRepository>
+            <id>siams-snapshots-deploy</id>
+            <url>http://maven.siams.com/nexus/content/repositories/snapshots/</url>
+        </snapshotRepository>
         <repository>
-            <id>simagis-open-releases</id>
-            <url>https://simagis.artifactoryonline.com/simagis/open-releases-local</url>
+            <id>siams-deploy</id>
+            <url>http://maven.siams.com/nexus/content/repositories/releases/</url>
         </repository>
     </distributionManagement>
 </project>
